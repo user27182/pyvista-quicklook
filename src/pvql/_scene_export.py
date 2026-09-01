@@ -23,11 +23,22 @@ def to_surface(dataset: object) -> pv.PolyData:
     return surface.triangulate()
 
 
+def has_cell_scalars(surface: pv.PolyData) -> bool:
+    """Return whether the active scalars sit on cells rather than points."""
+    name = surface.active_scalars_name
+    return bool(name) and name in surface.cell_data
+
+
+def to_point_scalars(surface: pv.PolyData) -> pv.PolyData:
+    """Return a surface carrying cell scalars on points, one cell per point."""
+    if not has_cell_scalars(surface):
+        return surface
+    separated = surface.separate_cells().cell_data_to_point_data()
+    return separated.extract_surface(algorithm='dataset_surface').triangulate()
+
+
 def colours_for(surface: pv.PolyData, colormap: str) -> np.ndarray | None:
     """Return per-point RGB for the active scalars, or None when there are none."""
-    if surface.active_scalars_name and surface.active_scalars_name in surface.cell_data:
-        surface = surface.cell_data_to_point_data()
-
     scalars = surface.active_scalars
     if scalars is None:
         return None
@@ -59,12 +70,13 @@ def export(source: str, destination: str, max_points: int, colormap: str) -> Non
         message = 'the dataset has no surface to show'
         raise ValueError(message)
 
-    # Decimation costs more than it saves at preview sizes, so it is a last resort
-    # that only runs when the surface would otherwise be unwieldy to write and load.
-    if max_points and surface.n_points > max_points:
-        ratio = 1.0 - (max_points / surface.n_points)
+    # Splitting cells triples the points, so the cap is shared out beforehand.
+    cap = max_points // 3 if max_points and has_cell_scalars(surface) else max_points
+    if cap and surface.n_points > cap:
+        ratio = 1.0 - (cap / surface.n_points)
         surface = surface.decimate_pro(ratio, preserve_topology=True).triangulate()
 
+    surface = to_point_scalars(surface)
     colours = colours_for(surface, colormap)
     surface.clear_data()
     if colours is not None and len(colours) == surface.n_points:
