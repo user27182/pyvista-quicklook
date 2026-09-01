@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import plistlib
+import threading
+import time
 
 import pytest
 
@@ -15,6 +17,7 @@ from pvql import daemon
 from pvql import formats
 from pvql import plist
 from pvql import render
+from pvql import warmup
 
 
 def test_normalize_accepts_any_spelling():
@@ -390,3 +393,48 @@ def test_find_python_sits_beside_pyvista(tmp_path):
         tool.write_text('#!/bin/sh\n')
         tool.chmod(0o755)
     assert config.find_python(str(tmp_path / 'pyvista')) == str(tmp_path / 'python3')
+
+
+def test_warmup_script_ships_with_the_package():
+    """The warm-up script the PyVista interpreter runs is part of the package."""
+    assert warmup.WARMER.is_file()
+
+
+def test_warm_reports_a_missing_interpreter(monkeypatch):
+    """Warming without a usable PyVista environment explains what to set."""
+    monkeypatch.setattr(warmup.config_mod, 'find_python', lambda configured=None: None)
+    with pytest.raises(render.RenderError, match='interpreter'):
+        warmup.warm({})
+
+
+def test_warm_in_background_does_not_raise(monkeypatch):
+    """A failing warm-up never brings the service down."""
+    started = threading.Event()
+
+    def explode(config):
+        started.set()
+        message = 'no interpreter'
+        raise render.RenderError(message)
+
+    monkeypatch.setattr(daemon.warmup_mod, 'warm', explode)
+    daemon.warm_in_background({})
+    assert started.wait(timeout=5)
+
+
+def test_warmed_recently_reads_the_stamp(tmp_path, monkeypatch):
+    """A fresh stamp counts as warm; a missing one does not."""
+    monkeypatch.setattr(warmup.config_mod, 'CACHE_DIR', tmp_path)
+    assert warmup.warmed_recently() is False
+    warmup.stamp_path().touch()
+    assert warmup.warmed_recently() is True
+    assert warmup.warmed_recently(within=0) is False
+
+
+def test_warm_in_background_skips_a_recent_warm_up(monkeypatch):
+    """The service does not compete with a warm-up the installer just ran."""
+    called = []
+    monkeypatch.setattr(daemon.warmup_mod, 'warmed_recently', lambda: True)
+    monkeypatch.setattr(daemon.warmup_mod, 'warm', lambda config: called.append(config))
+    daemon.warm_in_background({})
+    time.sleep(0.2)
+    assert called == []

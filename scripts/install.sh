@@ -59,6 +59,9 @@ LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchSe
 /usr/bin/qlmanage -r >/dev/null 2>&1 || true
 /usr/bin/qlmanage -r cache >/dev/null 2>&1 || true
 
+echo "==> warming PyVista and VTK"
+"$HELPER" warmup || echo "warm-up skipped; the first preview will be slower" >&2
+
 echo
 echo "installed. Verify with:"
 echo "    pvql doctor"

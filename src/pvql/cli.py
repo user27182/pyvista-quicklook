@@ -16,6 +16,7 @@ from . import config as config_mod
 from . import daemon as daemon_mod
 from . import plist as plist_mod
 from . import render as render_mod
+from . import warmup as warmup_mod
 from .formats import FORMATS
 from .formats import resolve_extensions
 from .formats import uti_for
@@ -100,6 +101,17 @@ def cmd_service(args: argparse.Namespace) -> int:
         return 0
 
     print(_run(['/bin/launchctl', 'print', target]) or f'{label} is not loaded')
+    return 0
+
+
+def cmd_warmup(_: argparse.Namespace) -> int:
+    """Load PyVista and VTK so the first preview does not wait for them."""
+    try:
+        elapsed = warmup_mod.warm()
+    except render_mod.RenderError as error:
+        print(error, file=sys.stderr)
+        return 1
+    print(f'PyVista and VTK are warm ({elapsed:.1f} s)')
     return 0
 
 
@@ -279,6 +291,9 @@ def build_parser() -> argparse.ArgumentParser:
     service.add_argument('--uninstall', action='store_true')
     service.add_argument('--helper', help='absolute path to the pvql executable')
     service.set_defaults(func=cmd_service)
+
+    warmup = sub.add_parser('warmup', help='load PyVista and VTK ahead of the first preview')
+    warmup.set_defaults(func=cmd_warmup)
 
     warm = sub.add_parser('warm', help='render previews ahead of time')
     warm.add_argument('paths', nargs='+')

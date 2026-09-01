@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from pathlib import Path
 import shutil
 import signal
+import threading
 import time
 from typing import Any
 import uuid
@@ -14,6 +16,7 @@ import uuid
 from . import config as config_mod
 from . import convert as convert_mod
 from . import render as render_mod
+from . import warmup as warmup_mod
 
 EXT_BUNDLE_ID = 'io.github.user27182.PyVistaQuickLook.QuickLook'
 LABEL = 'io.github.user27182.pvqld'
@@ -151,10 +154,26 @@ def sweep(directory: Path) -> None:
             pass
 
 
+def warm_in_background(config: dict[str, Any]) -> None:
+    """Load PyVista in a thread, so requests are still answered while it happens."""
+
+    def run() -> None:
+        # The installer may have just warmed everything; do not compete with it.
+        if warmup_mod.warmed_recently():
+            return
+        with contextlib.suppress(Exception):
+            warmup_mod.warm(config)
+
+    threading.Thread(target=run, daemon=True).start()
+
+
 def serve(poll: float = 0.05) -> int:
     """Answer preview requests until the process is stopped."""
     directory = drop_dir()
     directory.mkdir(parents=True, exist_ok=True)
+    startup = config_mod.load()
+    if startup.get('warm_on_start', True):
+        warm_in_background(startup)
     last_sweep = time.monotonic()
     while True:
         for request in sorted(directory.glob(f'*{REQUEST_SUFFIX}')):

@@ -19,8 +19,9 @@ coloured by the active scalars and free to rotate and zoom.
 ```
 
 This installs the `pvql` helper, starts the render service, builds
-`PyVistaQuickLook.app`, copies it to `~/Applications`, and registers it with Quick Look.
-Pass `--prefix /Applications` to install for all users.
+`PyVistaQuickLook.app`, copies it to `~/Applications`, registers it with Quick Look, and
+loads PyVista and VTK once so the first preview is quick. Pass `--prefix /Applications`
+to install for all users.
 
 Check the result:
 
@@ -62,8 +63,14 @@ interactive view leaves out. Setting `"interactive": false` in the config always
 that still image.
 
 Both are cached under `~/Library/Caches/PyVistaQuickLook`, keyed by the file's path,
-size, and modification time, so editing a file invalidates its preview. The first
-preview of a file takes a few seconds; later ones come from the cache.
+size, and modification time, so editing a file invalidates its preview. Later previews
+of the same file come from the cache.
+
+Every preview runs PyVista in a fresh process, and VTK is 600 MB of libraries, so the
+first one after a restart is slow until macOS has those pages cached. The service loads
+them in the background when it starts, which is at login and whenever it is reinstalled,
+so that cost is paid before you press space. `pvql warmup` does the same on demand, and
+`"warm_on_start": false` turns the automatic pass off.
 
 Cell data is sampled onto the points before colouring, and surfaces above
 `max_scene_points` are decimated so the panel stays responsive.
@@ -105,6 +112,7 @@ Privacy & Security.
 | `interactive` | `true` | Show a turnable surface instead of a still image |
 | `max_scene_points` | `400000` | Decimate surfaces above this many points |
 | `colormap` | `'viridis'` | Colormap used to colour the surface |
+| `warm_on_start` | `true` | Load PyVista and VTK when the render service starts |
 | `window_size` | `[1024, 1024]` | Rendered preview size in pixels |
 | `timeout` | `60` | Seconds before a render is abandoned |
 | `max_file_size_mb` | `512` | Files above this size show a notice instead of a render |
@@ -120,6 +128,7 @@ app bundle. Every other key takes effect on the next preview.
 
 ```bash
 pvql preview FILE     # render and print the path of the cached PNG
+pvql warmup           # load PyVista and VTK ahead of the first preview
 pvql warm DIR         # render a directory ahead of time
 pvql types            # list claimed extensions
 pvql doctor           # check every part of the integration
