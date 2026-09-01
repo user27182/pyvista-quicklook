@@ -37,6 +37,12 @@ enum Helper {
         let message: String
     }
 
+    /// What the render service returned: a scene to explore, or a rendered image.
+    enum Payload {
+        case scene(URL)
+        case image(Data)
+    }
+
     static let hardTimeout: TimeInterval = 120
     static let requestSuffix = ".pvqlreq"
     static let replySuffix = ".pvqlrep"
@@ -160,8 +166,8 @@ enum Helper {
         )
     }
 
-    /// Asks the render service for a preview and returns its PNG data.
-    static func requestPreview(_ url: URL, timeout: TimeInterval = 90) throws -> Data {
+    /// Asks the render service for a preview of a mesh file.
+    static func requestPreview(_ url: URL, timeout: TimeInterval = 90) throws -> Payload {
         let directory = NSTemporaryDirectory() as NSString
         let token = UUID().uuidString
         let requestPath = directory.appendingPathComponent("\(token)\(requestSuffix)")
@@ -207,15 +213,22 @@ enum Helper {
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 throw Failure(message: "The render service sent a malformed reply.")
             }
-            if json["ok"] as? Bool == true, let png = json["png"] as? String {
-                defer { try? manager.removeItem(atPath: png) }
-                guard let bytes = manager.contents(atPath: png), !bytes.isEmpty else {
-                    throw Failure(message: "The render service produced an empty preview.")
+            if json["ok"] as? Bool == true {
+                if let scene = json["scene"] as? String {
+                    pvqlLog("received a scene at \(scene)")
+                    return .scene(URL(fileURLWithPath: scene))
                 }
-                pvqlLog("received \(bytes.count) bytes")
-                return bytes
+                if let png = json["png"] as? String {
+                    defer { try? manager.removeItem(atPath: png) }
+                    guard let bytes = manager.contents(atPath: png), !bytes.isEmpty else {
+                        throw Failure(message: "The render service produced an empty preview.")
+                    }
+                    pvqlLog("received \(bytes.count) bytes")
+                    return .image(bytes)
+                }
             }
-            throw Failure(message: json["error"] as? String ?? "The render service could not produce a preview.")
+            let reported = json["error"] as? String
+            throw Failure(message: reported ?? "The render service could not produce a preview.")
         }
 
         try? manager.removeItem(atPath: requestPath)

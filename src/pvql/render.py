@@ -37,19 +37,21 @@ def identity_of(path: Path) -> tuple[str, int, int]:
     return str(path), int(stat.st_mtime), stat.st_size
 
 
+def digest(identity: tuple[str, int, int], settings: list[str]) -> str:
+    """Return a cache key for a file rendered with the given settings."""
+    source, mtime, size = identity
+    parts = [CACHE_VERSION, source, str(mtime), str(size), *settings]
+    return hashlib.sha256('\0'.join(parts).encode()).hexdigest()
+
+
 def cache_key(identity: tuple[str, int, int], config: dict[str, Any]) -> str:
     """Return the cache key for a file under the current render settings."""
-    source, mtime, size = identity
-    parts = [
-        CACHE_VERSION,
-        source,
-        str(mtime),
-        str(size),
+    settings = [
         repr(config.get('window_size')),
         repr(config.get('background')),
         repr(config.get('extra_args')),
     ]
-    return hashlib.sha256('\0'.join(parts).encode()).hexdigest()
+    return digest(identity, settings)
 
 
 def build_command(executable: str, path: Path, out: Path, config: dict[str, Any]) -> list[str]:

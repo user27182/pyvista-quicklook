@@ -252,7 +252,8 @@ def cmd_doctor(_: argparse.Namespace) -> int:
             else:
                 elapsed = time.monotonic() - started
                 size_kb = out.stat().st_size / 1024
-                print(f'✓ render     {size_kb:.0f} KB in {elapsed:.1f} s via the service')
+                kind = 'interactive scene' if out.suffix == '.ply' else 'rendered image'
+                print(f'✓ preview    {kind}, {size_kb:.0f} KB in {elapsed:.1f} s')
                 out.unlink(missing_ok=True)
 
     print('\nall checks passed' if not problems else f'\n{problems} problem(s) found')

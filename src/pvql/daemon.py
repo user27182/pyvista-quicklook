@@ -12,6 +12,7 @@ from typing import Any
 import uuid
 
 from . import config as config_mod
+from . import convert as convert_mod
 from . import render as render_mod
 
 EXT_BUNDLE_ID = 'io.github.user27182.PyVistaQuickLook.QuickLook'
@@ -81,6 +82,18 @@ def readable(path: str, seconds: float = 2.0) -> bool:
         signal.signal(signal.SIGALRM, previous)
 
 
+def build_scene(
+    target: str, config: dict[str, Any], identity: tuple[str, int, int] | None
+) -> Path | None:
+    """Return an interactive scene for a request, or None to fall back to an image."""
+    if not config.get('interactive', True):
+        return None
+    try:
+        return convert_mod.scene(target, config, identity=identity)
+    except render_mod.RenderError:
+        return None
+
+
 def handle(request: Path) -> None:
     """Render the file named by one request and write the reply beside it."""
     reply = request.with_suffix(REPLY_SUFFIX)
@@ -103,8 +116,15 @@ def handle(request: Path) -> None:
         write_json(reply, {'ok': False, 'error': UNREADABLE_MESSAGE.format(path=source)})
         return
 
+    config = config_mod.load()
     try:
-        png = render_mod.preview(target, config_mod.load(), identity=identity)
+        built = build_scene(target, config, identity)
+        if built is not None:
+            delivered = reply.with_suffix('.ply')
+            shutil.copyfile(built, delivered)
+            write_json(reply, {'ok': True, 'scene': str(delivered)})
+            return
+        png = render_mod.preview(target, config, identity=identity)
     except render_mod.RenderError as error:
         write_json(reply, {'ok': False, 'error': str(error)})
     except Exception as error:  # noqa: BLE001
@@ -118,7 +138,12 @@ def handle(request: Path) -> None:
 def sweep(directory: Path) -> None:
     """Delete replies that no one collected."""
     cutoff = time.time() - STALE_SECONDS
-    for entry in [*directory.glob(f'*{REPLY_SUFFIX}'), *directory.glob('*.png')]:
+    stale = [
+        *directory.glob(f'*{REPLY_SUFFIX}'),
+        *directory.glob('*.png'),
+        *directory.glob('*.ply'),
+    ]
+    for entry in stale:
         try:
             if entry.stat().st_mtime < cutoff:
                 entry.unlink(missing_ok=True)
@@ -163,7 +188,7 @@ def request_preview(source: str, timeout: float = 90) -> Path:
             payload = json.loads(reply.read_text())
             reply.unlink(missing_ok=True)
             if payload.get('ok'):
-                return Path(payload['png'])
+                return Path(payload.get('scene') or payload['png'])
             raise render_mod.RenderError(payload.get('error', 'unknown error'))
         time.sleep(0.05)
     message = (

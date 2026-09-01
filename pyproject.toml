@@ -38,7 +38,7 @@ Homepage = 'https://github.com/user27182/pyvista-quicklook'
 
 [tool.coverage.run]
 branch = true
-omit = ['*/_version.py']
+omit = ['*/_scene_export.py', '*/_version.py']
 parallel = true
 source = ['pvql']
 

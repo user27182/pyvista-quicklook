@@ -16,6 +16,9 @@ LOG_PATH = APP_SUPPORT / 'pvql.log'
 DEFAULTS: dict[str, Any] = {
     'pyvista': None,
     'pvql': None,
+    'interactive': True,
+    'max_scene_points': 400000,
+    'colormap': 'viridis',
     'window_size': [1024, 1024],
     'timeout': 60,
     'max_file_size_mb': 512,
@@ -65,6 +68,18 @@ def find_pyvista(configured: str | None = None) -> str | None:
         return found
     for directory in _CANDIDATE_DIRS:
         candidate = directory / 'pyvista'
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+    return None
+
+
+def find_python(configured: str | None = None) -> str | None:
+    """Return the interpreter that sits beside the ``pyvista`` executable."""
+    executable = find_pyvista(configured)
+    if executable is None:
+        return None
+    for name in ('python3', 'python'):
+        candidate = Path(executable).parent / name
         if candidate.is_file() and os.access(candidate, os.X_OK):
             return str(candidate)
     return None

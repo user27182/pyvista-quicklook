@@ -16,7 +16,7 @@ APP_BUNDLE_ID = 'io.github.user27182.PyVistaQuickLook'
 APP_EXECUTABLE = 'PyVistaQuickLook'
 EXT_BUNDLE_ID = f'{APP_BUNDLE_ID}.QuickLook'
 EXT_EXECUTABLE = 'PyVistaQuickLookExtension'
-EXT_PRINCIPAL_CLASS = 'PVQLPreviewProvider'
+EXT_PRINCIPAL_CLASS = 'PVQLPreviewViewController'
 
 
 def bundle_version(version: str = __version__) -> str:
@@ -91,7 +91,6 @@ def extension_plist(extensions: list[str], helper: str | None = None) -> dict[st
             'NSExtensionAttributes': {
                 'QLSupportedContentTypes': [uti_for(ext) for ext in extensions],
                 'QLSupportsSearchableItems': False,
-                'QLIsDataBasedPreview': True,
             },
         },
     }

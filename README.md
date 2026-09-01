@@ -1,10 +1,10 @@
 # PyVista Quick Look
 
-Press the space bar on a mesh file in the Finder and see it rendered, the same way
-images and PDFs already preview.
+Press the space bar on a mesh file in the Finder and turn it with the mouse, the same
+way macOS already previews `.ply` and `.usdz` models.
 
-Selecting `flow.vtu` and pressing space runs `pyvista plot` on it off-screen and shows
-the result in the Quick Look panel.
+Selecting `flow.vtu` and pressing space shows its surface in the Quick Look panel,
+coloured by the active scalars and free to rotate and zoom.
 
 ## Requirements
 
@@ -40,8 +40,9 @@ pvql types        # what is claimed now
 pvql types --all  # every format pvql knows about
 ```
 
-Formats macOS already previews — `.stl`, `.obj`, `.ply`, `.png` — are not claimed.
-Claim them by adding them to the config and reinstalling:
+Formats macOS already previews — `.stl`, `.obj`, `.ply`, `.png` — are deliberately not
+claimed, so the built-in viewer keeps handling them. Claim them by adding them to the
+config and reinstalling:
 
 ```json
 { "extensions": { "add": [".stl", ".obj"], "remove": [".pdb"] } }
@@ -51,14 +52,23 @@ Claim them by adding them to the config and reinstalling:
 
 The app bundle contains a Quick Look extension that declares a uniform type identifier
 for each claimed extension. When the Finder previews one of those files, the extension
-hands the file to a background render service, which runs
-`pyvista plot --off-screen --screenshot` and caches the PNG under
-`~/Library/Caches/PyVistaQuickLook`.
+hands it to a background render service, which reads it with PyVista, extracts the
+surface, colours the vertices by the active scalars, and writes a PLY. The extension
+shows that PLY in a SceneKit view, which is what makes the preview turnable.
 
-The first preview of a file takes a few seconds while PyVista starts up. Later previews
-of the same file are served from the cache. Editing the file invalidates its cache entry.
+Datasets with no surface to show fall back to a still image rendered by
+`pyvista plot --off-screen --screenshot`, which keeps the scalar bar and axes that the
+interactive view leaves out. Setting `"interactive": false` in the config always uses
+that still image.
 
-When a render fails, the Quick Look panel shows the error text instead of an image.
+Both are cached under `~/Library/Caches/PyVistaQuickLook`, keyed by the file's path,
+size, and modification time, so editing a file invalidates its preview. The first
+preview of a file takes a few seconds; later ones come from the cache.
+
+Cell data is sampled onto the points before colouring, and surfaces above
+`max_scene_points` are decimated so the panel stays responsive.
+
+When a preview fails, the Quick Look panel shows the error text instead.
 
 ### The render service
 
@@ -92,6 +102,9 @@ Privacy & Security.
 | --- | --- | --- |
 | `pyvista` | discovered | Absolute path to the `pyvista` executable |
 | `pvql` | discovered | Absolute path to the `pvql` helper |
+| `interactive` | `true` | Show a turnable surface instead of a still image |
+| `max_scene_points` | `400000` | Decimate surfaces above this many points |
+| `colormap` | `'viridis'` | Colormap used to colour the surface |
 | `window_size` | `[1024, 1024]` | Rendered preview size in pixels |
 | `timeout` | `60` | Seconds before a render is abandoned |
 | `max_file_size_mb` | `512` | Files above this size show a notice instead of a render |

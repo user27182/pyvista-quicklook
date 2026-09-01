@@ -10,6 +10,7 @@ import pytest
 
 from pvql import cli
 from pvql import config
+from pvql import convert
 from pvql import daemon
 from pvql import formats
 from pvql import plist
@@ -322,3 +323,70 @@ def test_bundle_version_is_numeric():
     """Bundle versions carry only the leading numeric part."""
     assert plist.bundle_version('1.2.3.dev4+gabc') == '1.2.3'
     assert plist.bundle_version('nonsense') == '0.0.0'
+
+
+def test_scene_key_differs_from_the_image_key():
+    """A file's scene and its rendered image are cached separately."""
+    identity = ('/mesh.vtu', 1, 2)
+    settings = {'window_size': [8, 8], 'max_scene_points': 100, 'colormap': 'viridis'}
+    assert convert.scene_key(identity, settings) != render.cache_key(identity, settings)
+
+
+def test_scene_key_follows_conversion_settings():
+    """Changing the colormap or the point budget invalidates the scene."""
+    identity = ('/mesh.vtu', 1, 2)
+    base = {'max_scene_points': 100, 'colormap': 'viridis'}
+    assert convert.scene_key(identity, base) != convert.scene_key(
+        identity, {**base, 'colormap': 'plasma'}
+    )
+    assert convert.scene_key(identity, base) != convert.scene_key(
+        identity, {**base, 'max_scene_points': 200}
+    )
+
+
+def test_scene_reports_a_missing_file(tmp_path):
+    """Converting a file that is not there is reported plainly."""
+    with pytest.raises(render.RenderError, match='No such file'):
+        convert.scene(tmp_path / 'absent.vtu', {})
+
+
+def test_build_scene_is_skipped_when_not_interactive():
+    """Turning interactivity off falls straight through to the rendered image."""
+    assert daemon.build_scene('/mesh.vtu', {'interactive': False}, None) is None
+
+
+def test_build_scene_falls_back_when_conversion_fails(monkeypatch):
+    """A dataset that cannot be converted falls back to the rendered image."""
+
+    def fail(target, config, identity=None):
+        message = 'no surface'
+        raise render.RenderError(message)
+
+    monkeypatch.setattr(daemon.convert_mod, 'scene', fail)
+    assert daemon.build_scene('/mesh.vtu', {'interactive': True}, None) is None
+
+
+def test_handle_delivers_an_interactive_scene(tmp_path, monkeypatch):
+    """When a scene is built, the reply points at it rather than an image."""
+    ply = tmp_path / 'scene.ply'
+    ply.write_bytes(b'ply\n')
+    monkeypatch.setattr(daemon, 'folder_is_reachable', lambda path: True)
+    monkeypatch.setattr(daemon.convert_mod, 'scene', lambda target, config, identity=None: ply)
+
+    request = tmp_path / 'token.pvqlreq'
+    request.write_text(json.dumps({'path': str(tmp_path / 'mesh.vtu'), 'mtime': 1, 'size': 2}))
+    daemon.handle(request)
+
+    reply = json.loads((tmp_path / 'token.pvqlrep').read_text())
+    assert reply['ok'] is True
+    assert reply['scene'].endswith('token.ply')
+    assert (tmp_path / 'token.ply').read_bytes() == b'ply\n'
+
+
+def test_find_python_sits_beside_pyvista(tmp_path):
+    """The interpreter is discovered next to the pyvista executable."""
+    for name in ('pyvista', 'python3'):
+        tool = tmp_path / name
+        tool.write_text('#!/bin/sh\n')
+        tool.chmod(0o755)
+    assert config.find_python(str(tmp_path / 'pyvista')) == str(tmp_path / 'python3')

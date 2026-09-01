@@ -52,7 +52,7 @@ swiftc -target "$TARGET" -O \
 echo "==> compiling $EXT_NAME"
 swiftc -target "$TARGET" -O -parse-as-library \
   "$ROOT/macos/Shared/Helper.swift" \
-  "$ROOT/macos/QuickLookExtension/PreviewProvider.swift" \
+  "$ROOT/macos/QuickLookExtension/PreviewViewController.swift" \
   -o "$APPEX/Contents/MacOS/$EXT_NAME" \
   -framework QuickLookUI \
   -Xlinker -e -Xlinker _NSExtensionMain
