@@ -31,7 +31,7 @@ readme = 'README.md'
 requires-python = '>=3.10'
 
 [project.scripts]
-pvql = 'pvql.cli:main'
+pvql = 'pyvista_quicklook.cli:main'
 
 [project.urls]
 Homepage = 'https://github.com/user27182/pyvista-quicklook'
@@ -40,10 +40,10 @@ Homepage = 'https://github.com/user27182/pyvista-quicklook'
 branch = true
 omit = ['*/_scene_export.py', '*/_version.py', '*/_warmup.py']
 parallel = true
-source = ['pvql']
+source = ['pyvista_quicklook']
 
 [tool.pytest.ini_options]
-addopts = '--cov=pvql --cov-fail-under=50'
+addopts = '--cov=pyvista_quicklook --cov-fail-under=50'
 testpaths = 'tests'
 
 [tool.ruff]
@@ -94,7 +94,7 @@ required-imports = ['from __future__ import annotations']
 
 [tool.ruff.lint.per-file-ignores]
 # The command line interface reports its findings on stdout.
-'src/pvql/cli.py' = ['T201']
+'src/pyvista_quicklook/cli.py' = ['T201']
 'tests/*' = ['D103']
 
 [tool.ruff.lint.pyupgrade]
@@ -108,4 +108,4 @@ where = ['src']
 
 [tool.setuptools_scm]
 version_scheme = 'release-branch-semver'
-write_to = 'src/pvql/_version.py'
+write_to = 'src/pyvista_quicklook/_version.py'

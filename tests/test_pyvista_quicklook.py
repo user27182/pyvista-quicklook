@@ -1,4 +1,4 @@
-"""Tests for the parts of pvql that do not render."""
+"""Tests for the parts of pyvista_quicklook that do not render."""
 
 from __future__ import annotations
 
@@ -10,14 +10,14 @@ import time
 
 import pytest
 
-from pvql import cli
-from pvql import config
-from pvql import convert
-from pvql import daemon
-from pvql import formats
-from pvql import plist
-from pvql import render
-from pvql import warmup
+from pyvista_quicklook import cli
+from pyvista_quicklook import config
+from pyvista_quicklook import convert
+from pyvista_quicklook import daemon
+from pyvista_quicklook import formats
+from pyvista_quicklook import plist
+from pyvista_quicklook import render
+from pyvista_quicklook import warmup
 
 
 def test_normalize_accepts_any_spelling():

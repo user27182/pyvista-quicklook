@@ -35,7 +35,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APPEX/Contents/MacOS"
 
 echo "==> generating Info.plist files (helper: $HELPER)"
-PYTHONPATH="$ROOT/src" python3 -m pvql plist \
+PYTHONPATH="$ROOT/src" python3 -m pyvista_quicklook plist \
   --app "$APP/Contents/Info.plist" \
   --extension "$APPEX/Contents/Info.plist" \
   --helper "$HELPER" >/dev/null
