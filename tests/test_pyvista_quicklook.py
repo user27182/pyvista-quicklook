@@ -331,19 +331,19 @@ def test_bundle_version_is_numeric():
 def test_scene_key_differs_from_the_image_key():
     """A file's scene and its rendered image are cached separately."""
     identity = ('/mesh.vtu', 1, 2)
-    settings = {'window_size': [8, 8], 'max_scene_points': 100, 'colormap': 'viridis'}
+    settings = {'window_size': [8, 8], 'max_scene_points': 100, 'max_glyph_points': 20}
     assert convert.scene_key(identity, settings) != render.cache_key(identity, settings)
 
 
 def test_scene_key_follows_conversion_settings():
-    """Changing the colormap or the point budget invalidates the scene."""
+    """Changing either point budget invalidates the scene."""
     identity = ('/mesh.vtu', 1, 2)
-    base = {'max_scene_points': 100, 'colormap': 'viridis'}
-    assert convert.scene_key(identity, base) != convert.scene_key(
-        identity, {**base, 'colormap': 'plasma'}
-    )
+    base = {'max_scene_points': 100, 'max_glyph_points': 20}
     assert convert.scene_key(identity, base) != convert.scene_key(
         identity, {**base, 'max_scene_points': 200}
+    )
+    assert convert.scene_key(identity, base) != convert.scene_key(
+        identity, {**base, 'max_glyph_points': 40}
     )
 
 

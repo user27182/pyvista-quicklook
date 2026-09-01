@@ -27,7 +27,7 @@ def to_surface(dataset: object) -> pv.PolyData:
     return surface
 
 
-# Viridis at 32 control points, interpolated to a full ramp when matplotlib is absent.
+# Viridis at 32 control points, interpolated to a full ramp.
 _VIRIDIS = (
     '440154470d6048186a482475472e7c4538824241863e4c8a3a548c365d8d32658e2e6d8e2b758e'
     '287d8e25848e228c8d1f948c1e9c8920a38625ab822eb37c3aba7648c16e58c76569cd5b7fd34e'
@@ -35,16 +35,12 @@ _VIRIDIS = (
 )
 
 
-def ramp(colormap: str) -> np.ndarray:
-    """Return a 256-entry RGB table for a colormap, falling back to viridis."""
-    try:
-        from matplotlib import colormaps
-    except ImportError:
-        control = np.frombuffer(bytes.fromhex(_VIRIDIS), dtype=np.uint8).reshape(-1, 3)
-        positions = np.linspace(0, 255, len(control))
-        channels = [np.interp(np.arange(256), positions, control[:, c]) for c in range(3)]
-        return np.stack(channels, axis=1).round().astype(np.uint8)
-    return (colormaps[colormap](np.linspace(0, 1, 256))[:, :3] * 255).astype(np.uint8)
+def ramp() -> np.ndarray:
+    """Return the 256-entry RGB table previews are coloured with."""
+    control = np.frombuffer(bytes.fromhex(_VIRIDIS), dtype=np.uint8).reshape(-1, 3)
+    positions = np.linspace(0, 255, len(control))
+    channels = [np.interp(np.arange(256), positions, control[:, c]) for c in range(3)]
+    return np.stack(channels, axis=1).round().astype(np.uint8)
 
 
 def solidify(surface: pv.PolyData, max_glyphs: int) -> pv.PolyData:
@@ -101,7 +97,7 @@ def to_point_scalars(surface: pv.PolyData) -> pv.PolyData:
     return separated.extract_surface(algorithm='dataset_surface').triangulate()
 
 
-def colours_for(surface: pv.PolyData, colormap: str) -> np.ndarray | None:
+def colours_for(surface: pv.PolyData) -> np.ndarray | None:
     """Return per-point RGB for the active scalars, or None when there are none."""
     scalars = surface.active_scalars
     if scalars is None:
@@ -122,12 +118,10 @@ def colours_for(surface: pv.PolyData, colormap: str) -> np.ndarray | None:
     low, high = float(finite.min()), float(finite.max())
     span = high - low if high > low else 1.0
     normalised = np.clip((np.nan_to_num(scalars, nan=low) - low) / span, 0.0, 1.0)
-    return ramp(colormap)[(normalised * 255).round().astype(np.intp)]
+    return ramp()[(normalised * 255).round().astype(np.intp)]
 
 
-def export(
-    source: str, destination: str, max_points: int, colormap: str, max_glyphs: int = 20_000
-) -> None:
+def export(source: str, destination: str, max_points: int, max_glyphs: int = 20_000) -> None:
     """Write a mesh file out as a PLY with vertex colours."""
     # Triangulating first would discard the vertex and line cells solidify needs.
     surface = choose_scalars(to_surface(pv.read(source)))
@@ -143,7 +137,7 @@ def export(
         surface = surface.decimate_pro(ratio, preserve_topology=True).triangulate()
 
     surface = to_point_scalars(surface)
-    colours = colours_for(surface, colormap)
+    colours = colours_for(surface)
     normals = np.array(surface.point_data['Normals']) if 'Normals' in surface.point_data else None
     surface.clear_data()
     if normals is not None and len(normals) == surface.n_points:
@@ -162,10 +156,9 @@ def main() -> int:
     parser.add_argument('source')
     parser.add_argument('destination')
     parser.add_argument('--max-points', type=int, default=2_000_000)
-    parser.add_argument('--colormap', default='viridis')
     parser.add_argument('--max-glyphs', type=int, default=20_000)
     args = parser.parse_args()
-    export(args.source, args.destination, args.max_points, args.colormap, args.max_glyphs)
+    export(args.source, args.destination, args.max_points, args.max_glyphs)
     return 0
 
 

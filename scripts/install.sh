@@ -11,18 +11,8 @@ DEST="$HOME/Applications"
 PYTHON_VERSION="${PVQL_PYTHON:-3.12}"
 # PyVista 0.49 is the floor and is not released yet.
 PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista @ git+https://github.com/pyvista/pyvista.git}"
-# The VTK fork instead of stock VTK, and only what PyVista itself imports.
-RUNTIME_DEPS=(
-  'cvista[all]'
-  cyclopts
-  matplotlib
-  numpy
-  pillow
-  pooch
-  pyobjc-framework-Cocoa
-  scooby
-  typing-extensions
-)
+# SceneKit draws the previews, so only the reading half of the VTK fork is needed.
+RUNTIME_DEPS=('cvista[io]' numpy pooch scooby typing-extensions)
 PYVISTA=""
 PYTHON=""
 SKIP_HELPER=0
@@ -80,7 +70,7 @@ fi
 # install never depends on what is already on this machine.
 if [[ -z "$PYVISTA" ]]; then
   echo "==> preparing the PyVista environment in $VENV"
-  echo "    (about 270 MB the first time)"
+  echo "    (about 150 MB the first time)"
   mkdir -p "$SUPPORT"
   "$UV" venv --quiet --allow-existing --python "$PYTHON_VERSION" "$VENV"
   "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade --no-deps "$PYVISTA_SPEC"

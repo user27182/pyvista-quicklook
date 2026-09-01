@@ -85,12 +85,17 @@ def cmd_service(args: argparse.Namespace) -> int:
         with path.open('wb') as handle:
             plistlib.dump(daemon_mod.agent_plist(helper), handle, sort_keys=False)
         subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True, check=False)
-        loaded = subprocess.run(
-            ['/bin/launchctl', 'bootstrap', f'gui/{os.getuid()}', str(path)],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
+        # launchd reports an I/O error when it is still tearing the old job down.
+        for attempt in range(5):
+            loaded = subprocess.run(
+                ['/bin/launchctl', 'bootstrap', f'gui/{os.getuid()}', str(path)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if loaded.returncode == 0:
+                break
+            time.sleep(0.5 * (attempt + 1))
         if loaded.returncode != 0:
             print(f'could not load {label}: {loaded.stderr.strip()}', file=sys.stderr)
             return 1
