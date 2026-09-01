@@ -439,3 +439,21 @@ def test_warm_in_background_skips_a_recent_warm_up(monkeypatch):
     daemon.warm_in_background({})
     time.sleep(0.2)
     assert called == []
+
+
+def test_overrides_drops_settings_that_match_the_defaults():
+    """Only deliberate changes are stored, so defaults stay free to improve."""
+    merged = {**config.DEFAULTS, 'pyvista': '/bin/pyvista', 'timeout': 5}
+    stored = config.overrides(merged)
+    assert stored == {'pyvista': '/bin/pyvista', 'timeout': 5}
+    assert 'max_scene_points' not in stored
+
+
+def test_overrides_round_trips_through_load(tmp_path, monkeypatch):
+    """A stored override survives, and everything else follows the defaults."""
+    path = tmp_path / 'config.json'
+    monkeypatch.setattr(config, 'CONFIG_PATH', path)
+    path.write_text(json.dumps(config.overrides({**config.DEFAULTS, 'timeout': 5})))
+    loaded = config.load()
+    assert loaded['timeout'] == 5
+    assert loaded['max_scene_points'] == config.DEFAULTS['max_scene_points']

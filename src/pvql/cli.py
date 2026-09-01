@@ -172,7 +172,7 @@ def cmd_config(args: argparse.Namespace) -> int:
         config = config_mod.load()
         config['pyvista'] = args.pyvista or config.get('pyvista') or config_mod.find_pyvista()
         config['pvql'] = args.helper or config.get('pvql') or shutil.which('pvql')
-        path = config_mod.save(config)
+        path = config_mod.save(config_mod.overrides(config))
         print(f'wrote {path}')
     print(config_mod.CONFIG_PATH)
     if config_mod.CONFIG_PATH.is_file():
@@ -187,7 +187,7 @@ def cmd_cache(args: argparse.Namespace) -> int:
     if args.clear:
         print(f'removed {render_mod.clear_cache()} cached previews')
         return 0
-    entries = list(config_mod.CACHE_DIR.glob('*.png')) if config_mod.CACHE_DIR.is_dir() else []
+    entries = render_mod.cached_previews()
     total = sum(entry.stat().st_size for entry in entries)
     print(f'{config_mod.CACHE_DIR}\n{len(entries)} previews, {total / 1024 / 1024:.1f} MB')
     return 0

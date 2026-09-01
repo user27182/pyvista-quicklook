@@ -52,6 +52,15 @@ def load() -> dict[str, Any]:
     return config
 
 
+def overrides(config: dict[str, Any]) -> dict[str, Any]:
+    """Return only the settings that differ from the defaults.
+
+    Storing the whole dictionary would freeze every default at install time, so a
+    later improvement to one would never reach an existing installation.
+    """
+    return {key: value for key, value in config.items() if value != DEFAULTS.get(key)}
+
+
 def save(config: dict[str, Any]) -> Path:
     """Write the configuration to disk and return its path."""
     APP_SUPPORT.mkdir(parents=True, exist_ok=True)

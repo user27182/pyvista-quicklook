@@ -156,12 +156,20 @@ def _tail(text: str, limit: int = 40) -> str:
     return '\n'.join(lines[-limit:])
 
 
+CACHED_SUFFIXES = ('*.png', '*.ply')
+
+
+def cached_previews() -> list[Path]:
+    """Return every cached preview, both rendered images and interactive scenes."""
+    if not config_mod.CACHE_DIR.is_dir():
+        return []
+    return [e for pattern in CACHED_SUFFIXES for e in config_mod.CACHE_DIR.glob(pattern)]
+
+
 def clear_cache() -> int:
     """Delete every cached preview and return the number of files removed."""
-    if not config_mod.CACHE_DIR.is_dir():
-        return 0
     removed = 0
-    for entry in config_mod.CACHE_DIR.glob('*.png'):
+    for entry in cached_previews():
         entry.unlink(missing_ok=True)
         removed += 1
     return removed
