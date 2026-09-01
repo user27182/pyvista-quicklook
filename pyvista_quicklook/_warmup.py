@@ -31,8 +31,11 @@ def main() -> int:
         directory = Path(scratch)
         # The interactive path: extract a surface and write it out.
         mesh.extract_surface().triangulate().save(directory / 'warm.ply')
-        # The still-image path: render off screen.
-        plotter = pv.Plotter(off_screen=True, window_size=(64, 64))
+        # The still-image path, absent from builds without the rendering modules.
+        try:
+            plotter = pv.Plotter(off_screen=True, window_size=(64, 64))
+        except Exception:  # noqa: BLE001
+            return 0
         plotter.add_mesh(mesh)
         plotter.screenshot(str(directory / 'warm.png'))
         plotter.close()

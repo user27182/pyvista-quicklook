@@ -170,7 +170,12 @@ def cmd_config(args: argparse.Namespace) -> int:
     """Show the configuration, or write a fresh one with discovered defaults."""
     if args.init:
         config = config_mod.load()
-        config['pyvista'] = args.pyvista or config.get('pyvista') or config_mod.find_pyvista()
+        config['python'] = args.python or config.get('python')
+        if args.python and not args.pyvista:
+            # Naming the interpreter replaces any command line interface on record.
+            config['pyvista'] = args.pyvista
+        else:
+            config['pyvista'] = args.pyvista or config.get('pyvista') or config_mod.find_pyvista()
         config['pvql'] = args.helper or config.get('pvql') or shutil.which('pvql')
         path = config_mod.save(config_mod.overrides(config))
         print(f'wrote {path}')
@@ -204,6 +209,15 @@ def _run(command: list[str]) -> str:
     return (completed.stdout + completed.stderr).strip()
 
 
+def _succeeds(command: list[str]) -> bool:
+    """Return whether a command runs and exits cleanly."""
+    try:
+        completed = subprocess.run(command, capture_output=True, timeout=20, check=False)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return completed.returncode == 0
+
+
 def cmd_doctor(_: argparse.Namespace) -> int:
     """Check that every piece of the Quick Look integration is in place."""
     config = config_mod.load()
@@ -213,12 +227,18 @@ def cmd_doctor(_: argparse.Namespace) -> int:
     print(f'config       {config_mod.CONFIG_PATH}{suffix}')
     print(f'cache        {config_mod.CACHE_DIR}')
 
-    executable = config_mod.find_pyvista(config.get('pyvista'))
-    if executable:
-        print(f'✓ pyvista    {executable}')
+    interpreter = config_mod.find_python(config)
+    if interpreter:
+        print(f'✓ python     {interpreter}')
     else:
         problems += 1
-        print('✗ pyvista    not found; set "pyvista" in the config file')
+        print('✗ python     no PyVista environment; set "python" in the config file')
+
+    executable = config_mod.resolve_pyvista(config)
+    if executable and _succeeds([executable, '--help']):
+        print(f'  pyvista    {executable}')
+    else:
+        print('  pyvista    none in this environment; still images unavailable')
 
     print(f'✓ formats    {len(claimed_extensions(config))} extensions claimed')
 
@@ -251,7 +271,7 @@ def cmd_doctor(_: argparse.Namespace) -> int:
         problems += 1
         print('✗ service    not loaded; run "pvql service --install"')
 
-    if executable:
+    if interpreter:
         with tempfile.TemporaryDirectory() as scratch:
             sample = Path(scratch) / 'pvql-doctor.vtk'
             sample.write_text(SMOKE_MESH)
@@ -312,6 +332,7 @@ def build_parser() -> argparse.ArgumentParser:
     config = sub.add_parser('config', help='show or create the configuration file')
     config.add_argument('--init', action='store_true', help='write a configuration file')
     config.add_argument('--pyvista', help='absolute path to the pyvista executable')
+    config.add_argument('--python', help='absolute path to the interpreter that has PyVista')
     config.add_argument('--helper', help='absolute path to the pvql executable')
     config.set_defaults(func=cmd_config)
 

@@ -102,7 +102,7 @@ def preview(
         )
         raise RenderError(message)
 
-    executable = config_mod.find_pyvista(config.get('pyvista'))
+    executable = config_mod.resolve_pyvista(config)
     if executable is None:
         message = (
             'The pyvista command-line interface was not found.\n'

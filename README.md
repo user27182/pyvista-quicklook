@@ -16,29 +16,46 @@ PyVista does not need to be installed; the installer provisions its own copy.
 ## Install
 
 ```bash
-curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/scripts/bootstrap.sh | sh
+./scripts/install.sh
 ```
 
 Then select a `.vtu`, `.vtp`, or `.vtk` file in the Finder and press space.
 
-The installer fetches [uv](https://docs.astral.sh/uv/) if it is missing, downloads the
-source, creates a private environment holding PyVista and VTK, installs the `pvql`
-helper, builds and registers `PyVistaQuickLook.app`, and loads PyVista once so the first
-preview is quick. Nothing outside `~/Library/Application Support/PyVistaQuickLook`,
-`~/Applications`, and `~/.local/bin` is touched, and no existing Python environment is
-used or changed.
-
-The first install downloads PyVista and VTK, about 600 MB.
-
-From a checkout, the same script runs without downloading anything:
+The installer fetches [uv](https://docs.astral.sh/uv/) if it is missing, creates a
+private environment holding PyVista, installs the `pvql` helper, builds and registers
+`PyVistaQuickLook.app`, and loads PyVista once so the first preview is quick. Nothing
+outside `~/Library/Application Support/PyVistaQuickLook`, `~/Applications`, and
+`~/.local/bin` is touched, and no existing Python environment is used or changed.
 
 ```bash
-./scripts/install.sh                     # provisions its own PyVista
-./scripts/install.sh --prefix /Applications
-./scripts/install.sh --pyvista /path/to/venv/bin/pyvista   # use an existing one
+./scripts/install.sh --prefix /Applications                # install for all users
+./scripts/install.sh --pyvista /path/to/venv/bin/pyvista   # use an existing PyVista
 ```
 
 Check the result with `pvql doctor`.
+
+`scripts/bootstrap.sh` installs the same way from a URL, once this repository is
+published:
+
+```bash
+curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/scripts/bootstrap.sh | sh
+```
+
+### What gets installed
+
+About 150 MB, in `~/Library/Application Support/PyVistaQuickLook/venv`:
+
+- PyVista, from git until 0.49 is released, installed with `--no-deps`
+- [cvista](https://github.com/pyvista/cvista)`[io]`, the reading half of a VTK fork
+- numpy, pooch, scooby, typing-extensions
+
+SceneKit draws the previews, so the environment holds no rendering or plotting code:
+no VTK rendering modules, no matplotlib, no cyclopts. That has two consequences. Still
+images are unavailable, so a dataset with no surface to show reports that rather than
+falling back to a rendered picture. And `colormap` needs matplotlib to be anything other
+than viridis, which is built in.
+
+Point `--pyvista` at a full PyVista environment to get both back.
 
 ## Supported files
 
@@ -118,7 +135,8 @@ Privacy & Security.
 
 | Key | Default | Effect |
 | --- | --- | --- |
-| `pyvista` | discovered | Absolute path to the `pyvista` executable |
+| `python` | set at install | Interpreter of the PyVista environment |
+| `pyvista` | unset | Optional `pyvista` executable, for still images |
 | `pvql` | discovered | Absolute path to the `pvql` helper |
 | `interactive` | `true` | Show a turnable surface instead of a still image |
 | `max_scene_points` | `2000000` | Decimate only above this many points; `0` never does |

@@ -33,7 +33,7 @@ def warmed_recently(within: float = RECENT_SECONDS) -> bool:
 def warm(config: dict[str, Any] | None = None) -> float:
     """Load PyVista and VTK in the configured environment and return how long it took."""
     config = config if config is not None else config_mod.load()
-    interpreter = config_mod.find_python(config.get('pyvista'))
+    interpreter = config_mod.find_python(config)
     if interpreter is None:
         message = (
             'The Python interpreter next to the pyvista executable was not found.\n'

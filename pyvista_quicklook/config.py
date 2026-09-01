@@ -14,6 +14,7 @@ CACHE_DIR = Path.home() / 'Library' / 'Caches' / 'PyVistaQuickLook'
 LOG_PATH = APP_SUPPORT / 'pvql.log'
 
 DEFAULTS: dict[str, Any] = {
+    'python': None,
     'pyvista': None,
     'pvql': None,
     'interactive': True,
@@ -83,9 +84,16 @@ def find_pyvista(configured: str | None = None) -> str | None:
     return None
 
 
-def find_python(configured: str | None = None) -> str | None:
-    """Return the interpreter that sits beside the ``pyvista`` executable."""
-    executable = find_pyvista(configured)
+def find_python(config: dict[str, Any] | None = None) -> str | None:
+    """Return the interpreter of the configured PyVista environment."""
+    config = config or {}
+    explicit = config.get('python')
+    if explicit:
+        candidate = Path(explicit).expanduser()
+        return str(candidate) if candidate.is_file() and os.access(candidate, os.X_OK) else None
+
+    # Older configurations only name the command line interface.
+    executable = find_pyvista(config.get('pyvista'))
     if executable is None:
         return None
     for name in ('python3', 'python'):
@@ -93,3 +101,18 @@ def find_python(configured: str | None = None) -> str | None:
         if candidate.is_file() and os.access(candidate, os.X_OK):
             return str(candidate)
     return None
+
+
+def resolve_pyvista(config: dict[str, Any] | None = None) -> str | None:
+    """Return the pyvista command line interface belonging to the configured environment."""
+    config = config or {}
+    configured = config.get('pyvista')
+    if configured:
+        return find_pyvista(configured)
+    interpreter = config.get('python')
+    if interpreter:
+        candidate = Path(interpreter).parent / 'pyvista'
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return str(candidate)
+        return None
+    return find_pyvista()

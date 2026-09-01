@@ -87,14 +87,14 @@ def readable(path: str, seconds: float = 2.0) -> bool:
 
 def build_scene(
     target: str, config: dict[str, Any], identity: tuple[str, int, int] | None
-) -> Path | None:
-    """Return an interactive scene for a request, or None to fall back to an image."""
+) -> tuple[Path | None, str | None]:
+    """Return an interactive scene for a request, or why one could not be built."""
     if not config.get('interactive', True):
-        return None
+        return None, None
     try:
-        return convert_mod.scene(target, config, identity=identity)
-    except render_mod.RenderError:
-        return None
+        return convert_mod.scene(target, config, identity=identity), None
+    except render_mod.RenderError as error:
+        return None, str(error)
 
 
 def handle(request: Path) -> None:
@@ -120,16 +120,19 @@ def handle(request: Path) -> None:
         return
 
     config = config_mod.load()
+    built, scene_error = build_scene(target, config, identity)
+    if built is not None:
+        delivered = reply.with_suffix('.ply')
+        shutil.copyfile(built, delivered)
+        write_json(reply, {'ok': True, 'scene': str(delivered)})
+        return
+
     try:
-        built = build_scene(target, config, identity)
-        if built is not None:
-            delivered = reply.with_suffix('.ply')
-            shutil.copyfile(built, delivered)
-            write_json(reply, {'ok': True, 'scene': str(delivered)})
-            return
         png = render_mod.preview(target, config, identity=identity)
     except render_mod.RenderError as error:
-        write_json(reply, {'ok': False, 'error': str(error)})
+        # A build without the rendering modules has no still-image fallback, so the
+        # reason the scene failed is the useful one.
+        write_json(reply, {'ok': False, 'error': scene_error or str(error)})
     except Exception as error:  # noqa: BLE001
         write_json(reply, {'ok': False, 'error': f'{type(error).__name__}: {error}'})
     else:

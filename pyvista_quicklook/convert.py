@@ -49,7 +49,7 @@ def scene(
         raise RenderError(message)
 
     identity = identity or identity_of(path)
-    interpreter = config_mod.find_python(config.get('pyvista'))
+    interpreter = config_mod.find_python(config)
     if interpreter is None:
         message = (
             'The Python interpreter next to the pyvista executable was not found.\n'

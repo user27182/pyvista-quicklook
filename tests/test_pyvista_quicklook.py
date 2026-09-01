@@ -355,7 +355,7 @@ def test_scene_reports_a_missing_file(tmp_path):
 
 def test_build_scene_is_skipped_when_not_interactive():
     """Turning interactivity off falls straight through to the rendered image."""
-    assert daemon.build_scene('/mesh.vtu', {'interactive': False}, None) is None
+    assert daemon.build_scene('/mesh.vtu', {'interactive': False}, None) == (None, None)
 
 
 def test_build_scene_falls_back_when_conversion_fails(monkeypatch):
@@ -366,7 +366,9 @@ def test_build_scene_falls_back_when_conversion_fails(monkeypatch):
         raise render.RenderError(message)
 
     monkeypatch.setattr(daemon.convert_mod, 'scene', fail)
-    assert daemon.build_scene('/mesh.vtu', {'interactive': True}, None) is None
+    built, why = daemon.build_scene('/mesh.vtu', {'interactive': True}, None)
+    assert built is None
+    assert 'no surface' in why
 
 
 def test_handle_delivers_an_interactive_scene(tmp_path, monkeypatch):
@@ -386,13 +388,27 @@ def test_handle_delivers_an_interactive_scene(tmp_path, monkeypatch):
     assert (tmp_path / 'token.ply').read_bytes() == b'ply\n'
 
 
-def test_find_python_sits_beside_pyvista(tmp_path):
-    """The interpreter is discovered next to the pyvista executable."""
+def test_find_python_prefers_the_configured_interpreter(tmp_path):
+    """An explicit interpreter is used as given."""
+    tool = tmp_path / 'python'
+    tool.write_text('#!/bin/sh\n')
+    tool.chmod(0o755)
+    assert config.find_python({'python': str(tool)}) == str(tool)
+
+
+def test_find_python_falls_back_to_the_pyvista_sibling(tmp_path):
+    """A configuration naming only the CLI still yields its interpreter."""
     for name in ('pyvista', 'python3'):
         tool = tmp_path / name
         tool.write_text('#!/bin/sh\n')
         tool.chmod(0o755)
-    assert config.find_python(str(tmp_path / 'pyvista')) == str(tmp_path / 'python3')
+    assert config.find_python({'pyvista': str(tmp_path / 'pyvista')}) == str(tmp_path / 'python3')
+
+
+def test_find_python_reports_nothing_without_an_environment(monkeypatch):
+    """No interpreter and no CLI means no environment."""
+    monkeypatch.setattr(config, 'find_pyvista', lambda configured=None: None)
+    assert config.find_python({}) is None
 
 
 def test_warmup_script_ships_with_the_package():
@@ -457,3 +473,56 @@ def test_overrides_round_trips_through_load(tmp_path, monkeypatch):
     loaded = config.load()
     assert loaded['timeout'] == 5
     assert loaded['max_scene_points'] == config.DEFAULTS['max_scene_points']
+
+
+def test_handle_reports_why_the_scene_failed(tmp_path, monkeypatch):
+    """Without a still-image fallback the scene's own error is what gets reported."""
+
+    def no_scene(target, config, identity=None):
+        message = 'the dataset has no surface to show'
+        raise render.RenderError(message)
+
+    def no_renderer(target, config, identity=None):
+        message = 'The pyvista command-line interface was not found.'
+        raise render.RenderError(message)
+
+    monkeypatch.setattr(daemon, 'folder_is_reachable', lambda path: True)
+    monkeypatch.setattr(daemon.convert_mod, 'scene', no_scene)
+    monkeypatch.setattr(daemon.render_mod, 'preview', no_renderer)
+
+    request = tmp_path / 'token.pvqlreq'
+    request.write_text(json.dumps({'path': str(tmp_path / 'mesh.vtu'), 'mtime': 1, 'size': 2}))
+    daemon.handle(request)
+
+    reply = json.loads((tmp_path / 'token.pvqlrep').read_text())
+    assert reply['ok'] is False
+    assert 'no surface' in reply['error']
+    assert 'command-line interface' not in reply['error']
+
+
+def test_config_init_with_an_interpreter_clears_a_stale_cli(tmp_path, monkeypatch):
+    """An environment named by interpreter does not keep an unrelated CLI on record."""
+    path = tmp_path / 'config.json'
+    monkeypatch.setattr(config, 'CONFIG_PATH', path)
+    monkeypatch.setattr(config, 'APP_SUPPORT', tmp_path)
+    path.write_text(json.dumps({'pyvista': '/old/bin/pyvista'}))
+    args = argparse.Namespace(
+        init=True, python='/new/bin/python', pyvista=None, helper='/bin/pvql'
+    )
+    cli.cmd_config(args)
+    stored = json.loads(path.read_text())
+    assert stored['python'] == '/new/bin/python'
+    assert 'pyvista' not in stored
+
+
+def test_resolve_pyvista_stays_inside_the_configured_environment(tmp_path):
+    """A configured interpreter without a sibling CLI does not fall back to PATH."""
+    interpreter = tmp_path / 'python'
+    interpreter.write_text('#!/bin/sh\n')
+    interpreter.chmod(0o755)
+    assert config.resolve_pyvista({'python': str(interpreter)}) is None
+
+    sibling = tmp_path / 'pyvista'
+    sibling.write_text('#!/bin/sh\n')
+    sibling.chmod(0o755)
+    assert config.resolve_pyvista({'python': str(interpreter)}) == str(sibling)

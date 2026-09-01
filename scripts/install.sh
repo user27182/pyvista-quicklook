@@ -9,7 +9,12 @@ SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
 VENV="$SUPPORT/venv"
 DEST="$HOME/Applications"
 PYTHON_VERSION="${PVQL_PYTHON:-3.12}"
+# PyVista 0.49 is the floor and is not released yet.
+PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista @ git+https://github.com/pyvista/pyvista.git}"
+# SceneKit draws the previews, so only the reading half of the VTK fork is needed.
+RUNTIME_DEPS=('cvista[io]' numpy pooch scooby typing-extensions)
 PYVISTA=""
+PYTHON=""
 SKIP_HELPER=0
 
 while [[ $# -gt 0 ]]; do
@@ -65,20 +70,25 @@ fi
 # install never depends on what is already on this machine.
 if [[ -z "$PYVISTA" ]]; then
   echo "==> preparing the PyVista environment in $VENV"
-  echo "    (this downloads PyVista and VTK the first time, about 600 MB)"
+  echo "    (about 150 MB the first time)"
   mkdir -p "$SUPPORT"
   "$UV" venv --quiet --allow-existing --python "$PYTHON_VERSION" "$VENV"
-  "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade pyvista
-  PYVISTA="$VENV/bin/pyvista"
+  "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade --no-deps "$PYVISTA_SPEC"
+  "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade "${RUNTIME_DEPS[@]}"
+  PYTHON="$VENV/bin/python"
 fi
 
-if [[ ! -x "$PYVISTA" ]]; then
-  echo "no usable pyvista executable at $PYVISTA" >&2
+if [[ -n "$PYVISTA" && ! -x "$PYVISTA" ]]; then
+  echo "no pyvista executable at $PYVISTA" >&2
   exit 1
 fi
 
 echo "==> recording configuration"
-"$HELPER" config --init --helper "$HELPER" --pyvista "$PYVISTA" >/dev/null
+if [[ -n "$PYVISTA" ]]; then
+  "$HELPER" config --init --helper "$HELPER" --pyvista "$PYVISTA" >/dev/null
+else
+  "$HELPER" config --init --helper "$HELPER" --python "$PYTHON" >/dev/null
+fi
 
 echo "==> warming PyVista and VTK"
 "$HELPER" warmup || echo "warm-up skipped; the first preview will be slower" >&2

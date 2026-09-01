@@ -23,6 +23,26 @@ def to_surface(dataset: object) -> pv.PolyData:
     return surface.triangulate()
 
 
+# Viridis at 32 control points, interpolated to a full ramp when matplotlib is absent.
+_VIRIDIS = (
+    '440154470d6048186a482475472e7c4538824241863e4c8a3a548c365d8d32658e2e6d8e2b758e'
+    '287d8e25848e228c8d1f948c1e9c8920a38625ab822eb37c3aba7648c16e58c76569cd5b7fd34e'
+    '93d741a8db34bddf26d5e21aeae51afde725'
+)
+
+
+def ramp(colormap: str) -> np.ndarray:
+    """Return a 256-entry RGB table for a colormap, falling back to viridis."""
+    try:
+        from matplotlib import colormaps
+    except ImportError:
+        control = np.frombuffer(bytes.fromhex(_VIRIDIS), dtype=np.uint8).reshape(-1, 3)
+        positions = np.linspace(0, 255, len(control))
+        channels = [np.interp(np.arange(256), positions, control[:, c]) for c in range(3)]
+        return np.stack(channels, axis=1).round().astype(np.uint8)
+    return (colormaps[colormap](np.linspace(0, 1, 256))[:, :3] * 255).astype(np.uint8)
+
+
 def has_cell_scalars(surface: pv.PolyData) -> bool:
     """Return whether the active scalars sit on cells rather than points."""
     name = surface.active_scalars_name
@@ -52,15 +72,13 @@ def colours_for(surface: pv.PolyData, colormap: str) -> np.ndarray | None:
     if scalars.ndim != 1 or scalars.size != surface.n_points:
         return None
 
-    from matplotlib import colormaps
-
     finite = scalars[np.isfinite(scalars)]
     if finite.size == 0:
         return None
     low, high = float(finite.min()), float(finite.max())
     span = high - low if high > low else 1.0
     normalised = np.clip((np.nan_to_num(scalars, nan=low) - low) / span, 0.0, 1.0)
-    return (colormaps[colormap](normalised)[:, :3] * 255).astype(np.uint8)
+    return ramp(colormap)[(normalised * 255).round().astype(np.intp)]
 
 
 def export(source: str, destination: str, max_points: int, colormap: str) -> None:
