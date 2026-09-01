@@ -72,8 +72,10 @@ them in the background when it starts, which is at login and whenever it is rein
 so that cost is paid before you press space. `pvql warmup` does the same on demand, and
 `"warm_on_start": false` turns the automatic pass off.
 
-Cell data is sampled onto the points before colouring, and surfaces above
-`max_scene_points` are decimated so the panel stays responsive.
+Cell data is sampled onto the points before colouring. Surfaces are sent whole:
+decimating them costs more time than the larger file does, so `max_scene_points` is a
+safety valve for very large meshes rather than a routine step. Set it to `0` to never
+decimate.
 
 When a preview fails, the Quick Look panel shows the error text instead.
 
@@ -110,7 +112,7 @@ Privacy & Security.
 | `pyvista` | discovered | Absolute path to the `pyvista` executable |
 | `pvql` | discovered | Absolute path to the `pvql` helper |
 | `interactive` | `true` | Show a turnable surface instead of a still image |
-| `max_scene_points` | `400000` | Decimate surfaces above this many points |
+| `max_scene_points` | `2000000` | Decimate only above this many points; `0` never does |
 | `colormap` | `'viridis'` | Colormap used to colour the surface |
 | `warm_on_start` | `true` | Load PyVista and VTK when the render service starts |
 | `window_size` | `[1024, 1024]` | Rendered preview size in pixels |
