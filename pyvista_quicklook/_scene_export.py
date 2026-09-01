@@ -43,6 +43,20 @@ def ramp(colormap: str) -> np.ndarray:
     return (colormaps[colormap](np.linspace(0, 1, 256))[:, :3] * 255).astype(np.uint8)
 
 
+def choose_scalars(surface: pv.PolyData) -> pv.PolyData:
+    """Point the surface at a real data array, ignoring VTK's own bookkeeping."""
+    name = surface.active_scalars_name
+    if name and not name.startswith('vtk'):
+        return surface
+    for source in (surface.point_data, surface.cell_data):
+        for candidate in source:
+            if not candidate.startswith('vtk'):
+                surface.set_active_scalars(candidate)
+                return surface
+    surface.set_active_scalars(None)
+    return surface
+
+
 def has_cell_scalars(surface: pv.PolyData) -> bool:
     """Return whether the active scalars sit on cells rather than points."""
     name = surface.active_scalars_name
@@ -83,7 +97,7 @@ def colours_for(surface: pv.PolyData, colormap: str) -> np.ndarray | None:
 
 def export(source: str, destination: str, max_points: int, colormap: str) -> None:
     """Write a mesh file out as a PLY with vertex colours."""
-    surface = to_surface(pv.read(source))
+    surface = choose_scalars(to_surface(pv.read(source)))
     if surface.n_points == 0:
         message = 'the dataset has no surface to show'
         raise ValueError(message)
