@@ -5,6 +5,25 @@ import os
 /// Log destination for the app and its Quick Look extension.
 let osLog = Logger(subsystem: "io.github.user27182.PyVistaQuickLook", category: "preview")
 
+/// Seconds since this process was started, which covers the time before it could log.
+func processAge() -> Double {
+    var info = kinfo_proc()
+    var size = MemoryLayout<kinfo_proc>.stride
+    var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, getpid()]
+    guard sysctl(&mib, 4, &info, &size, nil, 0) == 0 else {
+        return 0
+    }
+    let started = info.kp_proc.p_starttime
+    let seconds = Double(started.tv_sec) + Double(started.tv_usec) / 1_000_000
+    return Date().timeIntervalSince1970 - seconds
+}
+
+private let logStamp: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateFormat = "HH:mm:ss.SSS"
+    return formatter
+}()
+
 /// Appends a line to a debug log inside the extension's own temporary directory.
 func pvqlLog(_ message: String) {
     osLog.notice("\(message, privacy: .public)")
@@ -13,7 +32,8 @@ func pvqlLog(_ message: String) {
        size > 1_000_000 {
         try? FileManager.default.removeItem(atPath: path)
     }
-    let line = "\(Date()) \(message)\n"
+    let age = String(format: "%6.2fs", processAge())
+    let line = "\(logStamp.string(from: Date())) [pid \(getpid()) +\(age)] \(message)\n"
     if let handle = FileHandle(forWritingAtPath: path) {
         handle.seekToEndOfFile()
         handle.write(Data(line.utf8))
