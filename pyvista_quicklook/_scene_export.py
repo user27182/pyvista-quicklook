@@ -75,9 +75,12 @@ def recentre(surface: pv.PolyData) -> pv.PolyData:
 
 
 def choose_scalars(surface: pv.PolyData) -> pv.PolyData:
-    """Point the surface at a real data array, ignoring VTK's own bookkeeping."""
+    """Point the surface away from VTK's bookkeeping arrays, colouring by a real one."""
     name = surface.active_scalars_name
-    if name and not name.startswith('vtk'):
+    if not name:
+        # Nothing was active, so the file asks for no colour. Leave it that way.
+        return surface
+    if not name.startswith('vtk'):
         return surface
     for source in (surface.point_data, surface.cell_data):
         for candidate in source:
@@ -130,7 +133,10 @@ def export(source: str, destination: str, max_points: int, max_glyphs: int = 20_
     """Write a mesh file out as a PLY with vertex colours."""
     # Triangulating first would discard the vertex and line cells solidify needs.
     surface = choose_scalars(to_surface(pv.read(source)))
+    wanted = surface.active_scalars_name
     surface = solidify(surface, max_glyphs).triangulate()
+    # tube() and glyph() add arrays of their own; colour only by what the file had.
+    surface.set_active_scalars(wanted if wanted in surface.array_names else None)
     if surface.n_points == 0:
         message = 'the dataset has no surface to show'
         raise ValueError(message)
