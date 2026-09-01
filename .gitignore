@@ -4,7 +4,7 @@ dist/
 __pycache__/
 .venv/
 .pytest_cache/
-src/pyvista_quicklook/_version.py
+pyvista_quicklook/_version.py
 .coverage
 .coverage.*
 .idea/

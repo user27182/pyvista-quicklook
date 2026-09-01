@@ -94,7 +94,7 @@ required-imports = ['from __future__ import annotations']
 
 [tool.ruff.lint.per-file-ignores]
 # The command line interface reports its findings on stdout.
-'src/pyvista_quicklook/cli.py' = ['T201']
+'pyvista_quicklook/cli.py' = ['T201']
 'tests/*' = ['D103']
 
 [tool.ruff.lint.pyupgrade]
@@ -102,10 +102,8 @@ keep-runtime-typing = true
 
 [tool.setuptools]
 license-files = ['LICENSE']
-
-[tool.setuptools.packages.find]
-where = ['src']
+packages = ['pyvista_quicklook']
 
 [tool.setuptools_scm]
 version_scheme = 'release-branch-semver'
-write_to = 'src/pyvista_quicklook/_version.py'
+write_to = 'pyvista_quicklook/_version.py'
