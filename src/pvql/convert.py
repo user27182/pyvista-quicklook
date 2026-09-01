@@ -14,8 +14,15 @@ from .render import _log
 from .render import digest
 from .render import identity_of
 
-SCENE_VERSION = '1'
+SCENE_VERSION = '2'
+DEFAULT_MAX_POINTS = 2_000_000
 EXPORTER = Path(__file__).with_name('_scene_export.py')
+
+
+def max_points(config: dict[str, Any]) -> int:
+    """Return the decimation cap, where zero means never decimate."""
+    configured = config.get('max_scene_points')
+    return DEFAULT_MAX_POINTS if configured is None else int(configured)
 
 
 def scene_key(identity: tuple[str, int, int], config: dict[str, Any]) -> str:
@@ -63,7 +70,7 @@ def scene(
         str(path),
         str(scratch),
         '--max-points',
-        str(config.get('max_scene_points') or 400_000),
+        str(max_points(config)),
         '--colormap',
         str(config.get('colormap') or 'viridis'),
     ]

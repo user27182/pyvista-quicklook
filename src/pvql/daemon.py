@@ -230,7 +230,8 @@ def agent_plist(helper: str) -> dict[str, Any]:
         'ProgramArguments': [helper, 'daemon'],
         'RunAtLoad': True,
         'KeepAlive': True,
-        'ProcessType': 'Background',
+        # Background would throttle the renderer; previews answer a key press.
+        'ProcessType': 'Interactive',
         'StandardOutPath': str(logs / 'pvqld.log'),
         'StandardErrorPath': str(logs / 'pvqld.log'),
     }

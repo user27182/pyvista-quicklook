@@ -18,7 +18,7 @@ DEFAULTS: dict[str, Any] = {
     'pvql': None,
     'interactive': True,
     'warm_on_start': True,
-    'max_scene_points': 400000,
+    'max_scene_points': 2000000,
     'colormap': 'viridis',
     'window_size': [1024, 1024],
     'timeout': 60,

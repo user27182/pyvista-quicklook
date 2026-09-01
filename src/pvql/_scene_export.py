@@ -59,6 +59,8 @@ def export(source: str, destination: str, max_points: int, colormap: str) -> Non
         message = 'the dataset has no surface to show'
         raise ValueError(message)
 
+    # Decimation costs more than it saves at preview sizes, so it is a last resort
+    # that only runs when the surface would otherwise be unwieldy to write and load.
     if max_points and surface.n_points > max_points:
         ratio = 1.0 - (max_points / surface.n_points)
         surface = surface.decimate_pro(ratio, preserve_topology=True).triangulate()
@@ -77,7 +79,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('source')
     parser.add_argument('destination')
-    parser.add_argument('--max-points', type=int, default=400_000)
+    parser.add_argument('--max-points', type=int, default=2_000_000)
     parser.add_argument('--colormap', default='viridis')
     args = parser.parse_args()
     export(args.source, args.destination, args.max_points, args.colormap)
