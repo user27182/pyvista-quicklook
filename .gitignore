@@ -7,3 +7,4 @@ __pycache__/
 src/pvql/_version.py
 .coverage
 .coverage.*
+.idea/
