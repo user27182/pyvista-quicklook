@@ -4,6 +4,8 @@ requires = ['setuptools>=64', 'setuptools_scm>=8']
 
 [dependency-groups]
 dev = ['pre-commit', 'pytest', 'pytest-cov']
+# The exporter runs under PyVista, so testing it needs a reading environment.
+mesh = ['cvista[io]', 'pyvista @ git+https://github.com/pyvista/pyvista.git']
 
 [project]
 authors = [{ name = 'Erik Bedard' }]
