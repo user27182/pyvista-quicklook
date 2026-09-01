@@ -31,6 +31,7 @@ def scene_key(identity: tuple[str, int, int], config: dict[str, Any]) -> str:
         f'scene{SCENE_VERSION}',
         repr(config.get('max_scene_points')),
         repr(config.get('colormap')),
+        repr(config.get('max_glyph_points')),
     ]
     return digest(identity, settings)
 
@@ -73,6 +74,8 @@ def scene(
         str(max_points(config)),
         '--colormap',
         str(config.get('colormap') or 'viridis'),
+        '--max-glyphs',
+        str(config.get('max_glyph_points') or 20_000),
     ]
     environ = {**os.environ, 'PYVISTA_OFF_SCREEN': 'true', 'MPLBACKEND': 'Agg'}
     _log(config, f'miss {path} (scene)')

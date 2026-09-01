@@ -14,13 +14,17 @@ import pyvista as pv
 
 
 def to_surface(dataset: object) -> pv.PolyData:
-    """Return a triangulated surface for any dataset PyVista can read."""
+    """Return the surface of any dataset PyVista can read, cells left as they are."""
     if isinstance(dataset, pv.MultiBlock):
         dataset = dataset.combine()
-    surface = dataset.extract_surface() if hasattr(dataset, 'extract_surface') else dataset
+    surface = (
+        dataset.extract_surface(algorithm='dataset_surface')
+        if hasattr(dataset, 'extract_surface')
+        else dataset
+    )
     if not isinstance(surface, pv.PolyData):
         surface = surface.extract_geometry()
-    return surface.triangulate()
+    return surface
 
 
 # Viridis at 32 control points, interpolated to a full ramp when matplotlib is absent.
@@ -41,6 +45,32 @@ def ramp(colormap: str) -> np.ndarray:
         channels = [np.interp(np.arange(256), positions, control[:, c]) for c in range(3)]
         return np.stack(channels, axis=1).round().astype(np.uint8)
     return (colormaps[colormap](np.linspace(0, 1, 256))[:, :3] * 255).astype(np.uint8)
+
+
+def solidify(surface: pv.PolyData, max_glyphs: int) -> pv.PolyData:
+    """Give lines and loose points a surface, so there is something to draw."""
+    if surface.n_faces:
+        return surface
+
+    size = surface.length or 1.0
+    if surface.n_lines:
+        tubed = surface.tube(radius=size * 0.004, n_sides=8).triangulate()
+        # tube() names its normals differently from everything that reads them.
+        if 'TubeNormals' in tubed.point_data:
+            tubed.point_data['Normals'] = tubed.point_data['TubeNormals']
+            tubed.point_data.active_normals_name = 'Normals'
+        return tubed
+
+    if surface.n_points:
+        points = surface
+        if max_glyphs and surface.n_points > max_glyphs:
+            step = surface.n_points // max_glyphs + 1
+            kept = np.arange(0, surface.n_points, step)
+            points = surface.extract_points(kept).extract_surface(algorithm='dataset_surface')
+        sphere = pv.Sphere(radius=size * 0.004, theta_resolution=6, phi_resolution=6)
+        return points.glyph(geom=sphere, scale=False, orient=False).triangulate()
+
+    return surface
 
 
 def choose_scalars(surface: pv.PolyData) -> pv.PolyData:
@@ -95,9 +125,13 @@ def colours_for(surface: pv.PolyData, colormap: str) -> np.ndarray | None:
     return ramp(colormap)[(normalised * 255).round().astype(np.intp)]
 
 
-def export(source: str, destination: str, max_points: int, colormap: str) -> None:
+def export(
+    source: str, destination: str, max_points: int, colormap: str, max_glyphs: int = 20_000
+) -> None:
     """Write a mesh file out as a PLY with vertex colours."""
+    # Triangulating first would discard the vertex and line cells solidify needs.
     surface = choose_scalars(to_surface(pv.read(source)))
+    surface = solidify(surface, max_glyphs).triangulate()
     if surface.n_points == 0:
         message = 'the dataset has no surface to show'
         raise ValueError(message)
@@ -110,7 +144,11 @@ def export(source: str, destination: str, max_points: int, colormap: str) -> Non
 
     surface = to_point_scalars(surface)
     colours = colours_for(surface, colormap)
+    normals = np.array(surface.point_data['Normals']) if 'Normals' in surface.point_data else None
     surface.clear_data()
+    if normals is not None and len(normals) == surface.n_points:
+        surface.point_data['Normals'] = normals
+        surface.point_data.active_normals_name = 'Normals'
     if colours is not None and len(colours) == surface.n_points:
         surface['RGB'] = colours
         surface.save(destination, texture='RGB')
@@ -125,8 +163,9 @@ def main() -> int:
     parser.add_argument('destination')
     parser.add_argument('--max-points', type=int, default=2_000_000)
     parser.add_argument('--colormap', default='viridis')
+    parser.add_argument('--max-glyphs', type=int, default=20_000)
     args = parser.parse_args()
-    export(args.source, args.destination, args.max_points, args.colormap)
+    export(args.source, args.destination, args.max_points, args.colormap, args.max_glyphs)
     return 0
 
 
