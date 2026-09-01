@@ -28,6 +28,9 @@ else
   curl -LsSf "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" \
     | tar -xz -C "$SRC" --strip-components 1
   ROOT="$SRC"
+  # A downloaded tarball carries no history for setuptools-scm to read.
+  SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYVISTA_QUICKLOOK="${PVQL_VERSION:-0.0.0}"
+  export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYVISTA_QUICKLOOK
 fi
 
 # A published build spares the reader a compiler; falling back to source needs one.
