@@ -1,7 +1,4 @@
-"""Tests that the scene actually draws, using the same camera the panel uses.
-
-Needs the RenderScene tool from ``scripts/build.sh`` and so is skipped without it.
-"""
+"""Tests that the scene actually draws, using the same camera the panel uses."""
 
 from __future__ import annotations
 
@@ -9,19 +6,43 @@ from pathlib import Path
 import subprocess
 import sys
 
+import numpy as np
 import pytest
+import pyvista as pv
 
-np = pytest.importorskip('numpy')
-pv = pytest.importorskip('pyvista')
+from pyvista_quicklook import _scene_export as export_mod
 
-from pyvista_quicklook import _scene_export as export_mod  # noqa: E402
+ROOT = Path(__file__).resolve().parent.parent
+TOOL = ROOT / 'build' / 'RenderScene'
 
-TOOL = Path(__file__).resolve().parent.parent / 'build' / 'RenderScene'
+pytestmark = pytest.mark.skipif(sys.platform != 'darwin', reason='SceneKit is macOS only')
 
-pytestmark = [
-    pytest.mark.skipif(sys.platform != 'darwin', reason='SceneKit is macOS only'),
-    pytest.mark.skipif(not TOOL.exists(), reason='run scripts/build.sh to build RenderScene'),
-]
+
+@pytest.fixture(scope='session', autouse=True)
+def render_tool():
+    """Compile the off-screen renderer when the build has not already produced it."""
+    if TOOL.exists():
+        return TOOL
+    TOOL.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        [
+            'swiftc',
+            '-O',
+            '-parse-as-library',
+            str(ROOT / 'macos' / 'Shared' / 'Camera.swift'),
+            str(ROOT / 'macos' / 'Tools' / 'RenderScene.swift'),
+            '-o',
+            str(TOOL),
+            '-framework',
+            'AppKit',
+            '-framework',
+            'SceneKit',
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return TOOL
 
 
 def rendered(mesh, tmp_path, name='scene', side=192):

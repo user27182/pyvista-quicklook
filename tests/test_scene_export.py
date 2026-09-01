@@ -1,13 +1,12 @@
-"""Tests for the exporter, which needs PyVista and so is skipped without it."""
+"""Tests for the exporter."""
 
 from __future__ import annotations
 
+import numpy as np
 import pytest
+import pyvista as pv
 
-np = pytest.importorskip('numpy')
-pv = pytest.importorskip('pyvista')
-
-from pyvista_quicklook import _scene_export as export_mod  # noqa: E402
+from pyvista_quicklook import _scene_export as export_mod
 
 
 def written(mesh_or_path, tmp_path, name='out.ply', **kwargs):

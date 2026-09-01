@@ -63,8 +63,7 @@ jobs:
     - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d   # v10.0.1
       with:
         enable-cache: false
-      # The mesh group brings PyVista, so the exporter tests run rather than skip.
-    - run: uv sync --group dev --group mesh
+    - run: uv sync --group dev
     - run: ./scripts/build.sh
     - name: Check the bundle is complete and signed
       run: |
