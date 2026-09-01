@@ -129,11 +129,20 @@ service, and a real render.
   `pvql.log` beside it. The extension's own log is in
   `~/Library/Containers/io.github.user27182.PyVistaQuickLook.QuickLook/Data/tmp/`.
 
-## Tests
+## Development
 
 ```bash
-uv run --with pytest pytest tests/
+uv sync --group dev
+uv run pytest tests/          # helper tests, with coverage
+uv run pre-commit run --all-files
+./scripts/build.sh            # compile and sign the app bundle
 ```
+
+`main` is protected by a pre-commit hook, so work on a branch.
+
+Releases are published to PyPI by CI through trusted publishing: push a `v*` tag and
+the `publish` job uploads from the `release` environment. That requires a matching
+pending publisher configured on PyPI for this repository and workflow.
 
 ## Uninstall
 

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import os
+from pathlib import Path
 import subprocess
 import time
-from pathlib import Path
 from typing import Any
 
 from . import config as config_mod
@@ -86,23 +86,27 @@ def preview(
     path = Path(source).expanduser().resolve()
 
     if not path.is_file():
-        raise RenderError(f'No such file: {path}')
+        message = f'No such file: {path}'
+        raise RenderError(message)
 
     identity = identity or identity_of(path)
     limit_mb = config.get('max_file_size_mb') or 0
     size_mb = identity[2] / 1024 / 1024
     if limit_mb and size_mb > limit_mb:
-        raise RenderError(
-            f'{Path(identity[0]).name} is {size_mb:.0f} MB, above the {limit_mb} MB preview limit.\n'
+        name = Path(identity[0]).name
+        message = (
+            f'{name} is {size_mb:.0f} MB, above the {limit_mb} MB preview limit.\n'
             f'Raise "max_file_size_mb" in {config_mod.CONFIG_PATH} to preview it.'
         )
+        raise RenderError(message)
 
     executable = config_mod.find_pyvista(config.get('pyvista'))
     if executable is None:
-        raise RenderError(
+        message = (
             'The pyvista command-line interface was not found.\n'
             f'Set "pyvista" to its absolute path in {config_mod.CONFIG_PATH}.'
         )
+        raise RenderError(message)
 
     out = config_mod.CACHE_DIR / f'{cache_key(identity, config)}.png'
     if config.get('cache', True) and out.is_file() and out.stat().st_size:
@@ -117,26 +121,27 @@ def preview(
 
     started = time.monotonic()
     try:
-        completed = subprocess.run(  # noqa: S603
+        completed = subprocess.run(
             command,
             capture_output=True,
             text=True,
             timeout=config.get('timeout') or 60,
             env=environ,
             cwd=str(path.parent),
+            check=False,
         )
     except subprocess.TimeoutExpired as error:
         scratch.unlink(missing_ok=True)
-        raise RenderError(
-            f'Rendering {path.name} timed out after {config.get("timeout")} s.'
-        ) from error
+        message = f'Rendering {path.name} timed out after {config.get("timeout")} s.'
+        raise RenderError(message) from error
     elapsed = time.monotonic() - started
 
     if completed.returncode != 0 or not (scratch.is_file() and scratch.stat().st_size):
         scratch.unlink(missing_ok=True)
         detail = (completed.stderr or completed.stdout or '').strip()
         _log(config, f'fail {path}: {detail.splitlines()[-1] if detail else "no output"}')
-        raise RenderError(f'pyvista could not plot {path.name}.\n\n{_tail(detail)}')
+        message = f'pyvista could not plot {path.name}.\n\n{_tail(detail)}'
+        raise RenderError(message)
 
     scratch.replace(out)
     _log(config, f'done {path} in {elapsed:.1f}s')

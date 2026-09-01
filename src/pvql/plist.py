@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-import plistlib
 from pathlib import Path
+import plistlib
+import re
 from typing import Any
 
+from . import __version__
 from .formats import FORMATS
 from .formats import uti_for
 
@@ -15,7 +17,15 @@ APP_EXECUTABLE = 'PyVistaQuickLook'
 EXT_BUNDLE_ID = f'{APP_BUNDLE_ID}.QuickLook'
 EXT_EXECUTABLE = 'PyVistaQuickLookExtension'
 EXT_PRINCIPAL_CLASS = 'PVQLPreviewProvider'
-VERSION = '0.1.0'
+
+
+def bundle_version(version: str = __version__) -> str:
+    """Return the leading numeric part of a version, which is all a bundle may carry."""
+    match = re.match(r'\d+(?:\.\d+){0,2}', version)
+    return match.group(0) if match else '0.0.0'
+
+
+VERSION = bundle_version()
 MIN_MACOS = '12.0'
 
 

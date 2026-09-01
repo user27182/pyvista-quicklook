@@ -4,3 +4,4 @@ dist/
 __pycache__/
 .venv/
 .pytest_cache/
+src/pvql/_version.py

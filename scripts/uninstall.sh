@@ -3,7 +3,6 @@
 set -euo pipefail
 
 APP_NAME="PyVistaQuickLook"
-EXT_ID="io.github.user27182.PyVistaQuickLook.QuickLook"
 
 for candidate in "$HOME/Applications/$APP_NAME.app" "/Applications/$APP_NAME.app"; do
   if [[ -d "$candidate" ]]; then

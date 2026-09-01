@@ -2,4 +2,7 @@
 
 from __future__ import annotations
 
-__version__ = '0.1.0'
+try:
+    from ._version import __version__
+except ImportError:  # a source tree that has not been built
+    __version__ = '0.0.0.dev0'

@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import shutil
 import signal
 import time
-import uuid
-from pathlib import Path
 from typing import Any
+import uuid
 
 from . import config as config_mod
 from . import render as render_mod
@@ -70,7 +70,7 @@ def readable(path: str, seconds: float = 2.0) -> bool:
     previous = signal.signal(signal.SIGALRM, expire)
     signal.setitimer(signal.ITIMER_REAL, seconds)
     try:
-        with open(path, 'rb') as handle:  # noqa: PTH123
+        with open(path, 'rb') as handle:
             handle.read(1)
     except (OSError, TimeoutError):
         return False
@@ -122,7 +122,7 @@ def sweep(directory: Path) -> None:
         try:
             if entry.stat().st_mtime < cutoff:
                 entry.unlink(missing_ok=True)
-        except OSError:
+        except OSError:  # noqa: PERF203
             pass
 
 
@@ -166,10 +166,11 @@ def request_preview(source: str, timeout: float = 90) -> Path:
                 return Path(payload['png'])
             raise render_mod.RenderError(payload.get('error', 'unknown error'))
         time.sleep(0.05)
-    raise render_mod.RenderError(
+    message = (
         f'The render service did not answer within {timeout:.0f} s.\n'
         f'Check that it is running:  launchctl print gui/$UID/{LABEL}'
     )
+    raise render_mod.RenderError(message)
 
 
 def agent_path() -> Path:

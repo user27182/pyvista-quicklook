@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 from pathlib import Path
+import shutil
 from typing import Any
 
 APP_SUPPORT = Path.home() / 'Library' / 'Application Support' / 'PyVistaQuickLook'

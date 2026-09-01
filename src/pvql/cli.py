@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import argparse
 import os
+from pathlib import Path
 import plistlib
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
-from pathlib import Path
 
 from . import config as config_mod
 from . import daemon as daemon_mod
@@ -73,7 +73,7 @@ def cmd_service(args: argparse.Namespace) -> int:
     path = daemon_mod.agent_path()
 
     if args.uninstall:
-        subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True)  # noqa: S603, S607
+        subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True, check=False)
         path.unlink(missing_ok=True)
         print(f'removed {label}')
         return 0
@@ -83,16 +83,19 @@ def cmd_service(args: argparse.Namespace) -> int:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open('wb') as handle:
             plistlib.dump(daemon_mod.agent_plist(helper), handle, sort_keys=False)
-        subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True)  # noqa: S603, S607
-        loaded = subprocess.run(  # noqa: S603
-            ['/bin/launchctl', 'bootstrap', f'gui/{os.getuid()}', str(path)],  # noqa: S607
+        subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True, check=False)
+        loaded = subprocess.run(
+            ['/bin/launchctl', 'bootstrap', f'gui/{os.getuid()}', str(path)],
             capture_output=True,
             text=True,
+            check=False,
         )
         if loaded.returncode != 0:
             print(f'could not load {label}: {loaded.stderr.strip()}', file=sys.stderr)
             return 1
-        subprocess.run(['/bin/launchctl', 'kickstart', '-k', target], capture_output=True)  # noqa: S603, S607
+        subprocess.run(
+            ['/bin/launchctl', 'kickstart', '-k', target], capture_output=True, check=False
+        )
         print(f'installed {path}')
         return 0
 
@@ -115,7 +118,7 @@ def cmd_warm(args: argparse.Namespace) -> int:
     for target in targets:
         try:
             render_mod.preview(target, config)
-        except render_mod.RenderError as error:
+        except render_mod.RenderError as error:  # noqa: PERF203
             failures += 1
             print(f'✗ {target}: {str(error).splitlines()[0]}', file=sys.stderr)
         else:
@@ -181,7 +184,9 @@ def cmd_cache(args: argparse.Namespace) -> int:
 def _run(command: list[str]) -> str:
     """Run a command and return its combined output, or an empty string on failure."""
     try:
-        completed = subprocess.run(command, capture_output=True, text=True, timeout=20)  # noqa: S603
+        completed = subprocess.run(
+            command, capture_output=True, text=True, timeout=20, check=False
+        )
     except (OSError, subprocess.SubprocessError):
         return ''
     return (completed.stdout + completed.stderr).strip()
@@ -192,7 +197,8 @@ def cmd_doctor(_: argparse.Namespace) -> int:
     config = config_mod.load()
     problems = 0
 
-    print(f'config       {config_mod.CONFIG_PATH}' + ('' if config_mod.CONFIG_PATH.is_file() else '  (using defaults)'))
+    suffix = '' if config_mod.CONFIG_PATH.is_file() else '  (using defaults)'
+    print(f'config       {config_mod.CONFIG_PATH}{suffix}')
     print(f'cache        {config_mod.CACHE_DIR}')
 
     executable = config_mod.find_pyvista(config.get('pyvista'))
@@ -245,7 +251,8 @@ def cmd_doctor(_: argparse.Namespace) -> int:
                 print(f'✗ render     failed through the service\n\n{error}')
             else:
                 elapsed = time.monotonic() - started
-                print(f'✓ render     {out.stat().st_size / 1024:.0f} KB in {elapsed:.1f} s via the service')
+                size_kb = out.stat().st_size / 1024
+                print(f'✓ render     {size_kb:.0f} KB in {elapsed:.1f} s via the service')
                 out.unlink(missing_ok=True)
 
     print('\nall checks passed' if not problems else f'\n{problems} problem(s) found')

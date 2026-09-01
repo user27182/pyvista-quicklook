@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import plistlib
 
 import pytest
 
+from pvql import cli
+from pvql import config
 from pvql import daemon
 from pvql import formats
 from pvql import plist
@@ -168,7 +171,14 @@ def test_handle_falls_back_to_the_staged_copy(tmp_path, monkeypatch):
 
     request = tmp_path / 'token.pvqlreq'
     request.write_text(
-        json.dumps({'path': '/private/mesh.vtu', 'copy': str(tmp_path / 'copy.vtu'), 'mtime': 7, 'size': 3})
+        json.dumps(
+            {
+                'path': '/private/mesh.vtu',
+                'copy': str(tmp_path / 'copy.vtu'),
+                'mtime': 7,
+                'size': 3,
+            }
+        )
     )
     daemon.handle(request)
 
@@ -196,3 +206,119 @@ def test_agent_plist_runs_the_daemon():
     assert agent['ProgramArguments'] == ['/usr/local/bin/pvql', 'daemon']
     assert agent['KeepAlive'] is True
     assert agent['Label'] == daemon.LABEL
+
+
+def test_parser_accepts_every_subcommand():
+    """Each documented subcommand parses."""
+    parser = cli.build_parser()
+    for argv in (
+        ['preview', 'mesh.vtu'],
+        ['warm', 'dir'],
+        ['types', '--all'],
+        ['plist', '--app', 'a.plist', '--extension', 'e.plist'],
+        ['config', '--init'],
+        ['cache', '--clear'],
+        ['doctor'],
+        ['daemon'],
+        ['service', '--install'],
+    ):
+        assert parser.parse_args(argv).func is not None
+
+
+def test_claimed_extensions_follows_config():
+    """The claimed set reflects the config additions and removals."""
+    claimed = cli.claimed_extensions({'extensions': {'add': ['.stl'], 'remove': ['.vtu']}})
+    assert '.stl' in claimed
+    assert '.vtu' not in claimed
+
+
+def test_types_lists_claimed_extensions(capsys, monkeypatch):
+    """`pvql types` prints one line per claimed extension."""
+    monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(cli.config_mod.DEFAULTS))
+    assert cli.cmd_types(argparse.Namespace(all=False)) == 0
+    out = capsys.readouterr().out
+    assert '.vtu' in out
+    assert 'extensions claimed' in out
+
+
+def test_plist_writes_both_files(tmp_path, monkeypatch):
+    """`pvql plist` writes an app and an extension property list."""
+    monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(cli.config_mod.DEFAULTS))
+    app = tmp_path / 'App.plist'
+    ext = tmp_path / 'Ext.plist'
+    args = argparse.Namespace(app=str(app), extension=str(ext), helper='/bin/pvql')
+    assert cli.cmd_plist(args) == 0
+    assert plistlib.loads(app.read_bytes())['PVQLHelperPath'] == '/bin/pvql'
+    assert plistlib.loads(ext.read_bytes())['CFBundlePackageType'] == 'XPC!'
+
+
+def test_preview_reports_failures_on_stderr(capsys, monkeypatch):
+    """A render failure exits non-zero and explains itself."""
+
+    def fail(path, config):
+        message = 'nope'
+        raise render.RenderError(message)
+
+    monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(cli.config_mod.DEFAULTS))
+    monkeypatch.setattr(cli.render_mod, 'preview', fail)
+    args = argparse.Namespace(path='mesh.vtu', output=None, no_cache=True)
+    assert cli.cmd_preview(args) == 1
+    assert 'nope' in capsys.readouterr().err
+
+
+def test_preview_prints_the_cached_path(capsys, monkeypatch, tmp_path):
+    """A successful render prints where the preview landed."""
+    png = tmp_path / 'out.png'
+    png.write_bytes(b'x')
+    monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(cli.config_mod.DEFAULTS))
+    monkeypatch.setattr(cli.render_mod, 'preview', lambda path, config: png)
+    args = argparse.Namespace(path='mesh.vtu', output=None, no_cache=False)
+    assert cli.cmd_preview(args) == 0
+    assert str(png) in capsys.readouterr().out
+
+
+def test_cache_reports_its_size(capsys, monkeypatch, tmp_path):
+    """`pvql cache` reports the cache location and contents."""
+    (tmp_path / 'a.png').write_bytes(b'0123456789')
+    monkeypatch.setattr(cli.config_mod, 'CACHE_DIR', tmp_path)
+    assert cli.cmd_cache(argparse.Namespace(clear=False)) == 0
+    assert '1 previews' in capsys.readouterr().out
+
+
+def test_config_load_merges_over_defaults(tmp_path, monkeypatch):
+    """Unknown keys are dropped and missing ones fall back to defaults."""
+    path = tmp_path / 'config.json'
+    path.write_text(json.dumps({'timeout': 5, 'bogus': 1}))
+    monkeypatch.setattr(config.CONFIG_PATH, '__class__', type(path), raising=False)
+    monkeypatch.setattr(config, 'CONFIG_PATH', path)
+    loaded = config.load()
+    assert loaded['timeout'] == 5
+    assert 'bogus' not in loaded
+    assert loaded['window_size'] == config.DEFAULTS['window_size']
+
+
+def test_config_load_survives_broken_json(tmp_path, monkeypatch):
+    """A corrupt config file falls back to defaults instead of raising."""
+    path = tmp_path / 'config.json'
+    path.write_text('{not json')
+    monkeypatch.setattr(config, 'CONFIG_PATH', path)
+    assert config.load()['timeout'] == config.DEFAULTS['timeout']
+
+
+def test_find_pyvista_rejects_a_missing_executable(tmp_path):
+    """A configured path that is not executable is reported as not found."""
+    assert config.find_pyvista(str(tmp_path / 'absent')) is None
+
+
+def test_find_pyvista_accepts_a_configured_executable(tmp_path):
+    """A configured executable is used as given."""
+    tool = tmp_path / 'pyvista'
+    tool.write_text('#!/bin/sh\n')
+    tool.chmod(0o755)
+    assert config.find_pyvista(str(tool)) == str(tool)
+
+
+def test_bundle_version_is_numeric():
+    """Bundle versions carry only the leading numeric part."""
+    assert plist.bundle_version('1.2.3.dev4+gabc') == '1.2.3'
+    assert plist.bundle_version('nonsense') == '0.0.0'
