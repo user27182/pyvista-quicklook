@@ -63,7 +63,10 @@ def solidify(surface: pv.PolyData, max_glyphs: int) -> pv.PolyData:
             step = surface.n_points // max_glyphs + 1
             kept = np.arange(0, surface.n_points, step)
             points = surface.extract_points(kept).extract_surface(algorithm='dataset_surface')
-        sphere = pv.Sphere(radius=size * 0.004, theta_resolution=6, phi_resolution=6)
+        # Scale with the spacing between points, so a handful of them still read.
+        spacing = size / max(points.n_points, 1) ** (1 / 3)
+        radius = min(size * 0.2, spacing * 0.15)
+        sphere = pv.Sphere(radius=radius, theta_resolution=6, phi_resolution=6)
         return points.glyph(geom=sphere, scale=False, orient=False).triangulate()
 
     return surface

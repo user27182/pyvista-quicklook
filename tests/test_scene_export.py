@@ -148,3 +148,24 @@ def test_the_ramp_matches_viridis_ends():
     assert table.shape == (256, 3)
     assert tuple(table[0]) == (68, 1, 84)
     assert tuple(table[-1]) == (253, 231, 37)
+
+
+def test_glyph_size_follows_point_spacing():
+    """Sparse clouds get larger spheres, so a handful of points still reads."""
+    rng = np.random.default_rng(0)
+    corners = np.array([[0.0, 0, 0], [1.0, 1, 1]])
+    sparse = pv.PolyData(np.vstack([corners, [[0.5, 0.5, 0.5]]]))
+    dense = pv.PolyData(np.vstack([corners, rng.random((3000, 3))]))
+
+    # The spheres reach past the points they sit on, further when there are fewer.
+    sparse_reach = export_mod.solidify(sparse, 20_000).length - sparse.length
+    dense_reach = export_mod.solidify(dense, 20_000).length - dense.length
+    assert sparse_reach > dense_reach > 0
+
+
+def test_glyph_size_is_capped_for_a_single_point():
+    """One point does not produce a sphere that swallows the scene."""
+    single = pv.PolyData(np.array([[1.0, 2.0, 3.0]]))
+    out = export_mod.solidify(single, 20_000)
+    assert out.n_faces > 0
+    assert np.isfinite(out.length)

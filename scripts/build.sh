@@ -49,9 +49,17 @@ swiftc -target "$TARGET" -O \
   -o "$APP/Contents/MacOS/$APP_NAME" \
   -framework AppKit
 
+echo "==> compiling RenderScene"
+swiftc -target "$TARGET" -O -parse-as-library \
+  "$ROOT/macos/Shared/Camera.swift" \
+  "$ROOT/macos/Tools/RenderScene.swift" \
+  -o "$BUILD/RenderScene" \
+  -framework AppKit -framework SceneKit
+
 echo "==> compiling $EXT_NAME"
 swiftc -target "$TARGET" -O -parse-as-library \
   "$ROOT/macos/Shared/Helper.swift" \
+  "$ROOT/macos/Shared/Camera.swift" \
   "$ROOT/macos/QuickLookExtension/PreviewViewController.swift" \
   -o "$APPEX/Contents/MacOS/$EXT_NAME" \
   -framework QuickLookUI \

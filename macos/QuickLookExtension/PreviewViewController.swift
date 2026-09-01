@@ -20,27 +20,7 @@ func sceneView(for scene: SCNScene) -> SCNView {
     view.antialiasingMode = .multisampling4X
     view.backgroundColor = .clear
 
-    let (center, radius) = scene.rootNode.boundingSphere
-    let camera = SCNCamera()
-    camera.zNear = 0.01
-    camera.zFar = Double(radius) * 100
-    let cameraNode = SCNNode()
-    cameraNode.camera = camera
-
-    // A three-quarter view: 45 degrees round, 25 degrees up, as model viewers settle on.
-    let middle = SCNVector3(CGFloat(center.x), CGFloat(center.y), CGFloat(center.z))
-    let offset = SCNVector3(1, 1, 0.85)
-    let length = sqrt(offset.x * offset.x + offset.y * offset.y + offset.z * offset.z)
-    let distance = CGFloat(radius) * 2.6
-    cameraNode.position = SCNVector3(
-        middle.x + offset.x / length * distance,
-        middle.y + offset.y / length * distance,
-        middle.z + offset.z / length * distance
-    )
-    scene.rootNode.addChildNode(cameraNode)
-    // VTK writes z-up data; SceneKit's own up is +y.
-    cameraNode.look(at: middle, up: SCNVector3(0, 0, 1), localFront: SCNVector3(0, 0, -1))
-    view.pointOfView = cameraNode
+    view.pointOfView = previewCamera(for: scene)
     return view
 }
 
