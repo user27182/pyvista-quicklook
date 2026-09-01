@@ -10,26 +10,35 @@ coloured by the active scalars and free to rotate and zoom.
 
 - macOS 12 or newer
 - Xcode command line tools (`xcode-select --install`)
-- A Python environment with PyVista installed, providing the `pyvista` command
+
+PyVista does not need to be installed; the installer provisions its own copy.
 
 ## Install
 
 ```bash
-./scripts/install.sh --pyvista /path/to/your/venv/bin/pyvista
-```
-
-This installs the `pvql` helper, starts the render service, builds
-`PyVistaQuickLook.app`, copies it to `~/Applications`, registers it with Quick Look, and
-loads PyVista and VTK once so the first preview is quick. Pass `--prefix /Applications`
-to install for all users.
-
-Check the result:
-
-```bash
-pvql doctor
+curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/scripts/bootstrap.sh | sh
 ```
 
 Then select a `.vtu`, `.vtp`, or `.vtk` file in the Finder and press space.
+
+The installer fetches [uv](https://docs.astral.sh/uv/) if it is missing, downloads the
+source, creates a private environment holding PyVista and VTK, installs the `pvql`
+helper, builds and registers `PyVistaQuickLook.app`, and loads PyVista once so the first
+preview is quick. Nothing outside `~/Library/Application Support/PyVistaQuickLook`,
+`~/Applications`, and `~/.local/bin` is touched, and no existing Python environment is
+used or changed.
+
+The first install downloads PyVista and VTK, about 600 MB.
+
+From a checkout, the same script runs without downloading anything:
+
+```bash
+./scripts/install.sh                     # provisions its own PyVista
+./scripts/install.sh --prefix /Applications
+./scripts/install.sh --pyvista /path/to/venv/bin/pyvista   # use an existing one
+```
+
+Check the result with `pvql doctor`.
 
 ## Supported files
 
@@ -172,5 +181,8 @@ pending publisher configured on PyPI for this repository and workflow.
 
 ```bash
 ./scripts/uninstall.sh
-uv tool uninstall pvql
+uv tool uninstall pyvista-quicklook
 ```
+
+That removes the app, the private PyVista environment, the downloaded source, and the
+cache, leaving only the config file.

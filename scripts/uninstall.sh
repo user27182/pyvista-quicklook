@@ -22,6 +22,8 @@ LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchSe
 /usr/bin/qlmanage -r >/dev/null 2>&1 || true
 /usr/bin/qlmanage -r cache >/dev/null 2>&1 || true
 
-rm -rf "$HOME/Library/Caches/PyVistaQuickLook"
-echo "removed the app and its cache; the pvql helper and config file were left in place"
-echo "uninstall the helper with:  uv tool uninstall pvql"
+SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
+rm -rf "$HOME/Library/Caches/PyVistaQuickLook" "$SUPPORT/venv" "$SUPPORT/src"
+echo "removed the app, its cache, the PyVista environment, and the downloaded source"
+echo "the config file was left at $SUPPORT/config.json"
+echo "remove the helper with:  uv tool uninstall pyvista-quicklook"
