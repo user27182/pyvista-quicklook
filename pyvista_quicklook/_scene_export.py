@@ -69,22 +69,9 @@ def solidify(surface: pv.PolyData, max_glyphs: int) -> pv.PolyData:
     return surface
 
 
-def orient(surface: pv.PolyData) -> pv.PolyData:
-    """Turn the mesh so its widest face points at the camera, and centre it."""
-    aligned = surface.align_xyz()
-    bounds = np.array(aligned.bounds).reshape(3, 2)
-    order = np.argsort(bounds[:, 1] - bounds[:, 0])[::-1]
-    if list(order) == [0, 1, 2]:
-        return aligned
-
-    rotation = np.zeros((3, 3))
-    for new, old in enumerate(order):
-        rotation[new, old] = 1.0
-    if np.linalg.det(rotation) < 0:
-        rotation[2] *= -1.0
-    matrix = np.eye(4)
-    matrix[:3, :3] = rotation
-    return aligned.transform(matrix, inplace=False)
+def recentre(surface: pv.PolyData) -> pv.PolyData:
+    """Move the mesh to the origin, so far-from-origin coordinates keep their precision."""
+    return surface.translate(-np.array(surface.center), inplace=False)
 
 
 def choose_scalars(surface: pv.PolyData) -> pv.PolyData:
@@ -139,19 +126,11 @@ def colours_for(surface: pv.PolyData) -> np.ndarray | None:
     return ramp()[(normalised * 255).round().astype(np.intp)]
 
 
-def export(
-    source: str,
-    destination: str,
-    max_points: int,
-    max_glyphs: int = 20_000,
-    auto_orient: bool = True,
-) -> None:
+def export(source: str, destination: str, max_points: int, max_glyphs: int = 20_000) -> None:
     """Write a mesh file out as a PLY with vertex colours."""
     # Triangulating first would discard the vertex and line cells solidify needs.
     surface = choose_scalars(to_surface(pv.read(source)))
     surface = solidify(surface, max_glyphs).triangulate()
-    if auto_orient and surface.n_points > 2:
-        surface = orient(surface)
     if surface.n_points == 0:
         message = 'the dataset has no surface to show'
         raise ValueError(message)
@@ -162,7 +141,7 @@ def export(
         ratio = 1.0 - (cap / surface.n_points)
         surface = surface.decimate_pro(ratio, preserve_topology=True).triangulate()
 
-    surface = to_point_scalars(surface)
+    surface = recentre(to_point_scalars(surface))
     colours = colours_for(surface)
     normals = np.array(surface.point_data['Normals']) if 'Normals' in surface.point_data else None
     surface.clear_data()
@@ -183,9 +162,8 @@ def main() -> int:
     parser.add_argument('destination')
     parser.add_argument('--max-points', type=int, default=2_000_000)
     parser.add_argument('--max-glyphs', type=int, default=20_000)
-    parser.add_argument('--orient', action=argparse.BooleanOptionalAction, default=True)
     args = parser.parse_args()
-    export(args.source, args.destination, args.max_points, args.max_glyphs, args.orient)
+    export(args.source, args.destination, args.max_points, args.max_glyphs)
     return 0
 
 

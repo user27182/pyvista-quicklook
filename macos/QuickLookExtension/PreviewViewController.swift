@@ -27,9 +27,9 @@ func sceneView(for scene: SCNScene) -> SCNView {
     let cameraNode = SCNNode()
     cameraNode.camera = camera
 
-    // A three-quarter view, the framing generic model viewers settle on.
+    // A three-quarter view: 45 degrees round, 25 degrees up, as model viewers settle on.
     let middle = SCNVector3(CGFloat(center.x), CGFloat(center.y), CGFloat(center.z))
-    let offset = SCNVector3(1, 0.4, 1)
+    let offset = SCNVector3(1, 1, 0.85)
     let length = sqrt(offset.x * offset.x + offset.y * offset.y + offset.z * offset.z)
     let distance = CGFloat(radius) * 2.6
     cameraNode.position = SCNVector3(
@@ -38,7 +38,8 @@ func sceneView(for scene: SCNScene) -> SCNView {
         middle.z + offset.z / length * distance
     )
     scene.rootNode.addChildNode(cameraNode)
-    cameraNode.look(at: middle)
+    // VTK writes z-up data; SceneKit's own up is +y.
+    cameraNode.look(at: middle, up: SCNVector3(0, 0, 1), localFront: SCNVector3(0, 0, -1))
     view.pointOfView = cameraNode
     return view
 }
