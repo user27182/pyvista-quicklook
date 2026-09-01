@@ -416,6 +416,7 @@ def test_warm_in_background_does_not_raise(monkeypatch):
         message = 'no interpreter'
         raise render.RenderError(message)
 
+    monkeypatch.setattr(daemon.warmup_mod, 'warmed_recently', lambda: False)
     monkeypatch.setattr(daemon.warmup_mod, 'warm', explode)
     daemon.warm_in_background({})
     assert started.wait(timeout=5)
