@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- macOS only registers a Quick Look preview extension that declares the sandbox.
+       The extension stays inside its own container: it writes a request there and
+       reads back the PNG the render service leaves for it. -->
+  <key>com.apple.security.app-sandbox</key>
+  <true/>
+</dict>
+</plist>

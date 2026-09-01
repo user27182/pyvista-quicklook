@@ -1,0 +1,99 @@
+"""Generate the Info.plist files for the app and its Quick Look extension."""
+
+from __future__ import annotations
+
+import plistlib
+from pathlib import Path
+from typing import Any
+
+from .formats import FORMATS
+from .formats import uti_for
+
+APP_NAME = 'PyVista Quick Look'
+APP_BUNDLE_ID = 'io.github.user27182.PyVistaQuickLook'
+APP_EXECUTABLE = 'PyVistaQuickLook'
+EXT_BUNDLE_ID = f'{APP_BUNDLE_ID}.QuickLook'
+EXT_EXECUTABLE = 'PyVistaQuickLookExtension'
+EXT_PRINCIPAL_CLASS = 'PVQLPreviewProvider'
+VERSION = '0.1.0'
+MIN_MACOS = '12.0'
+
+
+def exported_types(extensions: list[str]) -> list[dict[str, Any]]:
+    """Return ``UTExportedTypeDeclarations`` entries for the claimed extensions."""
+    declarations = []
+    for ext in extensions:
+        fmt = FORMATS.get(ext)
+        declarations.append(
+            {
+                'UTTypeIdentifier': uti_for(ext),
+                'UTTypeDescription': fmt.description if fmt else f'{ext.lstrip(".").upper()} Data',
+                'UTTypeConformsTo': ['public.data'],
+                'UTTypeTagSpecification': {'public.filename-extension': [ext.lstrip('.')]},
+            }
+        )
+    return declarations
+
+
+def app_plist(extensions: list[str], helper: str | None = None) -> dict[str, Any]:
+    """Return the host application's Info.plist contents."""
+    plist: dict[str, Any] = {
+        'CFBundleName': APP_NAME,
+        'CFBundleDisplayName': APP_NAME,
+        'CFBundleIdentifier': APP_BUNDLE_ID,
+        'CFBundleExecutable': APP_EXECUTABLE,
+        'CFBundlePackageType': 'APPL',
+        'CFBundleInfoDictionaryVersion': '6.0',
+        'CFBundleDevelopmentRegion': 'en',
+        'CFBundleSupportedPlatforms': ['MacOSX'],
+        'DTPlatformName': 'macosx',
+        'CFBundleShortVersionString': VERSION,
+        'CFBundleVersion': VERSION,
+        'LSMinimumSystemVersion': MIN_MACOS,
+        'LSApplicationCategoryType': 'public.app-category.developer-tools',
+        'NSPrincipalClass': 'NSApplication',
+        'NSHighResolutionCapable': True,
+        'UTExportedTypeDeclarations': exported_types(extensions),
+    }
+    if helper:
+        plist['PVQLHelperPath'] = helper
+    return plist
+
+
+def extension_plist(extensions: list[str], helper: str | None = None) -> dict[str, Any]:
+    """Return the Quick Look extension's Info.plist contents."""
+    plist: dict[str, Any] = {
+        'CFBundleName': EXT_EXECUTABLE,
+        'CFBundleDisplayName': f'{APP_NAME} Extension',
+        'CFBundleIdentifier': EXT_BUNDLE_ID,
+        'CFBundleExecutable': EXT_EXECUTABLE,
+        'CFBundlePackageType': 'XPC!',
+        'CFBundleInfoDictionaryVersion': '6.0',
+        'CFBundleDevelopmentRegion': 'en',
+        'CFBundleSupportedPlatforms': ['MacOSX'],
+        'DTPlatformName': 'macosx',
+        'CFBundleShortVersionString': VERSION,
+        'CFBundleVersion': VERSION,
+        'LSMinimumSystemVersion': MIN_MACOS,
+        'NSExtension': {
+            'NSExtensionPointIdentifier': 'com.apple.quicklook.preview',
+            'NSExtensionPrincipalClass': EXT_PRINCIPAL_CLASS,
+            'NSExtensionAttributes': {
+                'QLSupportedContentTypes': [uti_for(ext) for ext in extensions],
+                'QLSupportsSearchableItems': False,
+                'QLIsDataBasedPreview': True,
+            },
+        },
+    }
+    if helper:
+        plist['PVQLHelperPath'] = helper
+    return plist
+
+
+def write(plist: dict[str, Any], destination: str | Path) -> Path:
+    """Write a plist dictionary to disk in XML format and return its path."""
+    path = Path(destination)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open('wb') as handle:
+        plistlib.dump(plist, handle, sort_keys=False)
+    return path

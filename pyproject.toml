@@ -1,0 +1,18 @@
+[build-system]
+requires = ['hatchling']
+build-backend = 'hatchling.build'
+
+[project]
+name = 'pvql'
+version = '0.1.0'
+description = 'Quick Look previews for PyVista-readable mesh files'
+readme = 'README.md'
+requires-python = '>=3.10'
+license = { text = 'MIT' }
+dependencies = []
+
+[project.scripts]
+pvql = 'pvql.cli:main'
+
+[tool.hatch.build.targets.wheel]
+packages = ['src/pvql']

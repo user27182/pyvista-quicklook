@@ -1,0 +1,225 @@
+import Darwin
+import Foundation
+import os
+
+/// Log destination for the app and its Quick Look extension.
+let osLog = Logger(subsystem: "io.github.user27182.PyVistaQuickLook", category: "preview")
+
+/// Appends a line to a debug log inside the extension's own temporary directory.
+func pvqlLog(_ message: String) {
+    osLog.notice("\(message, privacy: .public)")
+    let path = (NSTemporaryDirectory() as NSString).appendingPathComponent("pvql-extension.log")
+    if let size = (try? FileManager.default.attributesOfItem(atPath: path))?[.size] as? Int,
+       size > 1_000_000 {
+        try? FileManager.default.removeItem(atPath: path)
+    }
+    let line = "\(Date()) \(message)\n"
+    if let handle = FileHandle(forWritingAtPath: path) {
+        handle.seekToEndOfFile()
+        handle.write(Data(line.utf8))
+        try? handle.close()
+    } else {
+        try? line.write(toFile: path, atomically: true, encoding: .utf8)
+    }
+}
+
+/// Absolute path of the user's home directory, even when the process is sandboxed.
+func realHome() -> String {
+    if let entry = getpwuid(getuid()), let directory = entry.pointee.pw_dir {
+        return String(cString: directory)
+    }
+    return NSHomeDirectory()
+}
+
+/// Runs the `pvql` helper that turns a mesh file into a PNG preview.
+enum Helper {
+    struct Failure: Error {
+        let message: String
+    }
+
+    static let hardTimeout: TimeInterval = 120
+    static let requestSuffix = ".pvqlreq"
+    static let replySuffix = ".pvqlrep"
+    static let maximumStagedBytes = 512 * 1024 * 1024
+
+    static let serviceMissingMessage = """
+    The PyVista Quick Look render service is not answering.
+
+    Start it with:
+
+        pvql service --install
+
+    Then check it with:
+
+        pvql doctor
+    """
+
+    static let missingHelperMessage = """
+    PyVista Quick Look cannot find the "pvql" helper.
+
+    Install it, then record where it lives:
+
+        uv tool install /path/to/pyvista-quicklook
+        pvql config --init
+    """
+
+    /// Returns the path to the `pvql` executable, or nil when it cannot be found.
+    static func locate() -> String? {
+        var candidates: [String] = []
+        if let override = ProcessInfo.processInfo.environment["PVQL_HELPER"] {
+            candidates.append(override)
+        }
+        if let configured = configuredPath() {
+            candidates.append(configured)
+        }
+        if let declared = Bundle.main.object(forInfoDictionaryKey: "PVQLHelperPath") as? String {
+            candidates.append(declared)
+        }
+        let home = realHome()
+        candidates += [
+            "\(home)/.local/bin/pvql",
+            "/opt/homebrew/bin/pvql",
+            "/usr/local/bin/pvql",
+            "/usr/bin/pvql",
+        ]
+        return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
+    }
+
+    /// Returns the `pvql` path recorded in the configuration file, if present.
+    static func configuredPath() -> String? {
+        let url = URL(fileURLWithPath: realHome())
+            .appendingPathComponent("Library/Application Support/PyVistaQuickLook/config.json")
+        guard let data = try? Data(contentsOf: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let path = json["pvql"] as? String
+        else {
+            return nil
+        }
+        return (path as NSString).expandingTildeInPath
+    }
+
+    /// Runs `pvql` with the given arguments and returns its exit status and output.
+    static func run(_ arguments: [String]) throws -> (status: Int32, output: String, errors: String) {
+        guard let tool = locate() else {
+            pvqlLog("helper not found")
+            throw Failure(message: missingHelperMessage)
+        }
+        pvqlLog("running \(tool) \(arguments)")
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: tool)
+        process.arguments = arguments
+
+        let outPipe = Pipe()
+        let errPipe = Pipe()
+        process.standardOutput = outPipe
+        process.standardError = errPipe
+
+        var environment = ProcessInfo.processInfo.environment
+        environment["HOME"] = realHome()
+        environment["PATH"] = "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/opt/homebrew/bin"
+        process.environment = environment
+
+        do {
+            try process.run()
+        } catch {
+            pvqlLog("spawn failed: \(error.localizedDescription)")
+            throw Failure(message: "Could not run \(tool)\n\n\(error.localizedDescription)")
+        }
+
+        var outData = Data()
+        var errData = Data()
+        let group = DispatchGroup()
+        group.enter()
+        DispatchQueue.global().async {
+            outData = outPipe.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+        group.enter()
+        DispatchQueue.global().async {
+            errData = errPipe.fileHandleForReading.readDataToEndOfFile()
+            group.leave()
+        }
+
+        let watchdog = DispatchWorkItem {
+            if process.isRunning {
+                process.terminate()
+            }
+        }
+        DispatchQueue.global().asyncAfter(deadline: .now() + hardTimeout, execute: watchdog)
+        process.waitUntilExit()
+        watchdog.cancel()
+        group.wait()
+
+        let trim = CharacterSet.whitespacesAndNewlines
+        pvqlLog("pvql exited \(process.terminationStatus)")
+        return (
+            process.terminationStatus,
+            String(decoding: outData, as: UTF8.self).trimmingCharacters(in: trim),
+            String(decoding: errData, as: UTF8.self).trimmingCharacters(in: trim)
+        )
+    }
+
+    /// Asks the render service for a preview and returns its PNG data.
+    static func requestPreview(_ url: URL, timeout: TimeInterval = 90) throws -> Data {
+        let directory = NSTemporaryDirectory() as NSString
+        let token = UUID().uuidString
+        let requestPath = directory.appendingPathComponent("\(token)\(requestSuffix)")
+        let replyPath = directory.appendingPathComponent("\(token)\(replySuffix)")
+        let scratchPath = requestPath + ".tmp"
+        let stagingPath = directory.appendingPathComponent("\(token).staging")
+        let manager = FileManager.default
+        defer { try? manager.removeItem(atPath: stagingPath) }
+
+        var body: [String: Any] = ["path": url.path]
+        if let attributes = try? manager.attributesOfItem(atPath: url.path) {
+            let size = (attributes[.size] as? NSNumber)?.intValue ?? 0
+            body["size"] = size
+            if let modified = attributes[.modificationDate] as? Date {
+                body["mtime"] = Int(modified.timeIntervalSince1970)
+            }
+            // The service cannot read folders macOS keeps private, so leave it a copy.
+            if size > 0, size <= maximumStagedBytes {
+                let staged = (stagingPath as NSString).appendingPathComponent(url.lastPathComponent)
+                try? manager.createDirectory(atPath: stagingPath, withIntermediateDirectories: true)
+                if (try? manager.copyItem(atPath: url.path, toPath: staged)) != nil {
+                    body["copy"] = staged
+                }
+            }
+        }
+
+        pvqlLog("requesting \(url.path)")
+        do {
+            let payload = try JSONSerialization.data(withJSONObject: body)
+            try payload.write(to: URL(fileURLWithPath: scratchPath))
+            try manager.moveItem(atPath: scratchPath, toPath: requestPath)
+        } catch {
+            throw Failure(message: "Could not reach the render service.\n\n\(error.localizedDescription)")
+        }
+
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            guard let data = manager.contents(atPath: replyPath) else {
+                Thread.sleep(forTimeInterval: 0.05)
+                continue
+            }
+            try? manager.removeItem(atPath: replyPath)
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                throw Failure(message: "The render service sent a malformed reply.")
+            }
+            if json["ok"] as? Bool == true, let png = json["png"] as? String {
+                defer { try? manager.removeItem(atPath: png) }
+                guard let bytes = manager.contents(atPath: png), !bytes.isEmpty else {
+                    throw Failure(message: "The render service produced an empty preview.")
+                }
+                pvqlLog("received \(bytes.count) bytes")
+                return bytes
+            }
+            throw Failure(message: json["error"] as? String ?? "The render service could not produce a preview.")
+        }
+
+        try? manager.removeItem(atPath: requestPath)
+        pvqlLog("service did not answer")
+        throw Failure(message: serviceMissingMessage)
+    }
+}
