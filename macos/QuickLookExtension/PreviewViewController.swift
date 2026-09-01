@@ -3,10 +3,17 @@ import Foundation
 import QuickLookUI
 import SceneKit
 
+/// What to put in the panel once the render service has answered.
+enum Preview {
+    case scene(SCNScene)
+    case image(Data)
+    case message(String)
+}
+
 /// Builds a view that lets the reader turn the mesh with the mouse.
-func sceneView(for scene: SCNScene, frame: NSRect) -> SCNView {
-    let view = SCNView(frame: frame)
-    view.autoresizingMask = [.width, .height]
+@MainActor
+func sceneView(for scene: SCNScene) -> SCNView {
+    let view = SCNView()
     view.scene = scene
     view.allowsCameraControl = true
     view.autoenablesDefaultLighting = true
@@ -30,26 +37,22 @@ func sceneView(for scene: SCNScene, frame: NSRect) -> SCNView {
 }
 
 /// Builds a view showing text, used when a mesh cannot be previewed.
-func messageView(_ text: String, frame: NSRect) -> NSView {
+@MainActor
+func messageView(_ text: String) -> NSView {
     let field = NSTextField(wrappingLabelWithString: text)
     field.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
     field.isSelectable = true
     field.translatesAutoresizingMaskIntoConstraints = false
 
-    let scroll = NSScrollView(frame: frame)
-    scroll.autoresizingMask = [.width, .height]
-    scroll.hasVerticalScroller = true
-    scroll.drawsBackground = false
-
-    let container = NSView(frame: frame)
+    let container = NSView()
     container.addSubview(field)
     NSLayoutConstraint.activate([
         field.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
         field.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
         field.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+        field.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor, constant: -16),
     ])
-    scroll.documentView = container
-    return scroll
+    return container
 }
 
 /// Shows PyVista-readable mesh files in the Quick Look panel.
@@ -59,11 +62,19 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
         view = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
     }
 
-    /// Replaces whatever the panel is showing with a new view.
+    /// Fills the panel with a view, pinned to every edge so it resizes with it.
+    @MainActor
     func show(_ replacement: NSView) {
         view.subviews.forEach { $0.removeFromSuperview() }
-        replacement.frame = view.bounds
+        replacement.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(replacement)
+        NSLayoutConstraint.activate([
+            replacement.topAnchor.constraint(equalTo: view.topAnchor),
+            replacement.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            replacement.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            replacement.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        ])
+        view.layoutSubtreeIfNeeded()
     }
 
     func preparePreviewOfFile(
@@ -72,35 +83,36 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
     ) {
         pvqlLog("preview requested for \(url.path)")
         DispatchQueue.global(qos: .userInitiated).async {
-            var replacement: NSView
-
+            // Only file work here; AppKit views are built on the main thread below.
+            let outcome: Preview
             do {
                 switch try Helper.requestPreview(url) {
                 case let .scene(sceneURL):
                     defer { try? FileManager.default.removeItem(at: sceneURL) }
-                    let scene = try SCNScene(url: sceneURL, options: nil)
-                    replacement = sceneView(for: scene, frame: self.view.bounds)
-                    pvqlLog("showing an interactive scene")
+                    outcome = .scene(try SCNScene(url: sceneURL, options: nil))
                 case let .image(png):
-                    let imageView = NSImageView(frame: self.view.bounds)
-                    imageView.autoresizingMask = [.width, .height]
-                    imageView.imageScaling = .scaleProportionallyUpOrDown
-                    imageView.image = NSImage(data: png)
-                    replacement = imageView
-                    pvqlLog("showing a rendered image")
+                    outcome = .image(png)
                 }
             } catch {
                 let message = (error as? Helper.Failure)?.message ?? error.localizedDescription
-                pvqlLog("preview failed: \(message)")
-                replacement = messageView(
-                    "Could not preview \(url.lastPathComponent)\n\n\(message)",
-                    frame: self.view.bounds
-                )
+                outcome = .message("Could not preview \(url.lastPathComponent)\n\n\(message)")
             }
 
-            let ready = replacement
             DispatchQueue.main.async {
-                self.show(ready)
+                switch outcome {
+                case let .scene(scene):
+                    self.show(sceneView(for: scene))
+                    pvqlLog("showing an interactive scene in \(self.view.bounds.size)")
+                case let .image(png):
+                    let imageView = NSImageView()
+                    imageView.imageScaling = .scaleProportionallyUpOrDown
+                    imageView.image = NSImage(data: png)
+                    self.show(imageView)
+                    pvqlLog("showing a rendered image in \(self.view.bounds.size)")
+                case let .message(text):
+                    self.show(messageView(text))
+                    pvqlLog("showing a message: \(text.prefix(120))")
+                }
                 handler(nil)
             }
         }
