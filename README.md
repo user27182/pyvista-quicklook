@@ -43,19 +43,17 @@ curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/sc
 
 ### What gets installed
 
-About 150 MB, in `~/Library/Application Support/PyVistaQuickLook/venv`:
+About 270 MB, in `~/Library/Application Support/PyVistaQuickLook/venv`:
 
 - PyVista, from git until 0.49 is released, installed with `--no-deps`
-- [cvista](https://github.com/pyvista/cvista)`[io]`, the reading half of a VTK fork
-- numpy, pooch, scooby, typing-extensions
+- [cvista](https://github.com/pyvista/cvista)`[all]`, a VTK fork, in place of stock VTK
+- cyclopts, matplotlib, numpy, pillow, pooch, pyobjc-framework-Cocoa, scooby,
+  typing-extensions
 
-SceneKit draws the previews, so the environment holds no rendering or plotting code:
-no VTK rendering modules, no matplotlib, no cyclopts. That has two consequences. Still
-images are unavailable, so a dataset with no surface to show reports that rather than
-falling back to a rendered picture. And `colormap` needs matplotlib to be anything other
-than viridis, which is built in.
+Installing PyVista with `--no-deps` and swapping stock VTK for cvista is what keeps this
+down; stock VTK alone is 591 MB against cvista's 136 MB.
 
-Point `--pyvista` at a full PyVista environment to get both back.
+Point `--pyvista` at an environment you already have to use that instead.
 
 ## Supported files
 
