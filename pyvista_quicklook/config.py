@@ -21,6 +21,7 @@ DEFAULTS: dict[str, Any] = {
     'warm_on_start': True,
     'max_scene_points': 2000000,
     'max_glyph_points': 20000,
+    'auto_orient': True,
     'window_size': [1024, 1024],
     'timeout': 60,
     'max_file_size_mb': 512,

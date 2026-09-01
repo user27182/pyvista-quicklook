@@ -26,12 +26,19 @@ func sceneView(for scene: SCNScene) -> SCNView {
     camera.zFar = Double(radius) * 100
     let cameraNode = SCNNode()
     cameraNode.camera = camera
+
+    // A three-quarter view, the framing generic model viewers settle on.
+    let middle = SCNVector3(CGFloat(center.x), CGFloat(center.y), CGFloat(center.z))
+    let offset = SCNVector3(1, 0.4, 1)
+    let length = sqrt(offset.x * offset.x + offset.y * offset.y + offset.z * offset.z)
+    let distance = CGFloat(radius) * 2.6
     cameraNode.position = SCNVector3(
-        CGFloat(center.x),
-        CGFloat(center.y),
-        CGFloat(center.z) + CGFloat(radius) * 3.2
+        middle.x + offset.x / length * distance,
+        middle.y + offset.y / length * distance,
+        middle.z + offset.z / length * distance
     )
     scene.rootNode.addChildNode(cameraNode)
+    cameraNode.look(at: middle)
     view.pointOfView = cameraNode
     return view
 }
