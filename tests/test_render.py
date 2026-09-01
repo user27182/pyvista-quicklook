@@ -9,9 +9,9 @@ from pathlib import Path
 import subprocess
 import sys
 
-import numpy as np
 import pytest
 
+np = pytest.importorskip('numpy')
 pv = pytest.importorskip('pyvista')
 
 from pyvista_quicklook import _scene_export as export_mod  # noqa: E402
