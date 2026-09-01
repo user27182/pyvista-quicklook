@@ -15,20 +15,24 @@ PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista @ git+https://github.com/pyvista/pyvi
 RUNTIME_DEPS=('cvista[io]' numpy pooch scooby typing-extensions)
 PYVISTA=""
 PYTHON=""
+PREBUILT=""
 SKIP_HELPER=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --prefix) DEST="$2"; shift 2 ;;
     --pyvista) PYVISTA="$2"; shift 2 ;;
+    --app) PREBUILT="$2"; shift 2 ;;
     --skip-helper) SKIP_HELPER=1; shift ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
 
-if ! xcrun --find swiftc >/dev/null 2>&1; then
+# Only building needs a compiler; a prebuilt app is copied as it is.
+if [[ -z "$PREBUILT" ]] && ! xcrun --find swiftc >/dev/null 2>&1; then
   echo "Xcode command line tools are needed to build the extension." >&2
   echo "Install them with:  xcode-select --install" >&2
+  echo "Or install a prebuilt app with scripts/bootstrap.sh" >&2
   exit 1
 fi
 
@@ -96,13 +100,18 @@ echo "==> warming PyVista and VTK"
 echo "==> installing the render service"
 "$HELPER" service --install --helper "$HELPER"
 
-"$ROOT/scripts/build.sh" --helper "$HELPER"
+if [[ -n "$PREBUILT" ]]; then
+  SOURCE_APP="$PREBUILT"
+else
+  "$ROOT/scripts/build.sh" --helper "$HELPER"
+  SOURCE_APP="$ROOT/build/$APP_NAME.app"
+fi
 
 APP="$DEST/$APP_NAME.app"
 echo "==> installing $APP"
 mkdir -p "$DEST"
 rm -rf "$APP"
-cp -R "$ROOT/build/$APP_NAME.app" "$APP"
+cp -R "$SOURCE_APP" "$APP"
 
 echo "==> registering with Launch Services and Quick Look"
 LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister

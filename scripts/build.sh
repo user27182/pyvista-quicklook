@@ -11,10 +11,12 @@ EXT_ID="$APP_ID.QuickLook"
 DEPLOYMENT_TARGET="12.0"
 
 HELPER=""
+UNIVERSAL=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --helper) HELPER="$2"; shift 2 ;;
     --output) BUILD="$2"; shift 2 ;;
+    --universal) UNIVERSAL=1; shift ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
 done
@@ -30,6 +32,23 @@ APP="$BUILD/$APP_NAME.app"
 APPEX="$APP/Contents/PlugIns/$EXT_NAME.appex"
 TARGET="$(uname -m)-apple-macos$DEPLOYMENT_TARGET"
 
+# Compile one binary, for this machine or for both architectures at once.
+compile() {
+  local output="$1"
+  shift
+  if [[ "$UNIVERSAL" -eq 0 ]]; then
+    swiftc -target "$TARGET" "$@" -o "$output"
+    return
+  fi
+  local slices=()
+  for arch in arm64 x86_64; do
+    swiftc -target "$arch-apple-macos$DEPLOYMENT_TARGET" "$@" -o "$output.$arch"
+    slices+=("$output.$arch")
+  done
+  lipo -create "${slices[@]}" -output "$output"
+  rm -f "${slices[@]}"
+}
+
 echo "==> cleaning $APP"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APPEX/Contents/MacOS"
@@ -43,25 +62,22 @@ printf 'APPL????' > "$APP/Contents/PkgInfo"
 printf 'XPC!????' > "$APPEX/Contents/PkgInfo"
 
 echo "==> compiling $APP_NAME"
-swiftc -target "$TARGET" -O \
+compile "$APP/Contents/MacOS/$APP_NAME" -O \
   "$ROOT/macos/Shared/Helper.swift" \
   "$ROOT/macos/App/main.swift" \
-  -o "$APP/Contents/MacOS/$APP_NAME" \
   -framework AppKit
 
 echo "==> compiling RenderScene"
-swiftc -target "$TARGET" -O -parse-as-library \
+compile "$BUILD/RenderScene" -O -parse-as-library \
   "$ROOT/macos/Shared/Camera.swift" \
   "$ROOT/macos/Tools/RenderScene.swift" \
-  -o "$BUILD/RenderScene" \
   -framework AppKit -framework SceneKit
 
 echo "==> compiling $EXT_NAME"
-swiftc -target "$TARGET" -O -parse-as-library \
+compile "$APPEX/Contents/MacOS/$EXT_NAME" -O -parse-as-library \
   "$ROOT/macos/Shared/Helper.swift" \
   "$ROOT/macos/Shared/Camera.swift" \
   "$ROOT/macos/QuickLookExtension/PreviewViewController.swift" \
-  -o "$APPEX/Contents/MacOS/$EXT_NAME" \
   -framework QuickLookUI \
   -Xlinker -e -Xlinker _NSExtensionMain
 

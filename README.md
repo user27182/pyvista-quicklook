@@ -9,9 +9,10 @@ coloured by the active scalars and free to rotate and zoom.
 ## Requirements
 
 - macOS 12 or newer
-- Xcode command line tools (`xcode-select --install`)
 
-PyVista does not need to be installed; the installer provisions its own copy.
+Neither PyVista nor a compiler needs to be installed. The installer downloads a
+published build of the app and provisions its own PyVista; Xcode command line tools
+(`xcode-select --install`) are only needed to build from source.
 
 ## Install
 
@@ -30,6 +31,7 @@ outside `~/Library/Application Support/PyVistaQuickLook`, `~/Applications`, and
 ```bash
 ./scripts/install.sh --prefix /Applications                # install for all users
 ./scripts/install.sh --pyvista /path/to/venv/bin/pyvista   # use an existing PyVista
+./scripts/install.sh --app /path/to/PyVistaQuickLook.app   # skip the build
 ```
 
 Check the result with `pvql doctor`.

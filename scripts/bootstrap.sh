@@ -2,20 +2,16 @@
 # One-line installer for PyVista Quick Look. Safe to pipe from curl.
 set -eu
 
-REPO_URL="${PVQL_REPO:-https://github.com/user27182/pyvista-quicklook.git}"
+REPO="${PVQL_REPO:-user27182/pyvista-quicklook}"
 BRANCH="${PVQL_BRANCH:-main}"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
 SRC="${PVQL_SRC:-$SUPPORT/src}"
+ASSET="PyVistaQuickLook.zip"
 
 say() { printf '%s\n' "$*"; }
 die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
 [ "$(uname -s)" = 'Darwin' ] || die 'PyVista Quick Look only runs on macOS.'
-
-if ! xcrun --find swiftc >/dev/null 2>&1; then
-  die 'Xcode command line tools are needed to build the extension.
-  Install them with:  xcode-select --install'
-fi
 
 # Run from the checkout this script lives in when there is one, otherwise fetch it.
 HERE=''
@@ -26,17 +22,33 @@ esac
 if [ -n "$HERE" ] && [ -x "$HERE/scripts/install.sh" ] && [ -d "$HERE/macos" ]; then
   ROOT="$HERE"
 else
-  command -v git >/dev/null 2>&1 || die 'git is needed to download PyVista Quick Look.'
-  mkdir -p "$SUPPORT"
-  if [ -d "$SRC/.git" ]; then
-    say "==> updating $SRC"
-    git -C "$SRC" fetch --quiet --depth 1 origin "$BRANCH"
-    git -C "$SRC" reset --quiet --hard "origin/$BRANCH"
-  else
-    say "==> downloading PyVista Quick Look into $SRC"
-    git clone --quiet --depth 1 --branch "$BRANCH" "$REPO_URL" "$SRC"
-  fi
+  say "==> downloading PyVista Quick Look into $SRC"
+  rm -rf "$SRC"
+  mkdir -p "$SRC"
+  curl -LsSf "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" \
+    | tar -xz -C "$SRC" --strip-components 1
   ROOT="$SRC"
 fi
 
+# A published build spares the reader a compiler; falling back to source needs one.
+ZIP="${SUPPORT:?}/$ASSET"
+UNPACKED="${SUPPORT:?}/unpacked"
+APP=''
+mkdir -p "$SUPPORT"
+rm -rf "$ZIP" "$UNPACKED"
+
+if curl -LsSf -o "$ZIP" "https://github.com/$REPO/releases/latest/download/$ASSET"; then
+  say '==> unpacking the published app'
+  mkdir -p "$UNPACKED"
+  if ditto -x -k "$ZIP" "$UNPACKED"; then
+    APP=$(find "$UNPACKED" -maxdepth 1 -name '*.app' -print -quit)
+  fi
+  rm -f "$ZIP"
+fi
+
+if [ -n "$APP" ] && [ -d "$APP" ]; then
+  exec "$ROOT/scripts/install.sh" --app "$APP" "$@"
+fi
+
+say '==> no published build for this release; building from source'
 exec "$ROOT/scripts/install.sh" "$@"
