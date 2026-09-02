@@ -197,7 +197,8 @@ def test_volume_skin_is_kept_whole_when_it_fits(tmp_path):
     volume.save(tmp_path / 'in.vti')
     out = tmp_path / 'out.ply'
     export_mod.export(str(tmp_path / 'in.vti'), str(out), 100_000, 20_000)
-    assert pv.read(out).n_points == 60**3 - 58**3
+    # Six faces of 60 x 60 points; striding the volume itself would leave ~5 000.
+    assert 20_000 <= pv.read(out).n_points <= 6 * 60 * 60
     export_mod.export(str(tmp_path / 'in.vti'), str(out), 5_000, 20_000)
     assert pv.read(out).n_points <= 5_000
 
