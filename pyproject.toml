@@ -8,6 +8,7 @@ dev = [
   'cvista[io]',
   # The rendering wheels stop at Python 3.12; still images are tested where they exist.
   'cvista[rendering]; python_version < "3.13"',
+  'meshio',
   'pre-commit',
   'pytest',
   'pytest-cov',

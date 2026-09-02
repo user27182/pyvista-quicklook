@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 
+import meshio
 import numpy as np
 import pytest
 import pyvista as pv
@@ -262,10 +263,53 @@ def test_3mf_assemblies_are_drawn_as_one_surface(tmp_path):
     assert pv.read(out).n_faces > 0
 
 
+MESHIO_SURFACE_FORMATS = [
+    '.avs',
+    '.bdf',
+    '.fem',
+    '.mdpa',
+    '.mesh',
+    '.meshb',
+    '.nas',
+    '.off',
+    '.tec',
+    '.vol',
+]
+
+
+@pytest.mark.parametrize('ext', MESHIO_SURFACE_FORMATS)
+def test_meshio_surface_formats_are_drawn(tmp_path, ext):
+    """A surface written in a meshio format is read back through meshio and drawn."""
+    source = tmp_path / f'mesh{ext}'
+    pv.save_meshio(source, pv.Sphere().triangulate())
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(source), str(out), 2_000_000, 20_000)
+    assert pv.read(out).n_faces == pv.Sphere().n_faces
+
+
+def test_flac3d_grids_are_drawn(tmp_path):
+    """FLAC3D holds volume cells only, so their outer surface is drawn."""
+    source = tmp_path / 'zones.f3grid'
+    pv.save_meshio(source, pv.ImageData(dimensions=(4, 4, 4)).triangulate())
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(source), str(out), 2_000_000, 20_000)
+    assert pv.read(out).n_faces > 0
+
+
+def test_binary_gmsh_files_are_drawn(tmp_path):
+    """A binary Gmsh file, the form meshio reads reliably, is drawn."""
+    source = tmp_path / 'mesh.msh'
+    pv.save_meshio(source, pv.Sphere().triangulate(), file_format='gmsh', binary=True)
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(source), str(out), 2_000_000, 20_000)
+    assert pv.read(out).n_faces == pv.Sphere().n_faces
+
+
 def missing_reader(ext: str) -> str | None:
     """Return why the runtime cannot read an extension, or None when it can."""
     if ext not in readers.CLASS_READERS:
         registered = {entry.extension for entry in reader_registry.registered_readers()}
+        registered |= set(meshio.extension_to_filetypes)
         return None if ext in registered else 'no reader is registered'
     try:
         readers.CLASS_READERS[ext](f'/nonexistent/sample{ext}')

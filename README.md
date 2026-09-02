@@ -42,6 +42,8 @@ About 400 MB, in `~/Library/Application Support/PyVistaQuickLook/venv`:
 - [cvista](https://github.com/pyvista/cvista)`[all]`, a VTK fork, in place of stock VTK
 - [pyvista-cad](https://github.com/pyvista/pyvista-cad) with its STEP, DXF, and 3MF
   readers
+- [meshio](https://github.com/nschloe/meshio), for Nastran, Medit, Netgen, and other
+  mesh formats
 
 Point `--pyvista` at an environment you already have to use that instead. It needs
 PyVista 0.49 or newer.
