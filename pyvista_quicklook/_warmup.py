@@ -30,7 +30,9 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as scratch:
         directory = Path(scratch)
         # The interactive path: extract a surface and write it out.
-        mesh.extract_surface().triangulate().save(directory / 'warm.ply')
+        mesh.extract_surface(algorithm='dataset_surface').triangulate().save(
+            directory / 'warm.ply'
+        )
         # The still-image path, absent from builds without the rendering modules.
         try:
             plotter = pv.Plotter(off_screen=True, window_size=(64, 64))
