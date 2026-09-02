@@ -513,15 +513,6 @@ def test_find_python_prefers_the_configured_interpreter(tmp_path):
     assert config.find_python({'python': str(tool)}) == str(tool)
 
 
-def test_find_python_falls_back_to_the_pyvista_sibling(tmp_path):
-    """A configuration naming only the CLI still yields its interpreter."""
-    for name in ('pyvista', 'python3'):
-        tool = tmp_path / name
-        tool.write_text('#!/bin/sh\n')
-        tool.chmod(0o755)
-    assert config.find_python({'pyvista': str(tmp_path / 'pyvista')}) == str(tmp_path / 'python3')
-
-
 def test_find_python_reports_nothing_without_an_environment():
     """No interpreter and no CLI means no environment, whatever PATH holds."""
     assert config.find_python({}) is None
@@ -577,9 +568,9 @@ def test_warm_in_background_skips_a_recent_warm_up(monkeypatch):
 
 def test_overrides_drops_settings_that_match_the_defaults():
     """Only deliberate changes are stored, so defaults stay free to improve."""
-    merged = {**config.DEFAULTS, 'pyvista': '/bin/pyvista', 'timeout': 5}
+    merged = {**config.DEFAULTS, 'python': '/bin/python', 'timeout': 5}
     stored = config.overrides(merged)
-    assert stored == {'pyvista': '/bin/pyvista', 'timeout': 5}
+    assert stored == {'python': '/bin/python', 'timeout': 5}
     assert 'max_scene_points' not in stored
 
 

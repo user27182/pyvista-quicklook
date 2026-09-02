@@ -62,10 +62,7 @@ def preview(
     def build(scratch: Path) -> None:
         executable = config_mod.resolve_pyvista(config)
         if executable is None:
-            message = (
-                'The pyvista command-line interface was not found.\n'
-                f'Set "pyvista" to its absolute path in {config_mod.CONFIG_PATH}.'
-            )
+            message = 'No pyvista command-line interface beside the configured interpreter.'
             raise environment.RenderError(message)
         command = build_command(executable, path, scratch, config)
         environment.run(config, command, task=f'Rendering {path.name}', cwd=path.parent)

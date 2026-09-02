@@ -65,16 +65,11 @@ of it:
 `pvql cache --clear` empties the preview cache. `scripts/uninstall.sh` removes
 everything above except the configuration file and uv.
 
-Point `--pyvista` at an environment you already have to use that instead of creating
-one. It needs PyVista 0.49 or newer; the CAD and meshio formats read only when those
-packages are in it.
-
 From a checkout, `./scripts/install.sh` does the same and builds the app from source,
 which needs the Xcode command line tools (`xcode-select --install`):
 
 ```bash
 ./scripts/install.sh --prefix /Applications                # install for all users
-./scripts/install.sh --pyvista /path/to/venv/bin/pyvista   # use an existing PyVista
 ./scripts/install.sh --app /path/to/PyVistaQuickLook.app   # skip the build
 ```
 
@@ -182,7 +177,6 @@ Privacy & Security.
 | Key | Default | Effect |
 | --- | --- | --- |
 | `python` | set at install | Interpreter of the PyVista environment |
-| `pyvista` | beside `python` | `pyvista` executable used for still images |
 | `pvql` | discovered | Absolute path to the `pvql` helper |
 | `interactive` | `true` | Show a turnable surface; `false` always uses a still image |
 | `max_scene_points` | `2000000` | Thin surfaces above this many points; `0` never does |

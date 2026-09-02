@@ -180,11 +180,6 @@ def cmd_config(args: argparse.Namespace) -> int:
     if args.init:
         config = config_mod.load()
         config['python'] = args.python or config.get('python')
-        if args.python and not args.pyvista:
-            # Naming the interpreter replaces any command line interface on record.
-            config['pyvista'] = None
-        else:
-            config['pyvista'] = args.pyvista or config.get('pyvista')
         config['pvql'] = args.helper or config.get('pvql') or shutil.which('pvql')
         path = config_mod.save(config_mod.overrides(config))
         print(f'wrote {path}')
@@ -340,7 +335,6 @@ def build_parser() -> argparse.ArgumentParser:
 
     config = sub.add_parser('config', help='show or create the configuration file')
     config.add_argument('--init', action='store_true', help='write a configuration file')
-    config.add_argument('--pyvista', help='absolute path to the pyvista executable')
     config.add_argument('--python', help='absolute path to the interpreter that has PyVista')
     config.add_argument('--helper', help='absolute path to the pvql executable')
     config.set_defaults(func=cmd_config)

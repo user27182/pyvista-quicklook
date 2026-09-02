@@ -14,7 +14,6 @@ LOG_PATH = APP_SUPPORT / 'pvql.log'
 
 DEFAULTS: dict[str, Any] = {
     'python': None,
-    'pyvista': None,
     'pvql': None,
     'interactive': True,
     'warm_on_start': True,
@@ -71,26 +70,10 @@ def executable(path: str | os.PathLike[str] | None) -> str | None:
 
 def find_python(config: dict[str, Any] | None = None) -> str | None:
     """Return the interpreter of the configured PyVista environment."""
-    config = config or {}
-    if config.get('python'):
-        return executable(config['python'])
-
-    # Older configurations only name the command line interface.
-    cli = executable(config.get('pyvista'))
-    if cli is None:
-        return None
-    for name in ('python3', 'python'):
-        found = executable(Path(cli).parent / name)
-        if found:
-            return found
-    return None
+    return executable((config or {}).get('python'))
 
 
 def resolve_pyvista(config: dict[str, Any] | None = None) -> str | None:
-    """Return the pyvista command line interface belonging to the configured environment."""
-    config = config or {}
-    if config.get('pyvista'):
-        return executable(config['pyvista'])
-    if config.get('python'):
-        return executable(Path(config['python']).parent / 'pyvista')
-    return None
+    """Return the ``pyvista`` command line interface beside the configured interpreter."""
+    interpreter = find_python(config)
+    return None if interpreter is None else executable(Path(interpreter).parent / 'pyvista')
