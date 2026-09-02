@@ -5,8 +5,10 @@ from __future__ import annotations
 import numpy as np
 import pytest
 import pyvista as pv
+from pyvista.core.utilities import reader as readers
 
 from pyvista_quicklook import _scene_export as export_mod
+from pyvista_quicklook import formats
 
 
 def written(mesh_or_path, tmp_path, name='out.ply', **kwargs):
@@ -17,7 +19,13 @@ def written(mesh_or_path, tmp_path, name='out.ply', **kwargs):
     else:
         mesh_or_path.save(source)
     destination = tmp_path / name
-    export_mod.export(str(source), str(destination), kwargs.pop('max_points', 2_000_000), **kwargs)
+    export_mod.export(
+        str(source),
+        str(destination),
+        kwargs.pop('max_points', 2_000_000),
+        kwargs.pop('max_glyphs', 20_000),
+        **kwargs,
+    )
     return pv.read(destination)
 
 
@@ -168,3 +176,20 @@ def test_glyph_size_is_capped_for_a_single_point():
     out = export_mod.solidify(single, 20_000)
     assert out.n_faces > 0
     assert np.isfinite(out.length)
+
+
+def missing_reader(ext: str) -> str | None:
+    """Return why the runtime cannot read an extension, or None when it can."""
+    try:
+        readers.CLASS_READERS[ext](f'/nonexistent/sample{ext}')
+    except ImportError as error:
+        return str(error).splitlines()[0]
+    except Exception:  # noqa: BLE001
+        return None  # the reader exists and merely dislikes the path
+    return None
+
+
+def test_every_default_extension_has_a_reader():
+    """The runtime environment can read every format that is claimed by default."""
+    missing = {ext: why for ext in formats.default_extensions() if (why := missing_reader(ext))}
+    assert missing == {}

@@ -52,11 +52,12 @@ FORMATS: dict[str, Format] = {
     '.facet': Format('Facet Surface', True),
     '.slc': Format('SLC Volume', True),
     '.dem': Format('Digital Elevation Model', True),
-    '.cube': Format('Gaussian Cube', True),
-    '.pdb': Format('Protein Data Bank', True),
     '.segy': Format('SEG-Y Seismic Data', True),
     '.sgy': Format('SEG-Y Seismic Data', True),
     '.tri': Format('BYU Triangle Surface', True),
+    # Off by default: the reading half of the VTK fork has no chemistry readers.
+    '.cube': Format('Gaussian Cube', False),
+    '.pdb': Format('Protein Data Bank', False),
     # Off by default: macOS already previews these.
     '.stl': Format('Stereolithography Model', False),
     '.obj': Format('Wavefront OBJ Model', False),
