@@ -52,6 +52,20 @@ def test_readme_lists_exactly_the_known_formats():
     assert set(re.findall(r'`(\.[a-z0-9]+)`', section)) == set(formats.FORMATS)
 
 
+def test_unclaimed_formats_say_why():
+    """Every format that is off by default carries a reason, and no claimed one does."""
+    for ext, fmt in formats.FORMATS.items():
+        assert bool(fmt.reason) == (not fmt.default), ext
+
+
+def test_types_lists_an_added_extension_it_does_not_know(capsys, monkeypatch):
+    """An extension added through the config is listed even when the table lacks it."""
+    config = {**cli.config_mod.DEFAULTS, 'extensions': {'add': ['.xyz'], 'remove': []}}
+    monkeypatch.setattr(cli.config_mod, 'load', lambda: config)
+    assert cli.cmd_types(argparse.Namespace(all=False)) == 0
+    assert '.xyz' in capsys.readouterr().out
+
+
 def test_uti_is_unique_per_extension():
     """No two extensions share a uniform type identifier."""
     utis = [formats.uti_for(ext) for ext in formats.FORMATS]

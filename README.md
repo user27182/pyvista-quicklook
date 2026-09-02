@@ -91,23 +91,31 @@ preview:
 `.vrml`, `.vti`, `.vtk`, `.vtkhdf`, `.vtm`, `.vtmb`, `.vtp`, `.vtpd`, `.vtr`, `.vts`,
 `.vtu`, `.wrl`, `.xdmf`, `.zvtk`
 
-22 more are available with `extensions.add`. They are off by default because the
-extension is shared with other kinds of file or the reader needs more than the installer
-provides:
+22 more can be claimed with `extensions.add`:
 
-`.brep` BREP Model, `.brp` BREP Model, `.dat` Tecplot Data, `.dato` PERMAS Data,
-`.e` Exodus II Data, `.ele` TetGen Elements, `.fcstd` FreeCAD Document,
-`.g` BYU Geometry, `.h5` HDF5 Data, `.hdf` HDF Data, `.ifc` IFC Building Model,
-`.iges` IGES Model, `.igs` IGES Model, `.inp` AVS UCD Data, `.msh` Gmsh Mesh,
-`.node` TetGen Nodes, `.post` PERMAS Result, `.pts` Point Cloud, `.res` Fluent Result,
-`.scad` OpenSCAD Script, `.series` VTK File Series, `.vrt` GDAL Virtual Raster
+- `.brep`, `.brp`, `.fcstd`, `.iges`, `.igs`: needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more.
+- `.dat`, `.dato`, `.e`, `.g`, `.h5`, `.hdf`, `.inp`, `.post`, `.pts`, `.res`, `.series`,
+  `.vrt`: the extension is shared with other kinds of file.
+- `.ele`, `.node`: each is half of a TetGen pair.
+- `.ifc`: needs `pyvista-cad[ifc]`.
+- `.msh`: the extension is shared with ANSYS meshes, and meshio reads only the binary Gmsh form.
+- `.scad`: needs the `openscad` program.
 
 macOS previews STL, OBJ, PLY, glTF, images, and DICOM itself, and its previewer cannot
-be replaced, so those are not listed. Claim more, or fewer, of the rest in the config
-and reinstall:
+be replaced, so those are not listed.
+
+To claim more, or fewer, edit the config and run the install command again, which
+rebuilds the app with the new claims:
 
 ```json
 { "extensions": { "add": [".msh"], "remove": [".pdb"] } }
+```
+
+The CAD kernels are chosen at install time. To add them, run the install command with
+the packages named:
+
+```bash
+PVQL_CAD_SPEC='pyvista-cad[step,3mf,ifc]' sh -c "$(curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/scripts/bootstrap.sh)"
 ```
 
 ```bash

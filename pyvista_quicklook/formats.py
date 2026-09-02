@@ -12,6 +12,8 @@ class Format(NamedTuple):
 
     description: str
     default: bool
+    reason: str = ''
+    """Why the extension is not claimed by default."""
 
 
 # Extensions ``pyvista.read`` supports, with pyvista-cad's readers. ``default=False``
@@ -84,19 +86,35 @@ FORMATS: dict[str, Format] = {
     '.tec': Format('Tecplot ASCII Data', True),
     '.vol': Format('Netgen Mesh', True),
     # Off by default: extensions meshio reads but that other tools use too.
-    '.msh': Format('Gmsh Mesh', False),
-    '.dato': Format('PERMAS Data', False),
-    '.post': Format('PERMAS Result', False),
-    '.node': Format('TetGen Nodes', False),
-    '.ele': Format('TetGen Elements', False),
+    '.msh': Format(
+        'Gmsh Mesh',
+        False,
+        'the extension is shared with ANSYS meshes, and meshio reads only the binary Gmsh form',
+    ),
+    '.dato': Format('PERMAS Data', False, 'the extension is shared with other kinds of file'),
+    '.post': Format('PERMAS Result', False, 'the extension is shared with other kinds of file'),
+    '.node': Format('TetGen Nodes', False, 'each is half of a TetGen pair'),
+    '.ele': Format('TetGen Elements', False, 'each is half of a TetGen pair'),
     # Off by default: these readers need CAD kernels the installer leaves out.
-    '.iges': Format('IGES Model', False),
-    '.igs': Format('IGES Model', False),
-    '.brep': Format('BREP Model', False),
-    '.brp': Format('BREP Model', False),
-    '.fcstd': Format('FreeCAD Document', False),
-    '.ifc': Format('IFC Building Model', False),
-    '.scad': Format('OpenSCAD Script', False),
+    '.iges': Format(
+        'IGES Model', False, 'needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more'
+    ),
+    '.igs': Format(
+        'IGES Model', False, 'needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more'
+    ),
+    '.brep': Format(
+        'BREP Model', False, 'needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more'
+    ),
+    '.brp': Format(
+        'BREP Model', False, 'needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more'
+    ),
+    '.fcstd': Format(
+        'FreeCAD Document',
+        False,
+        'needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more',
+    ),
+    '.ifc': Format('IFC Building Model', False, 'needs `pyvista-cad[ifc]`'),
+    '.scad': Format('OpenSCAD Script', False, 'needs the `openscad` program'),
     # Medical volumes
     '.nii': Format('NIfTI Volume', True),
     '.mha': Format('MetaImage Volume', True),
@@ -106,16 +124,20 @@ FORMATS: dict[str, Format] = {
     '.mnc': Format('MINC Volume', True),
     '.mr': Format('GE Signa MR Image', True),
     # Off by default: extensions too generic to claim safely.
-    '.dat': Format('Tecplot Data', False),
-    '.h5': Format('HDF5 Data', False),
-    '.hdf': Format('HDF Data', False),
-    '.vrt': Format('GDAL Virtual Raster', False),
-    '.inp': Format('AVS UCD Data', False),
-    '.res': Format('Fluent Result', False),
-    '.pts': Format('Point Cloud', False),
-    '.series': Format('VTK File Series', False),
-    '.g': Format('BYU Geometry', False),
-    '.e': Format('Exodus II Data', False),
+    '.dat': Format('Tecplot Data', False, 'the extension is shared with other kinds of file'),
+    '.h5': Format('HDF5 Data', False, 'the extension is shared with other kinds of file'),
+    '.hdf': Format('HDF Data', False, 'the extension is shared with other kinds of file'),
+    '.vrt': Format(
+        'GDAL Virtual Raster', False, 'the extension is shared with other kinds of file'
+    ),
+    '.inp': Format('AVS UCD Data', False, 'the extension is shared with other kinds of file'),
+    '.res': Format('Fluent Result', False, 'the extension is shared with other kinds of file'),
+    '.pts': Format('Point Cloud', False, 'the extension is shared with other kinds of file'),
+    '.series': Format(
+        'VTK File Series', False, 'the extension is shared with other kinds of file'
+    ),
+    '.g': Format('BYU Geometry', False, 'the extension is shared with other kinds of file'),
+    '.e': Format('Exodus II Data', False, 'the extension is shared with other kinds of file'),
 }
 
 
