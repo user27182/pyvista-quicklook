@@ -135,26 +135,13 @@ preview:
 | VTK File Series | `.series` | the extension is shared with other kinds of file |
 | VTK HDF | `.hdf` | the extension is shared with other kinds of file |
 
-macOS previews STL, OBJ, PLY, glTF, images, and DICOM itself, and its previewer cannot
-be replaced, so those are not listed.
-
-To claim more, or fewer, edit the config and run the install command again, which
+Claims on the extensions macOS previews itself, such as STL and PLY, or that another kind
+of file owns, are ignored by macOS, which is why those are not claimed. To claim fewer,
+or to add one of the others, edit the config and run the install command again, which
 rebuilds the app with the new claims:
 
 ```json
-{ "extensions": { "add": [".msh"], "remove": [".pdb"] } }
-```
-
-The CAD kernels are chosen at install time. To add them, run the install command with
-the packages named:
-
-```bash
-PVQL_CAD_SPEC='pyvista-cad[step,3mf,ifc]' sh -c "$(curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/scripts/bootstrap.sh)"
-```
-
-```bash
-pvql types        # what is claimed now
-pvql types --all  # every format pvql knows about
+{ "extensions": { "add": [".h5"], "remove": [".dat"] } }
 ```
 
 ## How it works

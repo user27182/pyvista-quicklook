@@ -33,11 +33,11 @@ def exported_types(extensions: list[str]) -> list[dict[str, Any]]:
     """Return ``UTExportedTypeDeclarations`` entries for the claimed extensions."""
     declarations = []
     for ext in extensions:
-        fmt = FORMATS.get(ext)
+        description = FORMATS.get(ext)
         declarations.append(
             {
                 'UTTypeIdentifier': uti_for(ext),
-                'UTTypeDescription': fmt.description if fmt else f'{ext.lstrip(".").upper()} Data',
+                'UTTypeDescription': description or f'{ext.lstrip(".").upper()} Data',
                 'UTTypeConformsTo': ['public.data'],
                 'UTTypeTagSpecification': {'public.filename-extension': [ext.lstrip('.')]},
             }

@@ -29,13 +29,12 @@ def test_normalize_accepts_any_spelling():
     assert formats.normalize('.VtU ') == '.vtu'
 
 
-def test_default_extensions_are_claimed_and_known():
-    """Every default extension appears in the format table."""
-    defaults = formats.default_extensions()
-    assert defaults
-    assert set(defaults) <= set(formats.FORMATS)
-    assert '.vtu' in defaults
+def test_every_known_format_is_claimed_by_default():
+    """The format table and the default claims are the same set, and exclude macOS's own."""
+    assert set(formats.default_extensions()) == set(formats.FORMATS)
+    assert '.vtu' in formats.FORMATS
     assert '.stl' not in formats.FORMATS
+    assert set(formats.FORMATS).isdisjoint(formats.UNCLAIMED)
 
 
 def test_resolve_extensions_applies_config():
@@ -46,16 +45,16 @@ def test_resolve_extensions_applies_config():
 
 
 def test_readme_lists_exactly_the_known_formats():
-    """The README's Supported files section names every format, and nothing else."""
+    """The README's Supported files section names every format and every unclaimed one."""
     readme = (Path(__file__).parents[1] / 'README.md').read_text()
     section = readme.split('## Supported files', 1)[1].split('\n## ', 1)[0]
-    assert set(re.findall(r'`(\.[a-z0-9]+)`', section)) == set(formats.FORMATS)
+    listed = set(re.findall(r'`(\.[a-z0-9.]+)`', section))
+    assert listed == set(formats.FORMATS) | set(formats.UNCLAIMED)
 
 
-def test_unclaimed_formats_say_why():
-    """Every format that is off by default carries a reason, and no claimed one does."""
-    for ext, fmt in formats.FORMATS.items():
-        assert bool(fmt.reason) == (not fmt.default), ext
+def test_unclaimed_extensions_say_why():
+    """Every extension left unclaimed carries a reason."""
+    assert all(formats.UNCLAIMED.values())
 
 
 def test_types_lists_an_added_extension_it_does_not_know(capsys, monkeypatch):

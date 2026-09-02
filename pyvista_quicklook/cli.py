@@ -19,7 +19,7 @@ from . import plist as plist_mod
 from . import warmup as warmup_mod
 from .environment import RenderError
 from .formats import FORMATS
-from .formats import Format
+from .formats import UNCLAIMED
 from .formats import resolve_extensions
 from .formats import uti_for
 
@@ -153,12 +153,16 @@ def cmd_types(args: argparse.Namespace) -> int:
     """List the file extensions the Quick Look extension claims."""
     config = config_mod.load()
     claimed = claimed_extensions(config)
-    listing = sorted(FORMATS) if args.all else claimed
+    listing = sorted({*FORMATS, *UNCLAIMED, *claimed}) if args.all else claimed
     for ext in listing:
-        fmt = FORMATS.get(ext) or Format(f'{ext.lstrip(".").upper()} Data', False)
+        description = FORMATS.get(ext) or f'{ext.lstrip(".").upper()} Data'
         mark = '✓' if ext in claimed else ' '
-        note = '' if ext in claimed or not fmt.reason else f'  {fmt.reason}'
-        print(f'{mark} {ext:<10} {fmt.description:<32} {uti_for(ext)}{note}')
+        note = (
+            ''
+            if ext in claimed
+            else f'  not claimed: {UNCLAIMED.get(ext, "removed in the config")}'
+        )
+        print(f'{mark} {ext:<10} {description:<32} {uti_for(ext)}{note}')
     if not args.all:
         print(f'\n{len(claimed)} extensions claimed. Use --all to see every known format.')
     return 0

@@ -16,19 +16,17 @@ from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.core.utilities.reader_registry import registered_readers
 
 from .formats import FORMATS
-from .formats import Format
+from .formats import UNCLAIMED
 
 START = '## Supported files\n'
 END = 'macOS previews STL'
 
 
 class Row(NamedTuple):
-    """One format: its name, the extensions one reader takes, and why it is off, if it is."""
+    """One format: its name and the extensions one reader takes."""
 
     name: str
     extensions: list[str]
-    default: bool
-    reason: str
 
 
 def reader_of(ext: str) -> str:
@@ -42,26 +40,23 @@ def reader_of(ext: str) -> str:
 
 
 def rows() -> list[Row]:
-    """Return one row per reader, split by whether its extensions are claimed by default."""
-    grouped: dict[tuple[str, bool], list[str]] = {}
-    for ext, fmt in FORMATS.items():
-        grouped.setdefault((reader_of(ext), fmt.default), []).append(ext)
+    """Return one row per reader, so a format lists every extension it takes."""
+    grouped: dict[str, list[str]] = {}
+    for ext in FORMATS:
+        grouped.setdefault(reader_of(ext), []).append(ext)
     result = []
-    for (_, default), extensions in grouped.items():
-        formats: list[Format] = [FORMATS[ext] for ext in extensions]
-        names = {fmt.description for fmt in formats}
-        reasons = {fmt.reason for fmt in formats}
-        if len(names) > 1 or len(reasons) > 1:
-            message = f'{extensions} share a reader but not a description and reason'
+    for extensions in grouped.values():
+        names = {FORMATS[ext] for ext in extensions}
+        if len(names) > 1:
+            message = f'{extensions} share a reader but not a description'
             raise ValueError(message)
-        result.append(Row(names.pop(), sorted(extensions), default, reasons.pop()))
+        result.append(Row(names.pop(), sorted(extensions)))
     return sorted(result, key=lambda row: row.name.lower())
 
 
 def section() -> str:
     """Return the README text between the Supported files heading and the closing note."""
-    claimed = [row for row in rows() if row.default]
-    optional = [row for row in rows() if not row.default]
+    claimed = rows()
 
     def cell(row: Row) -> str:
         return ', '.join(f'`{ext}`' for ext in row.extensions)
@@ -71,23 +66,25 @@ def section() -> str:
         return f'| {left.name} | {cell(left)} |{tail}'
 
     half = (len(claimed) + 1) // 2
+    reasons: dict[str, list[str]] = {}
+    for ext, reason in UNCLAIMED.items():
+        reasons.setdefault(reason, []).append(ext)
     lines = [
         '',
-        (
-            f'{sum(len(r.extensions) for r in claimed)} extensions are claimed by default, so'
-            ' pressing space on any of them opens this'
-        ),
-        'preview:',
+        f'{len(FORMATS)} extensions are claimed, so pressing space on any of these files opens',
+        'this preview. A file that turns out not to be a mesh, such as a `.dat` holding a table',
+        'of numbers, is shown as plain text instead, the way Quick Look would have shown it.',
         '',
         '| Format | Extensions | Format | Extensions |',
         '| --- | --- | --- | --- |',
         *(pair(left, right) for left, right in zip_longest(claimed[:half], claimed[half:])),
         '',
-        f'{sum(len(r.extensions) for r in optional)} more can be claimed with `extensions.add`:',
+        'PyVista can also read these, which are not claimed:',
         '',
-        '| Format | Extensions | Why not by default |',
-        '| --- | --- | --- |',
-        *(f'| {row.name} | {cell(row)} | {row.reason} |' for row in optional),
+        *(
+            f'- {reason}: ' + ', '.join(f'`{e}`' for e in sorted(exts))
+            for reason, exts in reasons.items()
+        ),
         '',
         '',
     ]
