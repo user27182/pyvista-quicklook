@@ -86,16 +86,24 @@ def readable(path: str, seconds: float = 2.0) -> bool:
         signal.signal(signal.SIGALRM, previous)
 
 
-def build_scene(
-    target: str, config: dict[str, Any], identity: tuple[str, int, int] | None
-) -> tuple[Path | None, str | None]:
-    """Return an interactive scene for a request, or why one could not be built."""
-    if not config.get('interactive', True):
-        return None, None
+def produce(
+    target: str | os.PathLike[str],
+    config: dict[str, Any],
+    identity: tuple[str, int, int] | None = None,
+) -> Path:
+    """Return a cached preview of a file: an interactive scene, or else a rendered image."""
+    scene_error = None
+    if config.get('interactive', True):
+        try:
+            return convert_mod.scene(target, config, identity=identity)
+        except RenderError as error:
+            scene_error = str(error)
     try:
-        return convert_mod.scene(target, config, identity=identity), None
+        return render_mod.preview(target, config, identity=identity)
     except RenderError as error:
-        return None, str(error)
+        # A build without the rendering modules has no still-image fallback, so the
+        # reason the scene failed is the useful one.
+        raise RenderError(scene_error or str(error)) from error
 
 
 def handle(request: Path) -> None:
@@ -121,25 +129,18 @@ def handle(request: Path) -> None:
         return
 
     config = config_mod.load()
-    built, scene_error = build_scene(target, config, identity)
-    if built is not None:
-        delivered = reply.with_suffix('.ply')
-        shutil.copyfile(built, delivered)
-        write_json(reply, {'ok': True, 'scene': str(delivered)})
-        return
-
     try:
-        png = render_mod.preview(target, config, identity=identity)
+        built = produce(target, config, identity)
     except RenderError as error:
-        # A build without the rendering modules has no still-image fallback, so the
-        # reason the scene failed is the useful one.
-        write_json(reply, {'ok': False, 'error': scene_error or str(error)})
+        write_json(reply, {'ok': False, 'error': str(error)})
+        return
     except Exception as error:  # noqa: BLE001
         write_json(reply, {'ok': False, 'error': f'{type(error).__name__}: {error}'})
-    else:
-        delivered = reply.with_suffix('.png')
-        shutil.copyfile(png, delivered)
-        write_json(reply, {'ok': True, 'png': str(delivered)})
+        return
+    delivered = reply.with_suffix(built.suffix)
+    shutil.copyfile(built, delivered)
+    kind = 'scene' if built.suffix == '.ply' else 'png'
+    write_json(reply, {'ok': True, kind: str(delivered)})
 
 
 def sweep(directory: Path) -> None:

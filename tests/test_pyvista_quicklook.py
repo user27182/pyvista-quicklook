@@ -267,21 +267,44 @@ def test_preview_reports_failures_on_stderr(capsys, monkeypatch):
         raise environment.RenderError(message)
 
     monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(cli.config_mod.DEFAULTS))
-    monkeypatch.setattr(cli.render_mod, 'preview', fail)
+    monkeypatch.setattr(cli.daemon_mod, 'produce', fail)
     args = argparse.Namespace(path='mesh.vtu', output=None, no_cache=True)
     assert cli.cmd_preview(args) == 1
     assert 'nope' in capsys.readouterr().err
 
 
 def test_preview_prints_the_cached_path(capsys, monkeypatch, tmp_path):
-    """A successful render prints where the preview landed."""
-    png = tmp_path / 'out.png'
-    png.write_bytes(b'x')
+    """A successful build prints where the scene landed."""
+    ply = tmp_path / 'out.ply'
+    ply.write_bytes(b'x')
     monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(cli.config_mod.DEFAULTS))
-    monkeypatch.setattr(cli.render_mod, 'preview', lambda path, config: png)
+    monkeypatch.setattr(cli.daemon_mod, 'produce', lambda path, config: ply)
     args = argparse.Namespace(path='mesh.vtu', output=None, no_cache=False)
     assert cli.cmd_preview(args) == 0
-    assert str(png) in capsys.readouterr().out
+    assert str(ply) in capsys.readouterr().out
+
+
+def test_warm_builds_every_claimed_file_in_a_directory(capsys, monkeypatch, tmp_path):
+    """`pvql warm DIR` builds the claimed files it finds and reports the failures."""
+    (tmp_path / 'good.vtu').write_text('x')
+    (tmp_path / 'bad.vtp').write_text('x')
+    (tmp_path / 'notes.txt').write_text('x')
+    built = []
+
+    def produce(target, config):
+        if target.suffix == '.vtp':
+            message = 'unreadable'
+            raise environment.RenderError(message)
+        built.append(target.name)
+        return target
+
+    monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(cli.config_mod.DEFAULTS))
+    monkeypatch.setattr(cli.daemon_mod, 'produce', produce)
+    assert cli.cmd_warm(argparse.Namespace(paths=[str(tmp_path)])) == 1
+    assert built == ['good.vtu']
+    captured = capsys.readouterr()
+    assert '1 of 2 cached' in captured.out
+    assert 'bad.vtp: unreadable' in captured.err
 
 
 def test_cache_reports_its_size(capsys, monkeypatch, tmp_path):
@@ -390,22 +413,29 @@ def test_scene_rejects_files_above_the_limit(tmp_path):
         convert.scene(sample, config, identity=(str(sample), 0, 5 * 1024 * 1024))
 
 
-def test_build_scene_is_skipped_when_not_interactive():
-    """Turning interactivity off falls straight through to the rendered image."""
-    assert daemon.build_scene('/mesh.vtu', {'interactive': False}, None) == (None, None)
+def test_produce_skips_the_scene_when_not_interactive(monkeypatch, tmp_path):
+    """Turning interactivity off goes straight to the rendered image."""
+    png = tmp_path / 'out.png'
+
+    def no_scene(target, config, identity=None):
+        pytest.fail('the scene must not be built')
+
+    monkeypatch.setattr(daemon.convert_mod, 'scene', no_scene)
+    monkeypatch.setattr(daemon.render_mod, 'preview', lambda target, config, identity=None: png)
+    assert daemon.produce('/mesh.vtu', {'interactive': False}) == png
 
 
-def test_build_scene_falls_back_when_conversion_fails(monkeypatch):
+def test_produce_falls_back_when_conversion_fails(monkeypatch, tmp_path):
     """A dataset that cannot be converted falls back to the rendered image."""
+    png = tmp_path / 'out.png'
 
     def fail(target, config, identity=None):
         message = 'no surface'
         raise environment.RenderError(message)
 
     monkeypatch.setattr(daemon.convert_mod, 'scene', fail)
-    built, why = daemon.build_scene('/mesh.vtu', {'interactive': True}, None)
-    assert built is None
-    assert 'no surface' in why
+    monkeypatch.setattr(daemon.render_mod, 'preview', lambda target, config, identity=None: png)
+    assert daemon.produce('/mesh.vtu', {'interactive': True}) == png
 
 
 def test_handle_delivers_an_interactive_scene(tmp_path, monkeypatch):

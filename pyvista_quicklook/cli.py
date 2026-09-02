@@ -16,7 +16,6 @@ from . import cache as cache_mod
 from . import config as config_mod
 from . import daemon as daemon_mod
 from . import plist as plist_mod
-from . import render as render_mod
 from . import warmup as warmup_mod
 from .environment import RenderError
 from .formats import FORMATS
@@ -48,12 +47,12 @@ def claimed_extensions(config: dict) -> list[str]:
 
 
 def cmd_preview(args: argparse.Namespace) -> int:
-    """Render a file and print the path of the cached PNG preview."""
+    """Build a preview of a file and print the path of the cached scene or image."""
     config = config_mod.load()
     if args.no_cache:
         config['cache'] = False
     try:
-        out = render_mod.preview(args.path, config)
+        out = daemon_mod.produce(args.path, config)
     except RenderError as error:
         print(error, file=sys.stderr)
         return 1
@@ -123,7 +122,7 @@ def cmd_warmup(_: argparse.Namespace) -> int:
 
 
 def cmd_warm(args: argparse.Namespace) -> int:
-    """Render previews ahead of time for the given files or directories."""
+    """Build previews ahead of time for the given files or directories."""
     config = config_mod.load()
     claimed = set(claimed_extensions(config))
     targets: list[Path] = []
@@ -136,7 +135,7 @@ def cmd_warm(args: argparse.Namespace) -> int:
     failures = 0
     for target in targets:
         try:
-            render_mod.preview(target, config)
+            daemon_mod.produce(target, config)
         except RenderError as error:  # noqa: PERF203
             failures += 1
             print(f'✗ {target}: {str(error).splitlines()[0]}', file=sys.stderr)
@@ -304,7 +303,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog='pvql', description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
 
-    preview = sub.add_parser('preview', help='render a file and print the cached PNG path')
+    preview = sub.add_parser('preview', help='build a preview and print its cached path')
     preview.add_argument('path')
     preview.add_argument('-o', '--output', help='also copy the preview to this path')
     preview.add_argument('--no-cache', action='store_true', help='ignore any cached preview')
@@ -322,7 +321,7 @@ def build_parser() -> argparse.ArgumentParser:
     warmup = sub.add_parser('warmup', help='load PyVista and VTK ahead of the first preview')
     warmup.set_defaults(func=cmd_warmup)
 
-    warm = sub.add_parser('warm', help='render previews ahead of time')
+    warm = sub.add_parser('warm', help='build previews ahead of time')
     warm.add_argument('paths', nargs='+')
     warm.set_defaults(func=cmd_warm)
 
