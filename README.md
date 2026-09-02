@@ -14,16 +14,60 @@ macOS 12 or newer. Nothing else needs to be installed first.
 curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/scripts/bootstrap.sh | sh
 ```
 
-Then select a `.vtu`, `.vtp`, or `.vtk` file in the Finder and press space.
+Then select a `.vtu`, `.vtp`, or `.vtk` file in the Finder and press space. Check the
+result with `pvql doctor`.
 
-The installer downloads the latest release, fetches [uv](https://docs.astral.sh/uv/)
-if it is missing, creates a private environment holding PyVista, installs the `pvql`
-helper, registers `PyVistaQuickLook.app`, starts the render service, and loads PyVista
-once so the first preview is quick. Nothing outside
-`~/Library/Application Support/PyVistaQuickLook`, `~/Applications`, and `~/.local/bin`
-is touched, and no existing Python environment is used or changed.
+### What the installer does
 
-Check the result with `pvql doctor`.
+1. Downloads the latest release: the installer scripts, about 1 MB, and the prebuilt
+   app, about 200 KB.
+2. Installs [uv](https://docs.astral.sh/uv/) if it is missing, and a Python 3.12 if uv
+   finds none on the machine.
+3. Installs the `pvql` helper as a uv tool.
+4. Creates a private Python environment and installs PyVista, cvista, pyvista-cad, and
+   meshio into it. This is the step that takes a while: about 400 MB of wheels.
+5. Writes the configuration file and loads PyVista once, so the first preview is quick.
+6. Copies the app into `~/Applications` and registers it with Launch Services and
+   Quick Look.
+7. Installs the render service as a launch agent. It appears as PyVista Quick Look
+   under Login Items in System Settings.
+
+No system Python and no existing environment is used or changed.
+
+### Where things go
+
+| Path | What | Size |
+| --- | --- | --- |
+| `~/Library/Application Support/PyVistaQuickLook/venv` | The PyVista environment | 380 MB |
+| `~/Library/Application Support/PyVistaQuickLook/config.json` | Configuration | 4 KB |
+| `~/Library/Application Support/PyVistaQuickLook/src`, `unpacked` | The downloaded release | 2 MB |
+| `~/Applications/PyVistaQuickLook.app` | The app and its Quick Look extension | 500 KB |
+| `~/Library/Application Support/uv/tools/pyvista-quicklook` | The `pvql` helper | 400 KB |
+| `~/.local/bin/pvql`, `~/.local/bin/pyvista-quicklook` | Links to the helper | |
+| `~/Library/LaunchAgents/io.github.user27182.pvqld.plist` | The render service | 4 KB |
+| `~/Library/Logs/pvqld.log` | The service's output | grows slowly |
+| `~/Library/Caches/PyVistaQuickLook` | One built preview per file previewed | grows with use |
+| `~/.local/bin/uv`, `~/Library/Application Support/uv` | uv, and Python 3.12 if uv had to fetch one | 45 MB, plus Python |
+| `~/.cache/uv` | uv's download cache; the environment's files are clones of it, not copies | shared |
+
+About 385 MB in total, or 430 MB when uv is installed too. The environment is the bulk
+of it:
+
+- [cvista](https://github.com/pyvista/cvista)`[all]`, a VTK fork used in place of
+  stock VTK, 137 MB
+- cascadio, [pyvista-cad](https://github.com/pyvista/pyvista-cad)'s STEP reader, 69 MB
+- matplotlib, 28 MB
+- numpy, 25 MB
+- ezdxf, pyvista-cad's DXF reader, 20 MB
+- PyVista, from git until 0.49 is released, [meshio](https://github.com/nschloe/meshio),
+  and the remaining dependencies, about 100 MB
+
+`pvql cache --clear` empties the preview cache. `scripts/uninstall.sh` removes
+everything above except the configuration file and uv.
+
+Point `--pyvista` at an environment you already have to use that instead of creating
+one. It needs PyVista 0.49 or newer; the CAD and meshio formats read only when those
+packages are in it.
 
 From a checkout, `./scripts/install.sh` does the same and builds the app from source,
 which needs the Xcode command line tools (`xcode-select --install`):
@@ -33,20 +77,6 @@ which needs the Xcode command line tools (`xcode-select --install`):
 ./scripts/install.sh --pyvista /path/to/venv/bin/pyvista   # use an existing PyVista
 ./scripts/install.sh --app /path/to/PyVistaQuickLook.app   # skip the build
 ```
-
-### What gets installed
-
-About 400 MB, in `~/Library/Application Support/PyVistaQuickLook/venv`:
-
-- PyVista, from git until 0.49 is released, with its dependencies
-- [cvista](https://github.com/pyvista/cvista)`[all]`, a VTK fork, in place of stock VTK
-- [pyvista-cad](https://github.com/pyvista/pyvista-cad) with its STEP, DXF, and 3MF
-  readers
-- [meshio](https://github.com/nschloe/meshio), for Nastran, Medit, Netgen, and other
-  mesh formats
-
-Point `--pyvista` at an environment you already have to use that instead. It needs
-PyVista 0.49 or newer.
 
 ## Supported files
 
