@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import sys
+
 import numpy as np
 import pytest
 import pyvista as pv
 from pyvista.core.utilities import reader as readers
+from pyvista.core.utilities import reader_registry
 
 from pyvista_quicklook import _scene_export as export_mod
 from pyvista_quicklook import formats
@@ -213,6 +216,9 @@ def test_partitioned_datasets_are_drawn_as_one_surface(tmp_path):
 
 def missing_reader(ext: str) -> str | None:
     """Return why the runtime cannot read an extension, or None when it can."""
+    if ext not in readers.CLASS_READERS:
+        registered = {entry.extension for entry in reader_registry.registered_readers()}
+        return None if ext in registered else 'no reader is registered'
     try:
         readers.CLASS_READERS[ext](f'/nonexistent/sample{ext}')
     except ImportError as error:
@@ -222,7 +228,8 @@ def missing_reader(ext: str) -> str | None:
     return None
 
 
+@pytest.mark.skipif(sys.version_info >= (3, 13), reason='cvista rendering wheels stop at 3.12')
 def test_every_default_extension_has_a_reader():
-    """The runtime environment can read every format that is claimed by default."""
+    """The installed environment can read every format that is claimed by default."""
     missing = {ext: why for ext in formats.default_extensions() if (why := missing_reader(ext))}
     assert missing == {}

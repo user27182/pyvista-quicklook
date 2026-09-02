@@ -50,7 +50,7 @@ PyVista 0.49 or newer.
 
 Most VTK, ParaView, and simulation formats are claimed by default: `.vtk`, `.vti`,
 `.vtp`, `.vtu`, `.vtm`, `.vtkhdf`, `.pvd`, `.case`, `.exo`, `.foam`, `.cgns`, `.segy`,
-`.xdmf`, and more.
+`.xdmf`, and more, along with the CAD formats `.step`, `.dxf`, and `.3mf`.
 
 ```bash
 pvql types        # what is claimed now

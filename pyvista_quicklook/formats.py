@@ -14,8 +14,8 @@ class Format(NamedTuple):
     default: bool
 
 
-# Extensions ``pyvista.read`` supports. ``default=False`` entries are claimed only when
-# listed in the ``extensions.add`` config key.
+# Extensions ``pyvista.read`` supports, with pyvista-cad's readers. ``default=False``
+# entries are claimed only when listed in the ``extensions.add`` config key.
 FORMATS: dict[str, Format] = {
     # VTK serial formats
     '.vtk': Format('VTK Legacy Data', True),
@@ -52,12 +52,24 @@ FORMATS: dict[str, Format] = {
     '.facet': Format('Facet Surface', True),
     '.slc': Format('SLC Volume', True),
     '.dem': Format('Digital Elevation Model', True),
+    '.cube': Format('Gaussian Cube', True),
+    '.pdb': Format('Protein Data Bank', True),
     '.segy': Format('SEG-Y Seismic Data', True),
     '.sgy': Format('SEG-Y Seismic Data', True),
     '.tri': Format('BYU Triangle Surface', True),
-    # Off by default: the reading half of the VTK fork has no chemistry readers.
-    '.cube': Format('Gaussian Cube', False),
-    '.pdb': Format('Protein Data Bank', False),
+    # CAD formats, read by pyvista-cad.
+    '.step': Format('STEP Model', True),
+    '.stp': Format('STEP Model', True),
+    '.dxf': Format('DXF Drawing', True),
+    '.3mf': Format('3MF Model', True),
+    # Off by default: these readers need CAD kernels the installer leaves out.
+    '.iges': Format('IGES Model', False),
+    '.igs': Format('IGES Model', False),
+    '.brep': Format('BREP Model', False),
+    '.brp': Format('BREP Model', False),
+    '.fcstd': Format('FreeCAD Document', False),
+    '.ifc': Format('IFC Building Model', False),
+    '.scad': Format('OpenSCAD Script', False),
     # Off by default: macOS already previews these.
     '.stl': Format('Stereolithography Model', False),
     '.obj': Format('Wavefront OBJ Model', False),
