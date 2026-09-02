@@ -8,10 +8,32 @@ from __future__ import annotations
 
 import argparse
 import math
+from pathlib import Path
 import sys
 
 import numpy as np
 import pyvista as pv
+
+# Readers tried in turn for extensions two formats share; None is PyVista's own choice.
+ATTEMPTS = {'.inp': (None, 'abaqus'), '.msh': (None, 'ansys')}
+
+
+def read(source: str) -> object:
+    """Read a file, trying each reader its extension may need until one returns points."""
+    failure: BaseException | None = None
+    for file_format in ATTEMPTS.get(Path(source).suffix.lower(), (None,)):
+        try:
+            dataset = pv.read(source, file_format=file_format)
+        except (Exception, SystemExit) as error:  # noqa: BLE001
+            # meshio exits rather than raising when a format does not match.
+            failure = error
+            continue
+        if getattr(dataset, 'n_points', 1) > 0:
+            return dataset
+    if failure is not None:
+        raise failure
+    message = 'the file holds no points'
+    raise ValueError(message)
 
 
 def skin_estimate(dimensions: tuple[int, int, int]) -> int:
@@ -170,7 +192,7 @@ def colours_for(surface: pv.PolyData) -> np.ndarray | None:
 
 def export(source: str, destination: str, max_points: int, max_glyphs: int) -> None:
     """Write a mesh file out as a PLY with vertex colours; a budget of zero is no cap."""
-    dataset = pv.read(source)
+    dataset = read(source)
     if isinstance(dataset, pv.DataSet):
         dataset = slice_volume(choose_scalars(thin(dataset, max_points)))
     # Triangulating first would discard the vertex and line cells solidify needs.

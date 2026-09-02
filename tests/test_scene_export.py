@@ -325,6 +325,26 @@ def test_zstandard_files_are_drawn_with_their_scalars(tmp_path, ext):
     assert 'RGB' in scene.point_data
 
 
+def test_abaqus_and_avs_share_inp(tmp_path):
+    """An .inp is read as Abaqus when the AVS reader finds nothing in it, and vice versa."""
+    abaqus = tmp_path / 'part.inp'
+    pv.save_meshio(abaqus, pv.Sphere().triangulate())
+    avs = pv.examples.downloads.download_cells_nd(load=False)
+    for source, expected in ((abaqus, pv.Sphere().n_faces), (avs, None)):
+        out = tmp_path / 'out.ply'
+        export_mod.export(str(source), str(out), 2_000_000, 20_000)
+        faces = pv.read(out).n_faces
+        assert faces == expected if expected else faces > 0
+
+
+def test_gmsh_ascii_files_are_drawn(tmp_path):
+    """A Gmsh 2.2 ASCII file, as written by Gmsh itself, is drawn."""
+    source = Path(__file__).with_name('data') / 'box.msh'
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(source), str(out), 2_000_000, 20_000)
+    assert pv.read(out).n_faces > 0
+
+
 def test_flac3d_grids_are_drawn(tmp_path):
     """FLAC3D holds volume cells only, so their outer surface is drawn."""
     source = tmp_path / 'zones.f3grid'
