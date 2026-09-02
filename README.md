@@ -24,9 +24,13 @@ result with `pvql doctor`.
 2. Installs [uv](https://docs.astral.sh/uv/) if it is missing, and a Python 3.12 if uv
    finds none on the machine.
 3. Installs the `pvql` helper as a uv tool.
-4. Creates a private Python environment and installs PyVista with its io extras,
-   cvista, and pyvista-cad into it. This is the step that takes a while: about 400 MB
-   of wheels.
+4. Creates a private Python environment and installs
+   [PyVista](https://github.com/pyvista/pyvista) with its io extras, among them
+   [meshio](https://github.com/nschloe/meshio) and, from PyVista 0.49,
+   [pyvista-frd-reader](https://github.com/pyvista/pyvista-frd-reader), along with
+   [cvista](https://github.com/pyvista/cvista) and
+   [pyvista-cad](https://github.com/pyvista/pyvista-cad). This is the step that takes a
+   while: about 400 MB of wheels.
 5. Writes the configuration file and loads PyVista once, so the first preview is quick.
 6. Copies the app into `~/Applications` and registers it with Launch Services and
    Quick Look.
