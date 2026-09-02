@@ -13,6 +13,7 @@ import time
 from typing import Any
 import uuid
 
+from . import cache
 from . import config as config_mod
 from . import convert as convert_mod
 from . import environment
@@ -179,6 +180,7 @@ def serve(poll: float = 0.05) -> int:
     """Answer preview requests until the process is stopped."""
     directory = drop_dir()
     directory.mkdir(parents=True, exist_ok=True)
+    cache.discard_other_scenes(convert_mod.SCENE_VERSION)
     startup = config_mod.load()
     if startup.get('warm_on_start', True):
         warm_in_background(startup)

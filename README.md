@@ -159,7 +159,8 @@ Open surfaces, the slices among them, are written with a second, flipped side, s
 are drawn and lit from wherever the camera looks.
 
 Previews are cached under `~/Library/Caches/PyVistaQuickLook`, keyed by the file's
-path, size, and modification time, so editing a file invalidates its preview.
+path, size, and modification time, so editing a file invalidates its preview, and by the
+version of the converter, so an update rebuilds them rather than serving old ones.
 
 The service loads PyVista and VTK in the background when it starts, which is at login
 and whenever it is reinstalled, so the first preview does not wait for them. `pvql

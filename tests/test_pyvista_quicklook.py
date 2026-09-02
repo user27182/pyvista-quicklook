@@ -12,6 +12,7 @@ import sys
 
 import pytest
 
+from pyvista_quicklook import cache
 from pyvista_quicklook import cli
 from pyvista_quicklook import config
 from pyvista_quicklook import convert
@@ -535,6 +536,28 @@ def test_scene_passes_a_zero_glyph_budget_through(tmp_path, monkeypatch):
 def config_defaults():
     """Return a copy of the built-in configuration."""
     return dict(config.DEFAULTS)
+
+
+def test_scene_version_follows_the_exporter(tmp_path):
+    """Any change to the exporter changes the version scenes are keyed and named by."""
+    exporter = tmp_path / 'exporter.py'
+    exporter.write_text('a')
+    before = convert.exporter_version(exporter)
+    exporter.write_text('b')
+    assert convert.exporter_version(exporter) != before
+    assert convert.exporter_version() == convert.SCENE_VERSION
+
+
+def test_scenes_of_other_versions_are_discarded(tmp_path, monkeypatch):
+    """Scenes an older exporter built are removed; current ones and images stay."""
+    monkeypatch.setattr(cache.config_mod, 'CACHE_DIR', tmp_path)
+    for name in ('old-1.ply', f'{convert.SCENE_VERSION}-2.ply', 'image.png'):
+        (tmp_path / name).write_bytes(b'x')
+    assert cache.discard_other_scenes(convert.SCENE_VERSION) == 1
+    assert sorted(p.name for p in tmp_path.iterdir()) == [
+        f'{convert.SCENE_VERSION}-2.ply',
+        'image.png',
+    ]
 
 
 def test_scene_reports_a_missing_file(tmp_path):

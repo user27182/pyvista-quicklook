@@ -68,6 +68,17 @@ def entries() -> list[Path]:
     return [e for pattern in SUFFIXES for e in config_mod.CACHE_DIR.glob(pattern)]
 
 
+def discard_other_scenes(version: str) -> int:
+    """Delete scenes built by other versions of the exporter and return how many went."""
+    removed = 0
+    if config_mod.CACHE_DIR.is_dir():
+        for entry in config_mod.CACHE_DIR.glob('*.ply'):
+            if not entry.name.startswith(f'{version}-'):
+                entry.unlink(missing_ok=True)
+                removed += 1
+    return removed
+
+
 def clear() -> int:
     """Delete every cached preview and return the number of files removed."""
     removed = 0

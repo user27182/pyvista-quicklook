@@ -29,6 +29,7 @@ def test_scene_is_built_by_the_exporter_and_cached(tmp_path, env, monkeypatch):
     pv.Sphere().save(source)
     out = convert.scene(source, env)
     assert out.parent == config.CACHE_DIR
+    assert out.name.startswith(f'{convert.SCENE_VERSION}-')
     assert pv.read(out).n_faces > 0
     assert not list(config.CACHE_DIR.glob('*.tmp*'))
 
