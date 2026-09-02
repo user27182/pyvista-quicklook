@@ -80,60 +80,59 @@ which needs the Xcode command line tools (`xcode-select --install`):
 
 ## Supported files
 
-63 extensions are claimed by default, so pressing space on any of them opens this
-preview:
+76 extensions are claimed, so pressing space on any of these files opens
+this preview. A file that turns out not to be a mesh, such as a `.dat` holding a table
+of numbers, is shown as plain text instead, the way Quick Look would have shown it.
 
 | Format | Extensions | Format | Extensions |
 | --- | --- | --- | --- |
-| 3D Studio Model | `.3ds` | Object File Format Mesh | `.off` |
-| 3MF Model | `.3mf` | OpenFOAM Case | `.foam` |
-| AVS UCD Mesh | `.avs` | ParaView Data Collection | `.pvd` |
-| Binary Marching Cubes Surface | `.tri` | PLOT3D Metadata | `.p3d` |
+| 3D Studio Model | `.3ds` | OpenFOAM Case | `.foam` |
+| 3MF Model | `.3mf` | ParaView Data Collection | `.pvd` |
+| AVS UCD Data | `.inp` | PERMAS Data | `.dato`, `.post` |
+| AVS UCD Mesh | `.avs` | PLOT3D Metadata | `.p3d` |
+| Binary Marching Cubes Surface | `.tri` | Point Cloud | `.pts` |
+| BYU Geometry | `.g` | ProStar Mesh | `.vrt` |
 | CalculiX Result | `.frd` | Protein Data Bank | `.pdb` |
 | CGNS Data | `.cgns` | PyVista Zstandard Data | `.pv`, `.zvtk` |
 | Digital Elevation Model | `.dem` | SEG-Y Seismic Data | `.segy`, `.sgy` |
 | DXF Drawing | `.dxf` | SLC Volume | `.slc` |
 | Eclipse GRDECL Grid | `.grdecl` | STEP Model | `.step`, `.stp` |
 | EnSight Case | `.case` | Tecplot ASCII Data | `.tec` |
-| Exodus II Data | `.ex2`, `.exii`, `.exo` | VRML Model | `.vrml`, `.wrl` |
-| Facet Surface | `.facet` | VTK HDF | `.vtkhdf` |
-| FLAC3D Grid | `.f3grid` | VTK Image Data | `.vti` |
-| Fluent Case | `.cas` | VTK Legacy Data | `.vtk` |
-| GAMBIT Neutral Mesh | `.neu` | VTK MultiBlock | `.vtm`, `.vtmb` |
-| Gaussian Cube | `.cube` | VTK Parallel Image Data | `.pvti` |
-| GE Signa MR Image | `.mr` | VTK Parallel Legacy Data | `.pvtk` |
-| Kratos Model Part | `.mdpa` | VTK Parallel Rectilinear Grid | `.pvtr` |
-| Medit Mesh | `.mesh`, `.meshb` | VTK Parallel Unstructured Grid | `.pvtu` |
-| MetaImage Volume | `.mha`, `.mhd` | VTK Partitioned Dataset | `.vtpd` |
-| MINC Volume | `.mnc` | VTK PolyData | `.vtp` |
-| Nastran Bulk Data | `.bdf`, `.fem`, `.nas` | VTK Rectilinear Grid | `.vtr` |
-| Nek5000 Data | `.nek5000` | VTK Structured Grid | `.vts` |
-| Netgen Mesh | `.vol` | VTK Unstructured Grid | `.vtu` |
-| NIfTI Volume | `.nii` | XDMF Data | `.xdmf` |
-| NRRD Volume | `.nhdr`, `.nrrd` | | |
+| Exodus II Data | `.e`, `.ex2`, `.exii`, `.exo` | Tecplot Data | `.dat` |
+| Facet Surface | `.facet` | TetGen Mesh | `.ele`, `.node` |
+| FLAC3D Grid | `.f3grid` | VRML Model | `.vrml`, `.wrl` |
+| Fluent Case | `.cas` | VTK File Series | `.series` |
+| GAMBIT Neutral Mesh | `.neu` | VTK HDF | `.vtkhdf` |
+| Gaussian Cube | `.cube` | VTK Image Data | `.vti` |
+| GE Signa MR Image | `.mr` | VTK Legacy Data | `.vtk` |
+| Gmsh Mesh | `.msh` | VTK MultiBlock | `.vtm`, `.vtmb` |
+| Kratos Model Part | `.mdpa` | VTK Parallel Image Data | `.pvti` |
+| Medit Mesh | `.mesh`, `.meshb` | VTK Parallel Legacy Data | `.pvtk` |
+| MetaImage Volume | `.mha`, `.mhd` | VTK Parallel Rectilinear Grid | `.pvtr` |
+| MFIX Result | `.res` | VTK Parallel Unstructured Grid | `.pvtu` |
+| MINC Volume | `.mnc` | VTK Partitioned Dataset | `.vtpd` |
+| Nastran Bulk Data | `.bdf`, `.fem`, `.nas` | VTK PolyData | `.vtp` |
+| Nek5000 Data | `.nek5000` | VTK Rectilinear Grid | `.vtr` |
+| Netgen Mesh | `.vol` | VTK Structured Grid | `.vts` |
+| NIfTI Volume | `.nii` | VTK Unstructured Grid | `.vtu` |
+| NRRD Volume | `.nhdr`, `.nrrd` | XDMF Data | `.xdmf` |
+| Object File Format Mesh | `.off` | | |
 
-22 more can be claimed with `extensions.add`:
+PyVista can also read these, which are not claimed:
 
-| Format | Extensions | Why not by default |
-| --- | --- | --- |
-| AVS UCD Data | `.inp` | the extension is shared with other kinds of file |
-| BREP Model | `.brep`, `.brp` | needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more |
-| BYU Geometry | `.g` | the extension is shared with other kinds of file |
-| Exodus II Data | `.e` | the extension is shared with other kinds of file |
-| Fluent CFF Data | `.h5` | the extension is shared with other kinds of file |
-| FreeCAD Document | `.fcstd` | needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more |
-| Gmsh Mesh | `.msh` | the extension is shared with ANSYS meshes, and meshio reads only the binary Gmsh form |
-| IFC Building Model | `.ifc` | needs `pyvista-cad[ifc]` |
-| IGES Model | `.iges`, `.igs` | needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more |
-| MFIX Result | `.res` | the extension is shared with other kinds of file |
-| OpenSCAD Script | `.scad` | needs the `openscad` program |
-| PERMAS Data | `.dato`, `.post` | the extension is shared with other kinds of file |
-| Point Cloud | `.pts` | the extension is shared with other kinds of file |
-| ProStar Mesh | `.vrt` | the extension is shared with other kinds of file |
-| Tecplot Data | `.dat` | the extension is shared with other kinds of file |
-| TetGen Mesh | `.ele`, `.node` | each is half of a TetGen pair |
-| VTK File Series | `.series` | the extension is shared with other kinds of file |
-| VTK HDF | `.hdf` | the extension is shared with other kinds of file |
+- macOS previews it: `.bmp`, `.dcm`, `.gif`, `.glb`, `.gltf`, `.hdr`, `.jpeg`, `.jpg`, `.obj`, `.ply`, `.png`, `.pnm`, `.stl`, `.tif`, `.tiff`
+- disk images own the extension: `.img`
+- camera raw images own the extension: `.raw`
+- XML owns the extension: `.xml`
+- the Finder sees .gz: `.dato.gz`, `.nii.gz`, `.post.gz`, `.vol.gz`
+- needs an OpenCascade kernel: `.brep`, `.brp`, `.fcstd`, `.iges`, `.igs`
+- needs ifcopenshell: `.ifc`
+- needs the openscad program: `.scad`
+- a general HDF5 container: `.h5`, `.hdf`
+- needs h5py: `.h5m`, `.hmf`, `.med`, `.xmf`
+- meshio fails to read it: `.su2`, `.ugrid`
+- meshio hangs on it: `.wkt`
+- meshio writes it but does not read it: `.svg`
 
 Claims on the extensions macOS previews itself, such as STL and PLY, or that another kind
 of file owns, are ignored by macOS, which is why those are not claimed. To claim fewer,

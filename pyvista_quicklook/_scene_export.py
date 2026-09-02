@@ -21,6 +21,7 @@ ATTEMPTS = {'.inp': (None, 'abaqus'), '.msh': (None, 'ansys')}
 def read(source: str) -> object:
     """Read a file, trying each reader its extension may need until one returns points."""
     failure: BaseException | None = None
+    dataset = None
     for file_format in ATTEMPTS.get(Path(source).suffix.lower(), (None,)):
         try:
             dataset = pv.read(source, file_format=file_format)
@@ -30,10 +31,9 @@ def read(source: str) -> object:
             continue
         if getattr(dataset, 'n_points', 1) > 0:
             return dataset
-    if failure is not None:
+    if dataset is None and failure is not None:
         raise failure
-    message = 'the file holds no points'
-    raise ValueError(message)
+    return dataset
 
 
 def skin_estimate(dimensions: tuple[int, int, int]) -> int:

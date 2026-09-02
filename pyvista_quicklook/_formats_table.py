@@ -19,7 +19,7 @@ from .formats import FORMATS
 from .formats import UNCLAIMED
 
 START = '## Supported files\n'
-END = 'macOS previews STL'
+END = 'Claims on the extensions macOS previews itself'
 
 
 class Row(NamedTuple):
