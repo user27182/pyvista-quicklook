@@ -12,11 +12,13 @@ import sys
 import tempfile
 import time
 
+from . import cache as cache_mod
 from . import config as config_mod
 from . import daemon as daemon_mod
 from . import plist as plist_mod
 from . import render as render_mod
 from . import warmup as warmup_mod
+from .environment import RenderError
 from .formats import FORMATS
 from .formats import resolve_extensions
 from .formats import uti_for
@@ -52,7 +54,7 @@ def cmd_preview(args: argparse.Namespace) -> int:
         config['cache'] = False
     try:
         out = render_mod.preview(args.path, config)
-    except render_mod.RenderError as error:
+    except RenderError as error:
         print(error, file=sys.stderr)
         return 1
     if args.output:
@@ -113,7 +115,7 @@ def cmd_warmup(_: argparse.Namespace) -> int:
     """Load PyVista and VTK so the first preview does not wait for them."""
     try:
         elapsed = warmup_mod.warm()
-    except render_mod.RenderError as error:
+    except RenderError as error:
         print(error, file=sys.stderr)
         return 1
     print(f'PyVista and VTK are warm ({elapsed:.1f} s)')
@@ -135,7 +137,7 @@ def cmd_warm(args: argparse.Namespace) -> int:
     for target in targets:
         try:
             render_mod.preview(target, config)
-        except render_mod.RenderError as error:  # noqa: PERF203
+        except RenderError as error:  # noqa: PERF203
             failures += 1
             print(f'✗ {target}: {str(error).splitlines()[0]}', file=sys.stderr)
         else:
@@ -195,9 +197,9 @@ def cmd_config(args: argparse.Namespace) -> int:
 def cmd_cache(args: argparse.Namespace) -> int:
     """Show or clear the preview cache."""
     if args.clear:
-        print(f'removed {render_mod.clear_cache()} cached previews')
+        print(f'removed {cache_mod.clear()} cached previews')
         return 0
-    entries = render_mod.cached_previews()
+    entries = cache_mod.entries()
     total = sum(entry.stat().st_size for entry in entries)
     print(f'{config_mod.CACHE_DIR}\n{len(entries)} previews, {total / 1024 / 1024:.1f} MB')
     return 0
@@ -283,7 +285,7 @@ def cmd_doctor(_: argparse.Namespace) -> int:
             started = time.monotonic()
             try:
                 out = daemon_mod.request_preview(sample, timeout=90)
-            except render_mod.RenderError as error:
+            except RenderError as error:
                 problems += 1
                 print(f'✗ render     failed through the service\n\n{error}')
             else:

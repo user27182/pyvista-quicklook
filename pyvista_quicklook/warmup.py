@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-import subprocess
 import time
 from typing import Any
 
 from . import config as config_mod
-from .render import RenderError
-from .render import _log
+from . import environment
 
 WARMER = Path(__file__).with_name('_warmup.py')
 TIMEOUT = 300
@@ -33,34 +30,10 @@ def warmed_recently(within: float = RECENT_SECONDS) -> bool:
 def warm(config: dict[str, Any] | None = None) -> float:
     """Load PyVista and VTK in the configured environment and return how long it took."""
     config = config if config is not None else config_mod.load()
-    interpreter = config_mod.find_python(config)
-    if interpreter is None:
-        message = (
-            'The Python interpreter next to the pyvista executable was not found.\n'
-            f'Set "pyvista" to its absolute path in {config_mod.CONFIG_PATH}.'
-        )
-        raise RenderError(message)
-
-    environ = {**os.environ, 'PYVISTA_OFF_SCREEN': 'true', 'MPLBACKEND': 'Agg'}
+    command = [environment.interpreter(config), str(WARMER)]
     started = time.monotonic()
-    try:
-        completed = subprocess.run(
-            [interpreter, str(WARMER)],
-            capture_output=True,
-            text=True,
-            timeout=TIMEOUT,
-            env=environ,
-            check=False,
-        )
-    except subprocess.TimeoutExpired as error:
-        message = f'Warming PyVista timed out after {TIMEOUT} s.'
-        raise RenderError(message) from error
-
+    environment.run(config, command, task='Warming PyVista', timeout=TIMEOUT)
     elapsed = time.monotonic() - started
-    if completed.returncode != 0:
-        detail = (completed.stderr or completed.stdout or '').strip()
-        message = f'Could not warm PyVista.\n\n{detail}'
-        raise RenderError(message)
 
     try:
         config_mod.CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -68,5 +41,5 @@ def warm(config: dict[str, Any] | None = None) -> float:
     except OSError:
         pass
 
-    _log(config, f'warm in {elapsed:.1f}s')
+    environment.log(config, f'warm in {elapsed:.1f}s')
     return elapsed

@@ -17,6 +17,7 @@ from . import config as config_mod
 from . import convert as convert_mod
 from . import render as render_mod
 from . import warmup as warmup_mod
+from .environment import RenderError
 
 EXT_BUNDLE_ID = 'io.github.user27182.PyVistaQuickLook.QuickLook'
 LABEL = 'io.github.user27182.pvqld'
@@ -93,7 +94,7 @@ def build_scene(
         return None, None
     try:
         return convert_mod.scene(target, config, identity=identity), None
-    except render_mod.RenderError as error:
+    except RenderError as error:
         return None, str(error)
 
 
@@ -129,7 +130,7 @@ def handle(request: Path) -> None:
 
     try:
         png = render_mod.preview(target, config, identity=identity)
-    except render_mod.RenderError as error:
+    except RenderError as error:
         # A build without the rendering modules has no still-image fallback, so the
         # reason the scene failed is the useful one.
         write_json(reply, {'ok': False, 'error': scene_error or str(error)})
@@ -211,13 +212,13 @@ def request_preview(source: str, timeout: float = 90) -> Path:
             reply.unlink(missing_ok=True)
             if payload.get('ok'):
                 return Path(payload.get('scene') or payload['png'])
-            raise render_mod.RenderError(payload.get('error', 'unknown error'))
+            raise RenderError(payload.get('error', 'unknown error'))
         time.sleep(0.05)
     message = (
         f'The render service did not answer within {timeout:.0f} s.\n'
         f'Check that it is running:  launchctl print gui/$UID/{LABEL}'
     )
-    raise render_mod.RenderError(message)
+    raise RenderError(message)
 
 
 def agent_path() -> Path:

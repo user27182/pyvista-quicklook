@@ -14,6 +14,7 @@ from pyvista_quicklook import cli
 from pyvista_quicklook import config
 from pyvista_quicklook import convert
 from pyvista_quicklook import daemon
+from pyvista_quicklook import environment
 from pyvista_quicklook import formats
 from pyvista_quicklook import plist
 from pyvista_quicklook import render
@@ -119,13 +120,13 @@ def test_preview_rejects_files_above_the_limit(tmp_path):
     sample = tmp_path / 'big.vtu'
     sample.write_bytes(b'x')
     config = {'max_file_size_mb': 1, 'window_size': [1, 1]}
-    with pytest.raises(render.RenderError, match='preview limit'):
+    with pytest.raises(environment.RenderError, match='preview limit'):
         render.preview(sample, config, identity=(str(sample), 0, 5 * 1024 * 1024))
 
 
 def test_preview_reports_a_missing_file(tmp_path):
     """A path that does not exist is reported plainly."""
-    with pytest.raises(render.RenderError, match='No such file'):
+    with pytest.raises(environment.RenderError, match='No such file'):
         render.preview(tmp_path / 'absent.vtu', {})
 
 
@@ -261,7 +262,7 @@ def test_preview_reports_failures_on_stderr(capsys, monkeypatch):
 
     def fail(path, config):
         message = 'nope'
-        raise render.RenderError(message)
+        raise environment.RenderError(message)
 
     monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(cli.config_mod.DEFAULTS))
     monkeypatch.setattr(cli.render_mod, 'preview', fail)
@@ -349,7 +350,7 @@ def test_scene_key_follows_conversion_settings():
 
 def test_scene_reports_a_missing_file(tmp_path):
     """Converting a file that is not there is reported plainly."""
-    with pytest.raises(render.RenderError, match='No such file'):
+    with pytest.raises(environment.RenderError, match='No such file'):
         convert.scene(tmp_path / 'absent.vtu', {})
 
 
@@ -363,7 +364,7 @@ def test_build_scene_falls_back_when_conversion_fails(monkeypatch):
 
     def fail(target, config, identity=None):
         message = 'no surface'
-        raise render.RenderError(message)
+        raise environment.RenderError(message)
 
     monkeypatch.setattr(daemon.convert_mod, 'scene', fail)
     built, why = daemon.build_scene('/mesh.vtu', {'interactive': True}, None)
@@ -419,7 +420,7 @@ def test_warmup_script_ships_with_the_package():
 def test_warm_reports_a_missing_interpreter(monkeypatch):
     """Warming without a usable PyVista environment explains what to set."""
     monkeypatch.setattr(warmup.config_mod, 'find_python', lambda configured=None: None)
-    with pytest.raises(render.RenderError, match='interpreter'):
+    with pytest.raises(environment.RenderError, match='interpreter'):
         warmup.warm({})
 
 
@@ -430,7 +431,7 @@ def test_warm_in_background_does_not_raise(monkeypatch):
     def explode(config):
         started.set()
         message = 'no interpreter'
-        raise render.RenderError(message)
+        raise environment.RenderError(message)
 
     monkeypatch.setattr(daemon.warmup_mod, 'warmed_recently', lambda: False)
     monkeypatch.setattr(daemon.warmup_mod, 'warm', explode)
@@ -480,11 +481,11 @@ def test_handle_reports_why_the_scene_failed(tmp_path, monkeypatch):
 
     def no_scene(target, config, identity=None):
         message = 'the dataset has no surface to show'
-        raise render.RenderError(message)
+        raise environment.RenderError(message)
 
     def no_renderer(target, config, identity=None):
         message = 'The pyvista command-line interface was not found.'
-        raise render.RenderError(message)
+        raise environment.RenderError(message)
 
     monkeypatch.setattr(daemon, 'folder_is_reachable', lambda path: True)
     monkeypatch.setattr(daemon.convert_mod, 'scene', no_scene)
