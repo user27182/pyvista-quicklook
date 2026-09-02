@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 import plistlib
+import sys
 import threading
 import time
 
@@ -346,6 +348,31 @@ def test_scene_key_follows_conversion_settings():
     assert convert.scene_key(identity, base) != convert.scene_key(
         identity, {**base, 'max_glyph_points': 40}
     )
+
+
+def test_scene_passes_a_zero_glyph_budget_through(tmp_path, monkeypatch):
+    """A glyph budget of zero means no cap, and must not fall back to the default."""
+    sample = tmp_path / 'mesh.vtu'
+    sample.write_text('x')
+    seen = {}
+
+    def fake_run(config, command, **kwargs):
+        seen['command'] = command
+        Path(command[3]).write_bytes(b'ply')
+
+    monkeypatch.setattr(convert.environment, 'run', fake_run)
+    monkeypatch.setattr(convert.config_mod, 'CACHE_DIR', tmp_path / 'cache')
+    config = {'python': sys.executable, 'max_glyph_points': 0, 'cache': False}
+    out = convert.scene(sample, config)
+    command = seen['command']
+    assert command[command.index('--max-glyphs') + 1] == '0'
+    assert command[command.index('--max-points') + 1] == str(config_defaults()['max_scene_points'])
+    assert out.read_bytes() == b'ply'
+
+
+def config_defaults():
+    """Return a copy of the built-in configuration."""
+    return dict(config.DEFAULTS)
 
 
 def test_scene_reports_a_missing_file(tmp_path):

@@ -132,8 +132,8 @@ def colours_for(surface: pv.PolyData) -> np.ndarray | None:
     return ramp()[(normalised * 255).round().astype(np.intp)]
 
 
-def export(source: str, destination: str, max_points: int, max_glyphs: int = 20_000) -> None:
-    """Write a mesh file out as a PLY with vertex colours."""
+def export(source: str, destination: str, max_points: int, max_glyphs: int) -> None:
+    """Write a mesh file out as a PLY with vertex colours; a budget of zero is no cap."""
     # Triangulating first would discard the vertex and line cells solidify needs.
     surface = choose_scalars(to_surface(pv.read(source)))
     wanted = surface.active_scalars_name
@@ -169,8 +169,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('source')
     parser.add_argument('destination')
-    parser.add_argument('--max-points', type=int, default=2_000_000)
-    parser.add_argument('--max-glyphs', type=int, default=20_000)
+    parser.add_argument('--max-points', type=int, required=True)
+    parser.add_argument('--max-glyphs', type=int, required=True)
     args = parser.parse_args()
     export(args.source, args.destination, args.max_points, args.max_glyphs)
     return 0

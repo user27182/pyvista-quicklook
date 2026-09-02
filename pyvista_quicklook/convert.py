@@ -14,14 +14,13 @@ if TYPE_CHECKING:
     import os
 
 SCENE_VERSION = '2'
-DEFAULT_MAX_POINTS = 2_000_000
 EXPORTER = Path(__file__).with_name('_scene_export.py')
 
 
-def max_points(config: dict[str, Any]) -> int:
-    """Return the decimation cap, where zero means never decimate."""
-    configured = config.get('max_scene_points')
-    return DEFAULT_MAX_POINTS if configured is None else int(configured)
+def budget(config: dict[str, Any], key: str) -> int:
+    """Return a point budget from the configuration, where zero means no limit."""
+    configured = config.get(key)
+    return int(config_mod.DEFAULTS[key] if configured is None else configured)
 
 
 def scene_key(identity: tuple[str, int, int], config: dict[str, Any]) -> str:
@@ -52,9 +51,9 @@ def scene(
             str(path),
             str(scratch),
             '--max-points',
-            str(max_points(config)),
+            str(budget(config, 'max_scene_points')),
             '--max-glyphs',
-            str(config.get('max_glyph_points') or 20_000),
+            str(budget(config, 'max_glyph_points')),
         ]
         environment.run(config, command, task=f'Converting {path.name}', cwd=path.parent)
 

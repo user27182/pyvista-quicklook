@@ -50,7 +50,7 @@ def rendered(mesh, tmp_path, name='scene', side=192):
     source = tmp_path / f'{name}.vtk'
     mesh.save(source)
     scene = tmp_path / f'{name}.ply'
-    export_mod.export(str(source), str(scene), 2_000_000)
+    export_mod.export(str(source), str(scene), 2_000_000, 20_000)
 
     image = tmp_path / f'{name}.png'
     finished = subprocess.run(
