@@ -3,7 +3,6 @@
 set -eu
 
 REPO="${PVQL_REPO:-user27182/pyvista-quicklook}"
-BRANCH="${PVQL_BRANCH:-main}"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
 SRC="${PVQL_SRC:-$SUPPORT/src}"
 ASSET="PyVistaQuickLook.zip"
@@ -19,17 +18,33 @@ case "${0:-}" in
   */*) HERE=$(CDPATH='' cd -- "$(dirname -- "$0")/.." 2>/dev/null && pwd || true) ;;
 esac
 
+DOWNLOAD="https://github.com/$REPO/releases/latest/download/$ASSET"
 if [ -n "$HERE" ] && [ -x "$HERE/scripts/install.sh" ] && [ -d "$HERE/macos" ]; then
   ROOT="$HERE"
 else
-  say "==> downloading PyVista Quick Look into $SRC"
+  # The scripts and the app come from the same release, so the two never drift.
+  TAG="${PVQL_TAG:-}"
+  if [ -z "$TAG" ] && [ -z "${PVQL_BRANCH:-}" ]; then
+    TAG=$(curl -sI "https://github.com/$REPO/releases/latest" | tr -d '\r' \
+      | sed -n 's#^[Ll]ocation: .*/tag/##p')
+  fi
+  if [ -n "$TAG" ]; then
+    ARCHIVE="https://github.com/$REPO/archive/refs/tags/$TAG.tar.gz"
+    DOWNLOAD="https://github.com/$REPO/releases/download/$TAG/$ASSET"
+    VERSION="${TAG#v}"
+    say "==> installing PyVista Quick Look $TAG"
+  else
+    ARCHIVE="https://github.com/$REPO/archive/refs/heads/${PVQL_BRANCH:-main}.tar.gz"
+    VERSION='0.0.0'
+    say "==> no published release; installing from ${PVQL_BRANCH:-main}"
+  fi
+  say "==> downloading the installer into $SRC"
   rm -rf "$SRC"
   mkdir -p "$SRC"
-  curl -LsSf "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" \
-    | tar -xz -C "$SRC" --strip-components 1
+  curl -LsSf "$ARCHIVE" | tar -xz -C "$SRC" --strip-components 1
   ROOT="$SRC"
   # A downloaded tarball carries no history for setuptools-scm to read.
-  SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYVISTA_QUICKLOOK="${PVQL_VERSION:-0.0.0}"
+  SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYVISTA_QUICKLOOK="${PVQL_VERSION:-$VERSION}"
   export SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PYVISTA_QUICKLOOK
 fi
 
@@ -40,7 +55,7 @@ APP=''
 mkdir -p "$SUPPORT"
 rm -rf "$ZIP" "$UNPACKED"
 
-if curl -LsSf -o "$ZIP" "https://github.com/$REPO/releases/latest/download/$ASSET"; then
+if curl -LsSf -o "$ZIP" "$DOWNLOAD"; then
   say '==> unpacking the published app'
   mkdir -p "$UNPACKED"
   if ditto -x -k "$ZIP" "$UNPACKED"; then
