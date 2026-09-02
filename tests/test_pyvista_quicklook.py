@@ -34,13 +34,13 @@ def test_default_extensions_are_claimed_and_known():
     assert defaults
     assert set(defaults) <= set(formats.FORMATS)
     assert '.vtu' in defaults
-    assert '.stl' not in defaults
+    assert '.stl' not in formats.FORMATS
 
 
 def test_resolve_extensions_applies_config():
     """Additions and removals change the claimed set."""
-    resolved = formats.resolve_extensions(add=['stl'], remove=['.vtu'])
-    assert '.stl' in resolved
+    resolved = formats.resolve_extensions(add=['msh'], remove=['.vtu'])
+    assert '.msh' in resolved
     assert '.vtu' not in resolved
 
 
@@ -262,8 +262,8 @@ def test_parser_accepts_every_subcommand():
 
 def test_claimed_extensions_follows_config():
     """The claimed set reflects the config additions and removals."""
-    claimed = cli.claimed_extensions({'extensions': {'add': ['.stl'], 'remove': ['.vtu']}})
-    assert '.stl' in claimed
+    claimed = cli.claimed_extensions({'extensions': {'add': ['.msh'], 'remove': ['.vtu']}})
+    assert '.msh' in claimed
     assert '.vtu' not in claimed
 
 

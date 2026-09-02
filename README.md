@@ -57,12 +57,12 @@ pvql types        # what is claimed now
 pvql types --all  # every format pvql knows about
 ```
 
-Formats macOS already previews — `.stl`, `.obj`, `.ply`, `.png` — are deliberately not
-claimed, so the built-in viewer keeps handling them. Claim them by adding them to the
-config and reinstalling:
+macOS previews STL, OBJ, PLY, glTF, images, and DICOM itself, and its previewer cannot
+be replaced, so those are not listed. Claim more, or fewer, of the rest in the config
+and reinstall:
 
 ```json
-{ "extensions": { "add": [".stl", ".obj"], "remove": [".segy"] } }
+{ "extensions": { "add": [".msh"], "remove": [".pdb"] } }
 ```
 
 ## How it works

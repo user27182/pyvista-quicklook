@@ -15,7 +15,9 @@ class Format(NamedTuple):
 
 
 # Extensions ``pyvista.read`` supports, with pyvista-cad's readers. ``default=False``
-# entries are claimed only when listed in the ``extensions.add`` config key.
+# entries are claimed only when listed in the ``extensions.add`` config key. Formats
+# macOS previews itself (STL, OBJ, PLY, glTF, images, DICOM) are absent: Launch
+# Services keeps its own type for those extensions, so a claim has no effect.
 FORMATS: dict[str, Format] = {
     # VTK serial formats
     '.vtk': Format('VTK Legacy Data', True),
@@ -57,6 +59,9 @@ FORMATS: dict[str, Format] = {
     '.segy': Format('SEG-Y Seismic Data', True),
     '.sgy': Format('SEG-Y Seismic Data', True),
     '.tri': Format('BYU Triangle Surface', True),
+    '.3ds': Format('3D Studio Model', True),
+    '.wrl': Format('VRML Model', True),
+    '.vrml': Format('VRML Model', True),
     # CAD formats, read by pyvista-cad.
     '.step': Format('STEP Model', True),
     '.stp': Format('STEP Model', True),
@@ -70,24 +75,6 @@ FORMATS: dict[str, Format] = {
     '.fcstd': Format('FreeCAD Document', False),
     '.ifc': Format('IFC Building Model', False),
     '.scad': Format('OpenSCAD Script', False),
-    # Off by default: macOS already previews these.
-    '.stl': Format('Stereolithography Model', False),
-    '.obj': Format('Wavefront OBJ Model', False),
-    '.ply': Format('PLY Model', False),
-    '.glb': Format('Binary glTF Model', False),
-    '.gltf': Format('glTF Model', False),
-    '.3ds': Format('3D Studio Model', False),
-    '.wrl': Format('VRML Model', False),
-    '.vrml': Format('VRML Model', False),
-    '.bmp': Format('Bitmap Image', False),
-    '.gif': Format('GIF Image', False),
-    '.jpg': Format('JPEG Image', False),
-    '.jpeg': Format('JPEG Image', False),
-    '.png': Format('PNG Image', False),
-    '.tif': Format('TIFF Image', False),
-    '.tiff': Format('TIFF Image', False),
-    '.hdr': Format('Radiance HDR Image', False),
-    '.pnm': Format('PNM Image', False),
     # Off by default: medical formats other viewers usually claim.
     '.dcm': Format('DICOM Image', False),
     '.nii': Format('NIfTI Volume', False),
