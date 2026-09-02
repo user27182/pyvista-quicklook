@@ -23,6 +23,14 @@ from .formats import UNCLAIMED
 from .formats import resolve_extensions
 from .formats import uti_for
 
+# Where the app may have been installed, and where the render service writes.
+APP_DIRS = (Path.home() / 'Applications', Path('/Applications'))
+SERVICE_LOG = Path.home() / 'Library' / 'Logs' / 'pvqld.log'
+LSREGISTER = (
+    '/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework'
+    '/Support/lsregister'
+)
+
 # A tetrahedron in legacy VTK format, used by ``pvql doctor`` as a smoke test.
 SMOKE_MESH = """# vtk DataFile Version 3.0
 pvql doctor
@@ -253,14 +261,7 @@ def cmd_doctor(_: argparse.Namespace) -> int:
 
     print(f'✓ formats    {len(claimed_extensions(config))} extensions claimed')
 
-    installed = [
-        candidate
-        for candidate in (
-            Path.home() / 'Applications' / f'{plist_mod.APP_EXECUTABLE}.app',
-            Path('/Applications') / f'{plist_mod.APP_EXECUTABLE}.app',
-        )
-        if candidate.is_dir()
-    ]
+    installed = installed_apps()
     if installed:
         for candidate in installed:
             print(f'✓ app        {candidate}')
@@ -301,6 +302,79 @@ def cmd_doctor(_: argparse.Namespace) -> int:
 
     print('\nall checks passed' if not problems else f'\n{problems} problem(s) found')
     return 1 if problems else 0
+
+
+def installed_apps() -> list[Path]:
+    """Return every copy of the app bundle that is installed."""
+    return [
+        d / f'{plist_mod.APP_EXECUTABLE}.app'
+        for d in APP_DIRS
+        if (d / f'{plist_mod.APP_EXECUTABLE}.app').is_dir()
+    ]
+
+
+def uninstall_targets(everything: bool) -> list[Path]:
+    """Return the files and folders an uninstall removes, those that exist."""
+    support = config_mod.APP_SUPPORT
+    candidates = [
+        *installed_apps(),
+        daemon_mod.agent_path(),
+        config_mod.CACHE_DIR,
+        support / 'venv',
+        support / 'src',
+        support / 'unpacked',
+        daemon_mod.drop_dir(),
+        SERVICE_LOG,
+        config_mod.LOG_PATH,
+    ]
+    if everything:
+        candidates.append(config_mod.CONFIG_PATH)
+    return [path for path in candidates if path.exists()]
+
+
+def cmd_uninstall(args: argparse.Namespace) -> int:
+    """Remove the app, the render service, the PyVista environment, and the helper."""
+    targets = uninstall_targets(args.all)
+    print('This removes')
+    for target in targets:
+        print(f'  {target}')
+    print(f'  the render service {daemon_mod.LABEL}')
+    print('  the pvql command')
+    if not args.all and config_mod.CONFIG_PATH.exists():
+        print(f'and keeps {config_mod.CONFIG_PATH}; pass --all to remove it too.')
+    if not args.yes:
+        if not sys.stdin.isatty():
+            print('Run again with --yes to remove them.')
+            return 1
+        if input('Remove? [y/N] ').strip().lower() != 'y':
+            return 1
+
+    for app in installed_apps():
+        appex = app / 'Contents' / 'PlugIns' / f'{plist_mod.EXT_EXECUTABLE}.appex'
+        subprocess.run(['/usr/bin/pluginkit', '-r', str(appex)], capture_output=True, check=False)
+        subprocess.run([LSREGISTER, '-u', str(app)], capture_output=True, check=False)
+    target = f'gui/{os.getuid()}/{daemon_mod.LABEL}'
+    subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True, check=False)
+    for path in targets:
+        if path.is_dir():
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            path.unlink(missing_ok=True)
+    for command in (['/usr/bin/qlmanage', '-r'], ['/usr/bin/qlmanage', '-r', 'cache']):
+        subprocess.run(command, capture_output=True, check=False)
+
+    print('removed', file=sys.stdout, flush=True)
+    uv = shutil.which('uv') or str(Path.home() / '.local' / 'bin' / 'uv')
+    if Path(uv).is_file():
+        subprocess.run(
+            [uv, 'tool', 'uninstall', 'pyvista-quicklook'], capture_output=True, check=False
+        )
+        print('removed the pvql command; uv itself was left in place')
+    else:
+        print(
+            'uv was not found; remove the pvql command with: uv tool uninstall pyvista-quicklook'
+        )
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -352,6 +426,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     doctor = sub.add_parser('doctor', help='check the Quick Look integration')
     doctor.set_defaults(func=cmd_doctor)
+
+    uninstall = sub.add_parser('uninstall', help='remove the app, the service, and the helper')
+    uninstall.add_argument('--yes', action='store_true', help='do not ask first')
+    uninstall.add_argument('--all', action='store_true', help='remove the config file too')
+    uninstall.set_defaults(func=cmd_uninstall)
 
     return parser
 

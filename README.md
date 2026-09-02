@@ -68,8 +68,8 @@ of it:
 - PyVista, from git until 0.49 is released, [meshio](https://github.com/nschloe/meshio),
   and the remaining dependencies, about 100 MB
 
-`pvql cache --clear` empties the preview cache. `scripts/uninstall.sh` removes
-everything above except the configuration file and uv.
+`pvql cache --clear` empties the preview cache. `pvql uninstall` removes everything
+above except the configuration file and uv.
 
 From a checkout, `./scripts/install.sh` does the same and builds the app from source,
 which needs the Xcode command line tools (`xcode-select --install`):
@@ -240,6 +240,7 @@ pvql doctor           # check every part of the integration
 pvql service          # manage the render service
 pvql config --init    # write a config file with discovered defaults
 pvql cache --clear    # delete cached previews
+pvql uninstall        # remove everything, asking first
 ```
 
 ## Troubleshooting
@@ -289,9 +290,10 @@ downloads.
 ## Uninstall
 
 ```bash
-./scripts/uninstall.sh
-uv tool uninstall pyvista-quicklook
+pvql uninstall
 ```
 
-That removes the app, the render service, the private PyVista environment, the
-download, and the cache, leaving only the config file.
+It lists what it is about to remove and asks first: the app, the render service, the
+PyVista environment, the cache, and the `pvql` command itself. The configuration file
+is kept unless you pass `--all`; uv is left in place. The app's own window has an
+Uninstall button that does the same.

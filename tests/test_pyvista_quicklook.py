@@ -239,6 +239,81 @@ def test_handle_refuses_a_large_file_before_touching_it(tmp_path, monkeypatch):
     assert 'preview limit' in reply['error']
 
 
+@pytest.fixture
+def installation(tmp_path, monkeypatch):
+    """Lay out a fake installation under tmp_path and record the commands run."""
+    support = tmp_path / 'support'
+    for folder in ('venv', 'src', 'unpacked'):
+        (support / folder).mkdir(parents=True)
+        (support / folder / 'file').write_text('x')
+    (support / 'config.json').write_text('{}')
+    app = tmp_path / 'Applications' / 'PyVistaQuickLook.app'
+    (app / 'Contents' / 'PlugIns').mkdir(parents=True)
+    (tmp_path / 'cache').mkdir()
+    (tmp_path / 'agent.plist').write_text('x')
+    (tmp_path / 'container').mkdir()
+    (tmp_path / 'pvqld.log').write_text('x')
+    (tmp_path / 'uv').write_text('#!/bin/sh\n')
+    monkeypatch.setattr(config, 'APP_SUPPORT', support)
+    monkeypatch.setattr(config, 'CONFIG_PATH', support / 'config.json')
+    monkeypatch.setattr(config, 'LOG_PATH', support / 'pvql.log')
+    monkeypatch.setattr(config, 'CACHE_DIR', tmp_path / 'cache')
+    monkeypatch.setattr(cli, 'APP_DIRS', (tmp_path / 'Applications',))
+    monkeypatch.setattr(cli, 'SERVICE_LOG', tmp_path / 'pvqld.log')
+    monkeypatch.setattr(cli.daemon_mod, 'agent_path', lambda: tmp_path / 'agent.plist')
+    monkeypatch.setattr(cli.daemon_mod, 'drop_dir', lambda: tmp_path / 'container')
+    monkeypatch.setattr(cli.shutil, 'which', lambda name: str(tmp_path / 'uv'))
+    commands = []
+    monkeypatch.setattr(
+        cli.subprocess,
+        'run',
+        lambda command, **k: (
+            commands.append(command) or subprocess.CompletedProcess(command, 0, '', '')
+        ),
+    )
+    return tmp_path, commands
+
+
+def test_uninstall_removes_everything_but_the_config(installation, capsys):
+    """`pvql uninstall --yes` removes the installation and keeps the config file."""
+    tmp_path, commands = installation
+    assert cli.cmd_uninstall(argparse.Namespace(yes=True, all=False)) == 0
+    for gone in (
+        'Applications/PyVistaQuickLook.app',
+        'agent.plist',
+        'cache',
+        'container',
+        'pvqld.log',
+        'support/venv',
+        'support/src',
+        'support/unpacked',
+    ):
+        assert not (tmp_path / gone).exists(), gone
+    assert (tmp_path / 'support' / 'config.json').exists()
+    joined = [' '.join(str(part) for part in command) for command in commands]
+    assert any('pluginkit -r' in c for c in joined)
+    assert any('lsregister -u' in c for c in joined)
+    assert any('launchctl bootout' in c for c in joined)
+    assert any(c.endswith('uv tool uninstall pyvista-quicklook') for c in joined)
+    assert 'keeps' in capsys.readouterr().out
+
+
+def test_uninstall_all_removes_the_config_too(installation):
+    """`pvql uninstall --all` removes the config file as well."""
+    tmp_path, _ = installation
+    assert cli.cmd_uninstall(argparse.Namespace(yes=True, all=True)) == 0
+    assert not (tmp_path / 'support' / 'config.json').exists()
+
+
+def test_uninstall_only_reports_without_a_terminal(installation, capsys):
+    """Without --yes and without a terminal to ask on, nothing is removed."""
+    tmp_path, commands = installation
+    assert cli.cmd_uninstall(argparse.Namespace(yes=False, all=False)) == 1
+    assert (tmp_path / 'Applications' / 'PyVistaQuickLook.app').exists()
+    assert commands == []
+    assert '--yes' in capsys.readouterr().out
+
+
 def test_agent_plist_runs_the_daemon():
     """The launch agent starts the render service and keeps it running."""
     agent = daemon.agent_plist('/usr/local/bin/pvql')
@@ -277,6 +352,7 @@ def test_parser_accepts_every_subcommand():
         ['doctor'],
         ['daemon'],
         ['service', '--install'],
+        ['uninstall', '--yes', '--all'],
     ):
         assert parser.parse_args(argv).func is not None
 

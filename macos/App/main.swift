@@ -50,8 +50,9 @@ final class StatusController: NSObject, NSApplicationDelegate {
         runButton.action = #selector(runDiagnostics)
         let configButton = NSButton(title: "Open Config File", target: self, action: #selector(openConfig))
         let cacheButton = NSButton(title: "Reveal Cache", target: self, action: #selector(revealCache))
+        let uninstallButton = NSButton(title: "Uninstall…", target: self, action: #selector(uninstall))
 
-        let buttons = NSStackView(views: [runButton, configButton, cacheButton])
+        let buttons = NSStackView(views: [runButton, configButton, cacheButton, uninstallButton])
         buttons.orientation = .horizontal
         buttons.spacing = 8
 
@@ -103,6 +104,33 @@ final class StatusController: NSObject, NSApplicationDelegate {
             _ = try? Helper.run(["config", "--init"])
         }
         NSWorkspace.shared.open(path)
+    }
+
+    /// Asks, then removes the app, the render service, the PyVista environment, and `pvql`.
+    @objc func uninstall() {
+        let alert = NSAlert()
+        alert.messageText = "Uninstall PyVista Quick Look?"
+        alert.informativeText = "This removes the app, its Quick Look extension, the render service, the PyVista environment, and the cache. The configuration file is kept."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Uninstall")
+        alert.addButton(withTitle: "Cancel")
+        guard alert.runModal() == .alertFirstButtonReturn else {
+            return
+        }
+        runButton.isEnabled = false
+        textView.string = "Uninstalling…\n"
+        DispatchQueue.global(qos: .userInitiated).async {
+            let report: String
+            do {
+                let result = try Helper.run(["uninstall", "--yes"])
+                report = [result.output, result.errors].filter { !$0.isEmpty }.joined(separator: "\n")
+            } catch {
+                report = (error as? Helper.Failure)?.message ?? error.localizedDescription
+            }
+            DispatchQueue.main.async {
+                self.textView.string = report + "\n\nYou can quit now."
+            }
+        }
     }
 
     /// Reveals the preview cache in the Finder.
