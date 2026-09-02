@@ -50,14 +50,30 @@ PyVista 0.49 or newer.
 
 ## Supported files
 
-Most VTK, ParaView, and simulation formats are claimed by default: `.vtk`, `.vti`,
-`.vtp`, `.vtu`, `.vtm`, `.vtkhdf`, `.pvd`, `.case`, `.exo`, `.foam`, `.cgns`, `.segy`,
-`.xdmf`, and more, along with the CAD formats `.step`, `.dxf`, and `.3mf`.
+54 extensions are claimed by default, so pressing space on any of them opens this
+preview:
 
-```bash
-pvql types        # what is claimed now
-pvql types --all  # every format pvql knows about
-```
+`.3ds`, `.3mf`, `.avs`, `.bdf`, `.cas`, `.case`, `.cgns`, `.cube`, `.dem`, `.dxf`,
+`.ex2`, `.exii`, `.exo`, `.f3grid`, `.facet`, `.fem`, `.foam`, `.frd`, `.grdecl`,
+`.mdpa`, `.mesh`, `.meshb`, `.nas`, `.nek5000`, `.neu`, `.off`, `.p3d`, `.pdb`, `.pvd`,
+`.pvti`, `.pvtk`, `.pvtr`, `.pvtu`, `.segy`, `.sgy`, `.slc`, `.step`, `.stp`, `.tec`,
+`.tri`, `.vol`, `.vrml`, `.vti`, `.vtk`, `.vtkhdf`, `.vtm`, `.vtmb`, `.vtp`, `.vtpd`,
+`.vtr`, `.vts`, `.vtu`, `.wrl`, `.xdmf`
+
+33 more are available with `extensions.add`. They are off by default because the
+extension is shared with other kinds of file or the reader needs more than the installer
+provides:
+
+`.brep` BREP Model, `.brp` BREP Model, `.dat` Tecplot Data, `.dato` PERMAS Data,
+`.dcm` DICOM Image, `.e` Exodus II Data, `.ele` TetGen Elements,
+`.fcstd` FreeCAD Document, `.g` BYU Geometry, `.h5` HDF5 Data, `.hdf` HDF Data,
+`.ifc` IFC Building Model, `.iges` IGES Model, `.igs` IGES Model,
+`.img` Raw Image Volume, `.inp` AVS UCD Data, `.mha` MetaImage Volume,
+`.mhd` MetaImage Volume, `.mnc` MINC Volume, `.mr` MR Image, `.msh` Gmsh Mesh,
+`.nhdr` NRRD Header, `.nii` NIfTI Volume, `.node` TetGen Nodes, `.nrrd` NRRD Volume,
+`.post` PERMAS Result, `.pts` Point Cloud, `.raw` Raw Volume, `.res` Fluent Result,
+`.scad` OpenSCAD Script, `.series` VTK File Series, `.vrt` GDAL Virtual Raster,
+`.xml` DOLFIN XML Mesh
 
 macOS previews STL, OBJ, PLY, glTF, images, and DICOM itself, and its previewer cannot
 be replaced, so those are not listed. Claim more, or fewer, of the rest in the config
@@ -65,6 +81,11 @@ and reinstall:
 
 ```json
 { "extensions": { "add": [".msh"], "remove": [".pdb"] } }
+```
+
+```bash
+pvql types        # what is claimed now
+pvql types --all  # every format pvql knows about
 ```
 
 ## How it works

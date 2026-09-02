@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 import plistlib
+import re
 import subprocess
 import sys
 
@@ -42,6 +43,13 @@ def test_resolve_extensions_applies_config():
     resolved = formats.resolve_extensions(add=['msh'], remove=['.vtu'])
     assert '.msh' in resolved
     assert '.vtu' not in resolved
+
+
+def test_readme_lists_exactly_the_known_formats():
+    """The README's Supported files section names every format, and nothing else."""
+    readme = (Path(__file__).parents[1] / 'README.md').read_text()
+    section = readme.split('## Supported files', 1)[1].split('\n## ', 1)[0]
+    assert set(re.findall(r'`(\.[a-z0-9]+)`', section)) == set(formats.FORMATS)
 
 
 def test_uti_is_unique_per_extension():
