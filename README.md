@@ -75,15 +75,15 @@ which needs the Xcode command line tools (`xcode-select --install`):
 
 ## Supported files
 
-54 extensions are claimed by default, so pressing space on any of them opens this
+56 extensions are claimed by default, so pressing space on any of them opens this
 preview:
 
 `.3ds`, `.3mf`, `.avs`, `.bdf`, `.cas`, `.case`, `.cgns`, `.cube`, `.dem`, `.dxf`,
 `.ex2`, `.exii`, `.exo`, `.f3grid`, `.facet`, `.fem`, `.foam`, `.frd`, `.grdecl`,
-`.mdpa`, `.mesh`, `.meshb`, `.nas`, `.nek5000`, `.neu`, `.off`, `.p3d`, `.pdb`, `.pvd`,
-`.pvti`, `.pvtk`, `.pvtr`, `.pvtu`, `.segy`, `.sgy`, `.slc`, `.step`, `.stp`, `.tec`,
-`.tri`, `.vol`, `.vrml`, `.vti`, `.vtk`, `.vtkhdf`, `.vtm`, `.vtmb`, `.vtp`, `.vtpd`,
-`.vtr`, `.vts`, `.vtu`, `.wrl`, `.xdmf`
+`.mdpa`, `.mesh`, `.meshb`, `.nas`, `.nek5000`, `.neu`, `.off`, `.p3d`, `.pdb`, `.pv`,
+`.pvd`, `.pvti`, `.pvtk`, `.pvtr`, `.pvtu`, `.segy`, `.sgy`, `.slc`, `.step`, `.stp`,
+`.tec`, `.tri`, `.vol`, `.vrml`, `.vti`, `.vtk`, `.vtkhdf`, `.vtm`, `.vtmb`, `.vtp`,
+`.vtpd`, `.vtr`, `.vts`, `.vtu`, `.wrl`, `.xdmf`, `.zvtk`
 
 29 more are available with `extensions.add`. They are off by default because the
 extension is shared with other kinds of file or the reader needs more than the installer

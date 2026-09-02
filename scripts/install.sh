@@ -81,7 +81,7 @@ OVERRIDES=$(mktemp -t pvql-overrides)
 printf "vtk; python_version < '0'\n" > "$OVERRIDES"
 "$UV" pip uninstall --quiet --python "$VENV/bin/python" vtk >/dev/null 2>&1 || true
 "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade \
-  --override "$OVERRIDES" "$PYVISTA_SPEC" 'cvista[all]' "$CAD_SPEC" meshio
+  --override "$OVERRIDES" "$PYVISTA_SPEC" 'cvista[all]' "$CAD_SPEC" meshio pyvista-zstd
 rm -f "$OVERRIDES"
 PYTHON="$VENV/bin/python"
 

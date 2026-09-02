@@ -286,6 +286,20 @@ def test_meshio_surface_formats_are_drawn(tmp_path, ext):
     assert pv.read(out).n_faces == pv.Sphere().n_faces
 
 
+@pytest.mark.parametrize('ext', ['.pv', '.zvtk'])
+@pytest.mark.filterwarnings('ignore::FutureWarning')
+def test_zstandard_files_are_drawn_with_their_scalars(tmp_path, ext):
+    """A Zstandard-compressed file written by pyvista-zstd is read back and coloured."""
+    mesh = pv.Sphere()
+    mesh['t'] = np.arange(mesh.n_points, dtype=float)
+    mesh.save(tmp_path / f'mesh{ext}')
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(tmp_path / f'mesh{ext}'), str(out), 2_000_000, 20_000)
+    scene = pv.read(out)
+    assert scene.n_faces == mesh.n_faces
+    assert 'RGB' in scene.point_data
+
+
 def test_flac3d_grids_are_drawn(tmp_path):
     """FLAC3D holds volume cells only, so their outer surface is drawn."""
     source = tmp_path / 'zones.f3grid'

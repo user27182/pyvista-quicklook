@@ -31,6 +31,9 @@ FORMATS: dict[str, Format] = {
     '.vtmb': Format('VTK MultiBlock', True),
     '.vtpd': Format('VTK Partitioned Dataset', True),
     '.vtkhdf': Format('VTK HDF', True),
+    # Zstandard-compressed VTK, written by pyvista-zstd.
+    '.pv': Format('PyVista Zstandard Data', True),
+    '.zvtk': Format('Zstandard VTK Data', True),
     # VTK parallel formats
     '.pvtk': Format('VTK Parallel Legacy Data', True),
     '.pvti': Format('VTK Parallel Image Data', True),
