@@ -12,8 +12,8 @@ DEST="$HOME/Applications"
 PYTHON_VERSION="${PVQL_PYTHON:-3.12}"
 # PyVista 0.49 is the floor and is not released yet.
 PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista @ git+https://github.com/pyvista/pyvista.git}"
-# STEP, DXF, 3MF, and IGES readers; the heavier CAD kernels are left out.
-CAD_SPEC="${PVQL_CAD_SPEC:-pyvista-cad[step-light,3mf,iges]}"
+# STEP, DXF, and 3MF readers; IGES and the heavier CAD kernels need stock VTK or OCP.
+CAD_SPEC="${PVQL_CAD_SPEC:-pyvista-cad[step-light,3mf]}"
 PYVISTA=""
 PYTHON=""
 PREBUILT=""

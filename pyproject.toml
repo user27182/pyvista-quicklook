@@ -12,7 +12,7 @@ dev = [
   'pytest',
   'pytest-cov',
   'pyvista @ git+https://github.com/pyvista/pyvista.git',
-  'pyvista-cad[step-light,3mf,iges]',
+  'pyvista-cad[step-light,3mf]',
 ]
 
 [project]

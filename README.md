@@ -40,8 +40,8 @@ About 400 MB, in `~/Library/Application Support/PyVistaQuickLook/venv`:
 
 - PyVista, from git until 0.49 is released, with its dependencies
 - [cvista](https://github.com/pyvista/cvista)`[all]`, a VTK fork, in place of stock VTK
-- [pyvista-cad](https://github.com/pyvista/pyvista-cad) with its STEP, DXF, 3MF, and
-  IGES readers
+- [pyvista-cad](https://github.com/pyvista/pyvista-cad) with its STEP, DXF, and 3MF
+  readers
 
 Point `--pyvista` at an environment you already have to use that instead. It needs
 PyVista 0.49 or newer.
