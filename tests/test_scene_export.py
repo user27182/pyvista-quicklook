@@ -178,6 +178,30 @@ def test_glyph_size_is_capped_for_a_single_point():
     assert np.isfinite(out.length)
 
 
+def test_large_images_are_strided_to_the_budget(tmp_path):
+    """A structured dataset is thinned on its lattice rather than decimated."""
+    image = pv.ImageData(dimensions=(400, 400, 1))
+    image['height'] = np.arange(image.n_points, dtype=float)
+    image.save(tmp_path / 'in.vti')
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(tmp_path / 'in.vti'), str(out), 10_000, 20_000)
+    scene = pv.read(out)
+    assert scene.n_points == 100 * 100
+    assert np.unique(scene.points[:, 0]).size == 100
+    assert 'RGB' in scene.point_data
+
+
+def test_volume_skin_is_kept_whole_when_it_fits(tmp_path):
+    """Only a volume's outer surface is drawn, so the budget is judged on that."""
+    volume = pv.ImageData(dimensions=(60, 60, 60))
+    volume.save(tmp_path / 'in.vti')
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(tmp_path / 'in.vti'), str(out), 100_000, 20_000)
+    assert pv.read(out).n_points == 60**3 - 58**3
+    export_mod.export(str(tmp_path / 'in.vti'), str(out), 5_000, 20_000)
+    assert pv.read(out).n_points <= 5_000
+
+
 def missing_reader(ext: str) -> str | None:
     """Return why the runtime cannot read an extension, or None when it can."""
     try:

@@ -7,10 +7,34 @@ imports only PyVista and its own dependencies.
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 
 import numpy as np
 import pyvista as pv
+
+
+def skin_estimate(dimensions: tuple[int, int, int]) -> int:
+    """Return roughly how many points the outer surface of a structured dataset has."""
+    extents = [k for k in dimensions if k > 1]
+    if len(extents) == 3:
+        a, b, c = extents
+        return 2 * (a * b + b * c + a * c)
+    return math.prod(extents)
+
+
+def thin(dataset: object, max_points: int) -> object:
+    """Stride structured data down to the budget; decimating it would take minutes."""
+    if not max_points or not hasattr(dataset, 'extract_subset'):
+        return dataset
+    budget = max_points // 3 if has_cell_scalars(dataset) else max_points
+    expected = skin_estimate(dataset.dimensions)
+    if expected <= budget:
+        return dataset
+    axes = sum(1 for k in dataset.dimensions if k > 1)
+    stride = math.ceil((expected / budget) ** (1 / min(axes, 2)))
+    nx, ny, nz = dataset.dimensions
+    return dataset.extract_subset(voi=(0, nx - 1, 0, ny - 1, 0, nz - 1), rate=(stride,) * 3)
 
 
 def to_surface(dataset: object) -> pv.PolyData:
@@ -94,10 +118,10 @@ def choose_scalars(surface: pv.PolyData) -> pv.PolyData:
     return surface
 
 
-def has_cell_scalars(surface: pv.PolyData) -> bool:
+def has_cell_scalars(dataset: pv.DataSet) -> bool:
     """Return whether the active scalars sit on cells rather than points."""
-    name = surface.active_scalars_name
-    return bool(name) and name in surface.cell_data
+    name = dataset.active_scalars_name
+    return bool(name) and name in dataset.cell_data
 
 
 def to_point_scalars(surface: pv.PolyData) -> pv.PolyData:
@@ -135,7 +159,7 @@ def colours_for(surface: pv.PolyData) -> np.ndarray | None:
 def export(source: str, destination: str, max_points: int, max_glyphs: int) -> None:
     """Write a mesh file out as a PLY with vertex colours; a budget of zero is no cap."""
     # Triangulating first would discard the vertex and line cells solidify needs.
-    surface = choose_scalars(to_surface(pv.read(source)))
+    surface = choose_scalars(to_surface(thin(pv.read(source), max_points)))
     wanted = surface.active_scalars_name
     surface = solidify(surface, max_glyphs).triangulate()
     # tube() and glyph() add arrays of their own; colour only by what the file had.
