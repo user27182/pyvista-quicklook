@@ -65,7 +65,10 @@ if curl -LsSf -o "$ZIP" "$DOWNLOAD"; then
 fi
 
 if [ -n "$APP" ] && [ -d "$APP" ]; then
-  exec "$ROOT/scripts/install.sh" --app "$APP" "$@"
+  # The installer copies the app into place, so the unpacked download can go.
+  "$ROOT/scripts/install.sh" --app "$APP" "$@" && outcome=0 || outcome=$?
+  rm -rf "$UNPACKED"
+  exit "$outcome"
 fi
 
 say '==> no published build for this release; building from source'
