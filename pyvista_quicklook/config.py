@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-import shutil
 from typing import Any
 
 APP_SUPPORT = Path.home() / 'Library' / 'Application Support' / 'PyVistaQuickLook'
@@ -30,13 +29,6 @@ DEFAULTS: dict[str, Any] = {
     'cache': True,
     'log': False,
 }
-
-# Interpreters searched when ``pyvista`` is not set in the config file.
-_CANDIDATE_DIRS = (
-    Path.home() / '.local' / 'bin',
-    Path('/opt/homebrew/bin'),
-    Path('/usr/local/bin'),
-)
 
 
 def load() -> dict[str, Any]:
@@ -69,50 +61,36 @@ def save(config: dict[str, Any]) -> Path:
     return CONFIG_PATH
 
 
-def find_pyvista(configured: str | None = None) -> str | None:
-    """Return the absolute path to the ``pyvista`` executable, or None if not found."""
-    if configured:
-        candidate = Path(configured).expanduser()
-        return str(candidate) if candidate.is_file() and os.access(candidate, os.X_OK) else None
-    found = shutil.which('pyvista')
-    if found:
-        return found
-    for directory in _CANDIDATE_DIRS:
-        candidate = directory / 'pyvista'
-        if candidate.is_file() and os.access(candidate, os.X_OK):
-            return str(candidate)
-    return None
+def executable(path: str | os.PathLike[str] | None) -> str | None:
+    """Return the path as a string when it names an executable file, else None."""
+    if not path:
+        return None
+    candidate = Path(path).expanduser()
+    return str(candidate) if candidate.is_file() and os.access(candidate, os.X_OK) else None
 
 
 def find_python(config: dict[str, Any] | None = None) -> str | None:
     """Return the interpreter of the configured PyVista environment."""
     config = config or {}
-    explicit = config.get('python')
-    if explicit:
-        candidate = Path(explicit).expanduser()
-        return str(candidate) if candidate.is_file() and os.access(candidate, os.X_OK) else None
+    if config.get('python'):
+        return executable(config['python'])
 
     # Older configurations only name the command line interface.
-    executable = find_pyvista(config.get('pyvista'))
-    if executable is None:
+    cli = executable(config.get('pyvista'))
+    if cli is None:
         return None
     for name in ('python3', 'python'):
-        candidate = Path(executable).parent / name
-        if candidate.is_file() and os.access(candidate, os.X_OK):
-            return str(candidate)
+        found = executable(Path(cli).parent / name)
+        if found:
+            return found
     return None
 
 
 def resolve_pyvista(config: dict[str, Any] | None = None) -> str | None:
     """Return the pyvista command line interface belonging to the configured environment."""
     config = config or {}
-    configured = config.get('pyvista')
-    if configured:
-        return find_pyvista(configured)
-    interpreter = config.get('python')
-    if interpreter:
-        candidate = Path(interpreter).parent / 'pyvista'
-        if candidate.is_file() and os.access(candidate, os.X_OK):
-            return str(candidate)
-        return None
-    return find_pyvista()
+    if config.get('pyvista'):
+        return executable(config['pyvista'])
+    if config.get('python'):
+        return executable(Path(config['python']).parent / 'pyvista')
+    return None

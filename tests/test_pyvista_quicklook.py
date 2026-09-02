@@ -335,17 +335,21 @@ def test_config_load_survives_broken_json(tmp_path, monkeypatch):
     assert config.load()['timeout'] == config.DEFAULTS['timeout']
 
 
-def test_find_pyvista_rejects_a_missing_executable(tmp_path):
-    """A configured path that is not executable is reported as not found."""
-    assert config.find_pyvista(str(tmp_path / 'absent')) is None
+def test_executable_rejects_what_cannot_run(tmp_path):
+    """Missing, unset, and non-executable paths are all reported as not found."""
+    assert config.executable(None) is None
+    assert config.executable(str(tmp_path / 'absent')) is None
+    plain = tmp_path / 'plain'
+    plain.write_text('data')
+    assert config.executable(str(plain)) is None
 
 
-def test_find_pyvista_accepts_a_configured_executable(tmp_path):
-    """A configured executable is used as given."""
+def test_executable_accepts_a_runnable_file(tmp_path):
+    """An executable file is returned as given."""
     tool = tmp_path / 'pyvista'
     tool.write_text('#!/bin/sh\n')
     tool.chmod(0o755)
-    assert config.find_pyvista(str(tool)) == str(tool)
+    assert config.executable(str(tool)) == str(tool)
 
 
 def test_bundle_version_is_numeric():
@@ -472,10 +476,10 @@ def test_find_python_falls_back_to_the_pyvista_sibling(tmp_path):
     assert config.find_python({'pyvista': str(tmp_path / 'pyvista')}) == str(tmp_path / 'python3')
 
 
-def test_find_python_reports_nothing_without_an_environment(monkeypatch):
-    """No interpreter and no CLI means no environment."""
-    monkeypatch.setattr(config, 'find_pyvista', lambda configured=None: None)
+def test_find_python_reports_nothing_without_an_environment():
+    """No interpreter and no CLI means no environment, whatever PATH holds."""
     assert config.find_python({}) is None
+    assert config.resolve_pyvista({}) is None
 
 
 def test_warmup_script_ships_with_the_package():

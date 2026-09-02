@@ -179,9 +179,9 @@ def cmd_config(args: argparse.Namespace) -> int:
         config['python'] = args.python or config.get('python')
         if args.python and not args.pyvista:
             # Naming the interpreter replaces any command line interface on record.
-            config['pyvista'] = args.pyvista
+            config['pyvista'] = None
         else:
-            config['pyvista'] = args.pyvista or config.get('pyvista') or config_mod.find_pyvista()
+            config['pyvista'] = args.pyvista or config.get('pyvista')
         config['pvql'] = args.helper or config.get('pvql') or shutil.which('pvql')
         path = config_mod.save(config_mod.overrides(config))
         print(f'wrote {path}')
