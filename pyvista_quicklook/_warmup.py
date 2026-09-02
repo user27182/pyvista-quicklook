@@ -6,6 +6,7 @@ imports only PyVista and its own dependencies.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -18,6 +19,11 @@ def import_vtk_modules() -> None:
     except ImportError:
         return
     import_all()
+
+
+def has_a_display() -> bool:
+    """Return whether there is somewhere to open the window a still image renders into."""
+    return sys.platform == 'darwin' or bool(os.environ.get('DISPLAY'))
 
 
 def main() -> int:
@@ -34,6 +40,9 @@ def main() -> int:
             directory / 'warm.ply'
         )
         # The still-image path, absent from builds without the rendering modules.
+        # Without a display VTK aborts the process rather than raising, so ask first.
+        if not has_a_display():
+            return 0
         try:
             plotter = pv.Plotter(off_screen=True, window_size=(64, 64))
         except Exception:  # noqa: BLE001

@@ -57,6 +57,9 @@ source = ['pyvista_quicklook']
 
 [tool.pytest.ini_options]
 addopts = '--cov=pyvista_quicklook --cov-fail-under=70'
+markers = [
+  'needs_rendering: needs the rendering half of cvista, absent on Python 3.13 and later',
+]
 testpaths = 'tests'
 
 [tool.ruff]

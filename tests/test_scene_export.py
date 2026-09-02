@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import sys
-
 import meshio
 import numpy as np
 import pytest
@@ -240,8 +238,9 @@ def test_partitioned_datasets_are_drawn_as_one_surface(tmp_path):
     assert pv.read(out).n_faces == pv.Sphere().n_faces + 12
 
 
+@pytest.mark.needs_rendering
 def test_step_models_are_drawn(tmp_path):
-    """A STEP model is tessellated by pyvista-cad and drawn as a surface."""
+    """A STEP model is tessellated by pyvista-cad, read back as glTF, and drawn."""
     out = tmp_path / 'out.ply'
     export_mod.export(str(cad_examples.bracket_step_path()), str(out), 2_000_000, 20_000)
     assert pv.read(out).n_faces > 0
@@ -320,7 +319,7 @@ def missing_reader(ext: str) -> str | None:
     return None
 
 
-@pytest.mark.skipif(sys.version_info >= (3, 13), reason='cvista rendering wheels stop at 3.12')
+@pytest.mark.needs_rendering
 def test_every_default_extension_has_a_reader():
     """The installed environment can read every format that is claimed by default."""
     missing = {ext: why for ext in formats.default_extensions() if (why := missing_reader(ext))}
