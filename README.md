@@ -83,23 +83,82 @@ which needs the Xcode command line tools (`xcode-select --install`):
 63 extensions are claimed by default, so pressing space on any of them opens this
 preview:
 
-`.3ds`, `.3mf`, `.avs`, `.bdf`, `.cas`, `.case`, `.cgns`, `.cube`, `.dem`, `.dxf`,
-`.ex2`, `.exii`, `.exo`, `.f3grid`, `.facet`, `.fem`, `.foam`, `.frd`, `.grdecl`,
-`.mdpa`, `.mesh`, `.meshb`, `.mha`, `.mhd`, `.mnc`, `.mr`, `.nas`, `.nek5000`, `.neu`,
-`.nhdr`, `.nii`, `.nrrd`, `.off`, `.p3d`, `.pdb`, `.pv`, `.pvd`, `.pvti`, `.pvtk`,
-`.pvtr`, `.pvtu`, `.segy`, `.sgy`, `.slc`, `.step`, `.stp`, `.tec`, `.tri`, `.vol`,
-`.vrml`, `.vti`, `.vtk`, `.vtkhdf`, `.vtm`, `.vtmb`, `.vtp`, `.vtpd`, `.vtr`, `.vts`,
-`.vtu`, `.wrl`, `.xdmf`, `.zvtk`
+| Format | Extensions |
+| --- | --- |
+| 3D Studio Model | `.3ds` |
+| 3MF Model | `.3mf` |
+| AVS UCD Mesh | `.avs` |
+| Binary Marching Cubes Surface | `.tri` |
+| CalculiX Result | `.frd` |
+| CGNS Data | `.cgns` |
+| Digital Elevation Model | `.dem` |
+| DXF Drawing | `.dxf` |
+| Eclipse GRDECL Grid | `.grdecl` |
+| EnSight Case | `.case` |
+| Exodus II Data | `.ex2`, `.exii`, `.exo` |
+| Facet Surface | `.facet` |
+| FLAC3D Grid | `.f3grid` |
+| Fluent Case | `.cas` |
+| GAMBIT Neutral Mesh | `.neu` |
+| Gaussian Cube | `.cube` |
+| GE Signa MR Image | `.mr` |
+| Kratos Model Part | `.mdpa` |
+| Medit Mesh | `.mesh`, `.meshb` |
+| MetaImage Volume | `.mha`, `.mhd` |
+| MINC Volume | `.mnc` |
+| Nastran Bulk Data | `.bdf`, `.fem`, `.nas` |
+| Nek5000 Data | `.nek5000` |
+| Netgen Mesh | `.vol` |
+| NIfTI Volume | `.nii` |
+| NRRD Volume | `.nhdr`, `.nrrd` |
+| Object File Format Mesh | `.off` |
+| OpenFOAM Case | `.foam` |
+| ParaView Data Collection | `.pvd` |
+| PLOT3D Metadata | `.p3d` |
+| Protein Data Bank | `.pdb` |
+| PyVista Zstandard Data | `.pv`, `.zvtk` |
+| SEG-Y Seismic Data | `.segy`, `.sgy` |
+| SLC Volume | `.slc` |
+| STEP Model | `.step`, `.stp` |
+| Tecplot ASCII Data | `.tec` |
+| VRML Model | `.vrml`, `.wrl` |
+| VTK HDF | `.vtkhdf` |
+| VTK Image Data | `.vti` |
+| VTK Legacy Data | `.vtk` |
+| VTK MultiBlock | `.vtm`, `.vtmb` |
+| VTK Parallel Image Data | `.pvti` |
+| VTK Parallel Legacy Data | `.pvtk` |
+| VTK Parallel Rectilinear Grid | `.pvtr` |
+| VTK Parallel Unstructured Grid | `.pvtu` |
+| VTK Partitioned Dataset | `.vtpd` |
+| VTK PolyData | `.vtp` |
+| VTK Rectilinear Grid | `.vtr` |
+| VTK Structured Grid | `.vts` |
+| VTK Unstructured Grid | `.vtu` |
+| XDMF Data | `.xdmf` |
 
 22 more can be claimed with `extensions.add`:
 
-- `.brep`, `.brp`, `.fcstd`, `.iges`, `.igs`: needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more.
-- `.dat`, `.dato`, `.e`, `.g`, `.h5`, `.hdf`, `.inp`, `.post`, `.pts`, `.res`, `.series`,
-  `.vrt`: the extension is shared with other kinds of file.
-- `.ele`, `.node`: each is half of a TetGen pair.
-- `.ifc`: needs `pyvista-cad[ifc]`.
-- `.msh`: the extension is shared with ANSYS meshes, and meshio reads only the binary Gmsh form.
-- `.scad`: needs the `openscad` program.
+| Format | Extensions | Why not by default |
+| --- | --- | --- |
+| AVS UCD Data | `.inp` | the extension is shared with other kinds of file |
+| BREP Model | `.brep`, `.brp` | needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more |
+| BYU Geometry | `.g` | the extension is shared with other kinds of file |
+| Exodus II Data | `.e` | the extension is shared with other kinds of file |
+| Fluent CFF Data | `.h5` | the extension is shared with other kinds of file |
+| FreeCAD Document | `.fcstd` | needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more |
+| Gmsh Mesh | `.msh` | the extension is shared with ANSYS meshes, and meshio reads only the binary Gmsh form |
+| IFC Building Model | `.ifc` | needs `pyvista-cad[ifc]` |
+| IGES Model | `.iges`, `.igs` | needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more |
+| MFIX Result | `.res` | the extension is shared with other kinds of file |
+| OpenSCAD Script | `.scad` | needs the `openscad` program |
+| PERMAS Data | `.dato`, `.post` | the extension is shared with other kinds of file |
+| Point Cloud | `.pts` | the extension is shared with other kinds of file |
+| ProStar Mesh | `.vrt` | the extension is shared with other kinds of file |
+| Tecplot Data | `.dat` | the extension is shared with other kinds of file |
+| TetGen Mesh | `.ele`, `.node` | each is half of a TetGen pair |
+| VTK File Series | `.series` | the extension is shared with other kinds of file |
+| VTK HDF | `.hdf` | the extension is shared with other kinds of file |
 
 macOS previews STL, OBJ, PLY, glTF, images, and DICOM itself, and its previewer cannot
 be replaced, so those are not listed.
@@ -248,7 +307,12 @@ so the test environment holds the same packages the installer provisions.
 PyVista is pinned to one commit, in `pyproject.toml` and `scripts/install.sh` alike.
 Bumping it reruns a test that compares every extension the environment can read with
 the format table, so a reader that PyVista adds, drops, or moves to a plugin shows up as
-a failure to resolve in `formats.py`.
+a failure to resolve in `formats.py`. The README's format tables are generated from
+PyVista's reader tables and checked by another test:
+
+```bash
+uv run python -m pyvista_quicklook._formats_table README.md
+```
 
 `main` is protected by a pre-commit hook, so work on a branch.
 

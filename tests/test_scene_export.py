@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import meshio
 import numpy as np
 import pytest
@@ -10,6 +12,7 @@ from pyvista.core.utilities import reader as readers
 from pyvista.core.utilities import reader_registry
 from pyvista_cad import examples as cad_examples
 
+from pyvista_quicklook import _formats_table
 from pyvista_quicklook import _scene_export as export_mod
 from pyvista_quicklook import formats
 
@@ -359,6 +362,13 @@ def readable_extensions() -> set[str]:
     """Return every extension ``pyvista.read`` accepts in this environment."""
     registered = {entry.extension for entry in reader_registry.registered_readers()}
     return set(readers.CLASS_READERS) | registered | set(meshio.extension_to_filetypes)
+
+
+def test_readme_tables_match_the_readers():
+    """The README's format tables are exactly what PyVista's reader tables generate."""
+    readme = (Path(__file__).parents[1] / 'README.md').read_text()
+    section = readme.split(_formats_table.START, 1)[1].split(_formats_table.END, 1)[0]
+    assert section == _formats_table.section()
 
 
 def test_format_table_accounts_for_every_readable_extension():

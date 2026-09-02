@@ -35,7 +35,7 @@ FORMATS: dict[str, Format] = {
     '.vtkhdf': Format('VTK HDF', True),
     # Zstandard-compressed VTK, written by pyvista-zstd.
     '.pv': Format('PyVista Zstandard Data', True),
-    '.zvtk': Format('Zstandard VTK Data', True),
+    '.zvtk': Format('PyVista Zstandard Data', True),
     # VTK parallel formats
     '.pvtk': Format('VTK Parallel Legacy Data', True),
     '.pvti': Format('VTK Parallel Image Data', True),
@@ -64,7 +64,7 @@ FORMATS: dict[str, Format] = {
     '.pdb': Format('Protein Data Bank', True),
     '.segy': Format('SEG-Y Seismic Data', True),
     '.sgy': Format('SEG-Y Seismic Data', True),
-    '.tri': Format('BYU Triangle Surface', True),
+    '.tri': Format('Binary Marching Cubes Surface', True),
     '.3ds': Format('3D Studio Model', True),
     '.wrl': Format('VRML Model', True),
     '.vrml': Format('VRML Model', True),
@@ -80,7 +80,7 @@ FORMATS: dict[str, Format] = {
     '.fem': Format('Nastran Bulk Data', True),
     '.mdpa': Format('Kratos Model Part', True),
     '.mesh': Format('Medit Mesh', True),
-    '.meshb': Format('Medit Binary Mesh', True),
+    '.meshb': Format('Medit Mesh', True),
     '.nas': Format('Nastran Bulk Data', True),
     '.off': Format('Object File Format Mesh', True),
     '.tec': Format('Tecplot ASCII Data', True),
@@ -92,9 +92,9 @@ FORMATS: dict[str, Format] = {
         'the extension is shared with ANSYS meshes, and meshio reads only the binary Gmsh form',
     ),
     '.dato': Format('PERMAS Data', False, 'the extension is shared with other kinds of file'),
-    '.post': Format('PERMAS Result', False, 'the extension is shared with other kinds of file'),
-    '.node': Format('TetGen Nodes', False, 'each is half of a TetGen pair'),
-    '.ele': Format('TetGen Elements', False, 'each is half of a TetGen pair'),
+    '.post': Format('PERMAS Data', False, 'the extension is shared with other kinds of file'),
+    '.node': Format('TetGen Mesh', False, 'each is half of a TetGen pair'),
+    '.ele': Format('TetGen Mesh', False, 'each is half of a TetGen pair'),
     # Off by default: these readers need CAD kernels the installer leaves out.
     '.iges': Format(
         'IGES Model', False, 'needs `pyvista-cad[step]`, the OpenCascade kernel, about 200 MB more'
@@ -120,18 +120,16 @@ FORMATS: dict[str, Format] = {
     '.mha': Format('MetaImage Volume', True),
     '.mhd': Format('MetaImage Volume', True),
     '.nrrd': Format('NRRD Volume', True),
-    '.nhdr': Format('NRRD Header', True),
+    '.nhdr': Format('NRRD Volume', True),
     '.mnc': Format('MINC Volume', True),
     '.mr': Format('GE Signa MR Image', True),
     # Off by default: extensions too generic to claim safely.
     '.dat': Format('Tecplot Data', False, 'the extension is shared with other kinds of file'),
-    '.h5': Format('HDF5 Data', False, 'the extension is shared with other kinds of file'),
-    '.hdf': Format('HDF Data', False, 'the extension is shared with other kinds of file'),
-    '.vrt': Format(
-        'GDAL Virtual Raster', False, 'the extension is shared with other kinds of file'
-    ),
+    '.h5': Format('Fluent CFF Data', False, 'the extension is shared with other kinds of file'),
+    '.hdf': Format('VTK HDF', False, 'the extension is shared with other kinds of file'),
+    '.vrt': Format('ProStar Mesh', False, 'the extension is shared with other kinds of file'),
     '.inp': Format('AVS UCD Data', False, 'the extension is shared with other kinds of file'),
-    '.res': Format('Fluent Result', False, 'the extension is shared with other kinds of file'),
+    '.res': Format('MFIX Result', False, 'the extension is shared with other kinds of file'),
     '.pts': Format('Point Cloud', False, 'the extension is shared with other kinds of file'),
     '.series': Format(
         'VTK File Series', False, 'the extension is shared with other kinds of file'
