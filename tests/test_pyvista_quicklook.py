@@ -183,17 +183,17 @@ def test_handle_reports_a_malformed_request(tmp_path):
 
 
 def test_handle_falls_back_to_the_staged_copy(tmp_path, monkeypatch):
-    """When the original cannot be read, the copy is rendered under the original's identity."""
-    png = tmp_path / 'rendered.png'
-    png.write_bytes(b'\x89PNG')
+    """When the original cannot be read, the copy is converted under the original's identity."""
+    ply = tmp_path / 'built.ply'
+    ply.write_bytes(b'ply\n')
     seen = {}
 
-    def fake_preview(source, config, identity=None):
+    def fake_scene(source, config, identity=None):
         seen['source'] = str(source)
         seen['identity'] = identity
-        return png
+        return ply
 
-    monkeypatch.setattr(daemon.render_mod, 'preview', fake_preview)
+    monkeypatch.setattr(daemon.convert_mod, 'scene', fake_scene)
     monkeypatch.setattr(daemon, 'folder_is_reachable', lambda path: False)
 
     request = tmp_path / 'token.pvqlreq'
@@ -213,7 +213,7 @@ def test_handle_falls_back_to_the_staged_copy(tmp_path, monkeypatch):
     assert seen['identity'] == ('/private/mesh.vtu', 7, 3)
     reply = json.loads((tmp_path / 'token.pvqlrep').read_text())
     assert reply['ok'] is True
-    assert (tmp_path / 'token.png').read_bytes() == b'\x89PNG'
+    assert (tmp_path / 'token.ply').read_bytes() == b'ply\n'
 
 
 def test_handle_reports_unreachable_files_without_a_copy(tmp_path, monkeypatch):
@@ -488,17 +488,17 @@ def test_produce_skips_the_scene_when_not_interactive(monkeypatch, tmp_path):
     assert daemon.produce('/mesh.vtu', {'interactive': False}) == png
 
 
-def test_produce_falls_back_when_conversion_fails(monkeypatch, tmp_path):
-    """A dataset that cannot be converted falls back to the rendered image."""
-    png = tmp_path / 'out.png'
+def test_produce_does_not_hide_a_failed_conversion_behind_an_image(monkeypatch):
+    """A dataset that cannot be converted is reported, not painted as a still image."""
 
     def fail(target, config, identity=None):
         message = 'no surface'
         raise environment.RenderError(message)
 
     monkeypatch.setattr(daemon.convert_mod, 'scene', fail)
-    monkeypatch.setattr(daemon.render_mod, 'preview', lambda target, config, identity=None: png)
-    assert daemon.produce('/mesh.vtu', {'interactive': True}) == png
+    monkeypatch.setattr(daemon.render_mod, 'preview', lambda *a, **k: pytest.fail('rendered'))
+    with pytest.raises(environment.RenderError, match='no surface'):
+        daemon.produce('/mesh.vtu', {'interactive': True})
 
 
 def test_handle_delivers_an_interactive_scene(tmp_path, monkeypatch):
@@ -598,28 +598,20 @@ def test_overrides_round_trips_through_load(tmp_path, monkeypatch):
 
 
 def test_handle_reports_why_the_scene_failed(tmp_path, monkeypatch):
-    """Without a still-image fallback the scene's own error is what gets reported."""
+    """The scene's own error is what gets reported."""
 
     def no_scene(target, config, identity=None):
         message = 'the dataset has no surface to show'
         raise environment.RenderError(message)
 
-    def no_renderer(target, config, identity=None):
-        message = 'The pyvista command-line interface was not found.'
-        raise environment.RenderError(message)
-
     monkeypatch.setattr(daemon, 'folder_is_reachable', lambda path: True)
     monkeypatch.setattr(daemon.convert_mod, 'scene', no_scene)
-    monkeypatch.setattr(daemon.render_mod, 'preview', no_renderer)
-
     request = tmp_path / 'token.pvqlreq'
     request.write_text(json.dumps({'path': str(tmp_path / 'mesh.vtu'), 'mtime': 1, 'size': 2}))
     daemon.handle(request)
-
     reply = json.loads((tmp_path / 'token.pvqlrep').read_text())
     assert reply['ok'] is False
     assert 'no surface' in reply['error']
-    assert 'command-line interface' not in reply['error']
 
 
 def test_config_init_with_an_interpreter_clears_a_stale_cli(tmp_path, monkeypatch):

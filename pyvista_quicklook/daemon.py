@@ -94,19 +94,10 @@ def produce(
     config: dict[str, Any],
     identity: tuple[str, int, int] | None = None,
 ) -> Path:
-    """Return a cached preview of a file: an interactive scene, or else a rendered image."""
-    scene_error = None
+    """Return a cached preview of a file: an interactive scene, or a still image if asked."""
     if config.get('interactive', True):
-        try:
-            return convert_mod.scene(target, config, identity=identity)
-        except RenderError as error:
-            scene_error = str(error)
-    try:
-        return render_mod.preview(target, config, identity=identity)
-    except RenderError as error:
-        # A build without the rendering modules has no still-image fallback, so the
-        # reason the scene failed is the useful one.
-        raise RenderError(scene_error or str(error)) from error
+        return convert_mod.scene(target, config, identity=identity)
+    return render_mod.preview(target, config, identity=identity)
 
 
 def handle(request: Path) -> None:

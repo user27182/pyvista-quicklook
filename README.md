@@ -174,10 +174,9 @@ shown it. When a preview fails for another reason, the panel shows the error tex
 
 ### Still images
 
-The environment can also render still images with `pyvista plot --off-screen
---screenshot`, which keep the scalar bar and axes the interactive view leaves out. They
-are used when a dataset has no surface to show, or always when `"interactive"` is
-`false`.
+With `"interactive": false` in the config, every preview is a still image rendered by
+`pyvista plot --off-screen --screenshot` instead, which keeps the scalar bar and axes
+the interactive view leaves out.
 
 ### The render service
 
@@ -212,7 +211,7 @@ Privacy & Security.
 | --- | --- | --- |
 | `python` | set at install | Interpreter of the PyVista environment |
 | `pvql` | discovered | Absolute path to the `pvql` helper |
-| `interactive` | `true` | Show a turnable surface; `false` always uses a still image |
+| `interactive` | `true` | Show a turnable surface; `false` renders a still image instead |
 | `max_scene_points` | `2000000` | Thin surfaces above this many points; `0` never does |
 | `max_glyph_points` | `20000` | Draw at most this many points of a point cloud; `0` draws all |
 | `max_file_size_mb` | `512` | Files above this size show a notice instead of a preview, and are never copied |
