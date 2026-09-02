@@ -75,7 +75,8 @@ shows that PLY in a SceneKit view, which is what makes the preview turnable.
 
 Point data is interpolated across each face. Cell data is drawn flat: the cells are
 split apart first, so each keeps its own colour. Lines are drawn as tubes and point
-clouds as spheres, sized to the spacing between points.
+clouds as spheres, sized to the spacing between points. A volume that carries scalars
+is cut into three slices through its centre; one without is shown as its outer surface.
 
 Previews are cached under `~/Library/Caches/PyVistaQuickLook`, keyed by the file's
 path, size, and modification time, so editing a file invalidates its preview.

@@ -195,8 +195,32 @@ def test_large_images_are_strided_to_the_budget(tmp_path):
     assert 'RGB' in scene.point_data
 
 
+def test_volumes_with_scalars_are_cut_into_slices(tmp_path):
+    """A volume with scalars is shown as three slices through its centre, coloured."""
+    volume = pv.ImageData(dimensions=(30, 30, 30))
+    volume['t'] = np.arange(volume.n_points, dtype=float)
+    volume.save(tmp_path / 'in.vti')
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(tmp_path / 'in.vti'), str(out), 2_000_000, 20_000)
+    scene = pv.read(out)
+    assert scene.n_points == 3 * 30 * 30
+    assert 'RGB' in scene.point_data
+
+
+def test_volume_cell_data_is_drawn_flat_on_the_slices(tmp_path):
+    """Cell data on a volume reaches the slices and is drawn one colour per cell."""
+    volume = pv.ImageData(dimensions=(30, 30, 30))
+    volume.cell_data['c'] = np.arange(volume.n_cells, dtype=float)
+    volume.save(tmp_path / 'in.vti')
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(tmp_path / 'in.vti'), str(out), 2_000_000, 20_000)
+    scene = pv.read(out)
+    assert scene.n_points > 3 * 30 * 30
+    assert 'RGB' in scene.point_data
+
+
 def test_volume_skin_is_kept_whole_when_it_fits(tmp_path):
-    """Only a volume's outer surface is drawn, so the budget is judged on that."""
+    """A volume with nothing to colour shows its outer surface, whole while it fits."""
     volume = pv.ImageData(dimensions=(60, 60, 60))
     volume.save(tmp_path / 'in.vti')
     out = tmp_path / 'out.ply'

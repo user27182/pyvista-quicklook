@@ -37,6 +37,14 @@ def thin(dataset: object, max_points: int) -> object:
     return dataset.extract_subset(voi=(0, nx - 1, 0, ny - 1, 0, nz - 1), rate=(stride,) * 3)
 
 
+def slice_volume(dataset: pv.DataSet) -> pv.DataSet:
+    """Cut three slices through the centre of a volume that has scalars to show."""
+    dimensions = getattr(dataset, 'dimensions', None)
+    if dimensions is None or min(dimensions) < 2 or not dataset.active_scalars_name:
+        return dataset
+    return dataset.slice_orthogonal()
+
+
 def to_surface(dataset: object) -> pv.PolyData:
     """Return the surface of any dataset PyVista can read, cells left as they are."""
     if isinstance(dataset, pv.PartitionedDataSet):
@@ -103,21 +111,21 @@ def recentre(surface: pv.PolyData) -> pv.PolyData:
     return surface.translate(-np.array(surface.center), inplace=False)
 
 
-def choose_scalars(surface: pv.PolyData) -> pv.PolyData:
-    """Point the surface away from VTK's bookkeeping arrays, colouring by a real one."""
-    name = surface.active_scalars_name
+def choose_scalars(dataset: pv.DataSet) -> pv.DataSet:
+    """Point the dataset away from VTK's bookkeeping arrays, colouring by a real one."""
+    name = dataset.active_scalars_name
     if not name:
         # Nothing was active, so the file asks for no colour. Leave it that way.
-        return surface
+        return dataset
     if not name.startswith('vtk'):
-        return surface
-    for source in (surface.point_data, surface.cell_data):
+        return dataset
+    for source in (dataset.point_data, dataset.cell_data):
         for candidate in source:
             if not candidate.startswith('vtk'):
-                surface.set_active_scalars(candidate)
-                return surface
-    surface.set_active_scalars(None)
-    return surface
+                dataset.set_active_scalars(candidate)
+                return dataset
+    dataset.set_active_scalars(None)
+    return dataset
 
 
 def has_cell_scalars(dataset: pv.DataSet) -> bool:
@@ -162,8 +170,11 @@ def colours_for(surface: pv.PolyData) -> np.ndarray | None:
 
 def export(source: str, destination: str, max_points: int, max_glyphs: int) -> None:
     """Write a mesh file out as a PLY with vertex colours; a budget of zero is no cap."""
+    dataset = pv.read(source)
+    if isinstance(dataset, pv.DataSet):
+        dataset = slice_volume(choose_scalars(thin(dataset, max_points)))
     # Triangulating first would discard the vertex and line cells solidify needs.
-    surface = choose_scalars(to_surface(thin(pv.read(source), max_points)))
+    surface = choose_scalars(to_surface(dataset))
     wanted = surface.active_scalars_name
     surface = solidify(surface, max_glyphs).triangulate()
     # tube() and glyph() add arrays of their own; colour only by what the file had.
