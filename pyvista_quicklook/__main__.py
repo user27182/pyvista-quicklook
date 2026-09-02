@@ -1,4 +1,4 @@
-"""Entry point for ``python -m pvql``."""
+"""Entry point for ``python -m pyvista_quicklook``."""
 
 from __future__ import annotations
 

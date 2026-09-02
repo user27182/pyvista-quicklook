@@ -51,7 +51,7 @@ func realHome() -> String {
     return NSHomeDirectory()
 }
 
-/// Runs the `pvql` helper that turns a mesh file into a PNG preview.
+/// Talks to the render service, and runs the `pvql` helper for diagnostics.
 enum Helper {
     struct Failure: Error {
         let message: String
@@ -85,7 +85,7 @@ enum Helper {
 
     Install it, then record where it lives:
 
-        uv tool install /path/to/pyvista-quicklook
+        uv tool install pyvista-quicklook
         pvql config --init
     """
 

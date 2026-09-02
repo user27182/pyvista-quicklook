@@ -4,7 +4,7 @@
 <dict>
   <!-- macOS only registers a Quick Look preview extension that declares the sandbox.
        The extension stays inside its own container: it writes a request there and
-       reads back the PNG the render service leaves for it. -->
+       reads back the scene or image the render service leaves for it. -->
   <key>com.apple.security.app-sandbox</key>
   <true/>
 </dict>

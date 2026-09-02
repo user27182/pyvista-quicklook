@@ -319,7 +319,6 @@ def test_config_load_merges_over_defaults(tmp_path, monkeypatch):
     """Unknown keys are dropped and missing ones fall back to defaults."""
     path = tmp_path / 'config.json'
     path.write_text(json.dumps({'timeout': 5, 'bogus': 1}))
-    monkeypatch.setattr(config.CONFIG_PATH, '__class__', type(path), raising=False)
     monkeypatch.setattr(config, 'CONFIG_PATH', path)
     loaded = config.load()
     assert loaded['timeout'] == 5
