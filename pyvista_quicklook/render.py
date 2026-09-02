@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING
 from typing import Any
 
@@ -12,6 +11,7 @@ from . import environment
 
 if TYPE_CHECKING:
     import os
+    from pathlib import Path
 
 
 def cache_key(identity: tuple[str, int, int], config: dict[str, Any]) -> str:

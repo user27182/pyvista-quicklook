@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 import hashlib
 import os
-from pathlib import Path
 import time
+from typing import TYPE_CHECKING
 from typing import Any
 
 from . import config as config_mod
 from .environment import RenderError
 from .environment import log
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
 
 CACHE_VERSION = '1'
 SUFFIXES = ('*.png', '*.ply')
