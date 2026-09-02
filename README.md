@@ -36,12 +36,12 @@ which needs the Xcode command line tools (`xcode-select --install`):
 
 ### What gets installed
 
-About 150 MB, in `~/Library/Application Support/PyVistaQuickLook/venv`:
+About 400 MB, in `~/Library/Application Support/PyVistaQuickLook/venv`:
 
-- PyVista, from git until 0.49 is released, installed with `--no-deps`
-- [cvista](https://github.com/pyvista/cvista)`[io]`, the reading half of a VTK fork,
-  in place of stock VTK
-- numpy, pooch, scooby, typing-extensions
+- PyVista, from git until 0.49 is released, with its dependencies
+- [cvista](https://github.com/pyvista/cvista)`[all]`, a VTK fork, in place of stock VTK
+- [pyvista-cad](https://github.com/pyvista/pyvista-cad) with its STEP, DXF, 3MF, and
+  IGES readers
 
 Point `--pyvista` at an environment you already have to use that instead. It needs
 PyVista 0.49 or newer.
@@ -183,6 +183,10 @@ uv run pytest tests/          # helper and exporter tests, with coverage
 uv run pre-commit run --all-files
 ./scripts/build.sh            # compile and sign the app bundle
 ```
+
+`.python-version` pins the interpreter to 3.12, the last release cvista ships rendering
+wheels for, and `[tool.uv]` in `pyproject.toml` overrides PyVista's stock VTK requirement
+so the test environment holds the same packages the installer provisions.
 
 `main` is protected by a pre-commit hook, so work on a branch.
 

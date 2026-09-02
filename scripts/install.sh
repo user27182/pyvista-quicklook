@@ -8,11 +8,12 @@ EXT_ID="io.github.user27182.PyVistaQuickLook.QuickLook"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
 VENV="$SUPPORT/venv"
 DEST="$HOME/Applications"
+# cvista's rendering wheels stop at 3.12.
 PYTHON_VERSION="${PVQL_PYTHON:-3.12}"
 # PyVista 0.49 is the floor and is not released yet.
 PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista @ git+https://github.com/pyvista/pyvista.git}"
-# SceneKit draws the previews, so only the reading half of the VTK fork is needed.
-RUNTIME_DEPS=('cvista[io]' numpy pooch scooby typing-extensions)
+# STEP, DXF, 3MF, and IGES readers; the heavier CAD kernels are left out.
+CAD_SPEC="${PVQL_CAD_SPEC:-pyvista-cad[step-light,3mf,iges]}"
 PYVISTA=""
 PYTHON=""
 PREBUILT=""
@@ -74,11 +75,14 @@ fi
 # install never depends on what is already on this machine.
 if [[ -z "$PYVISTA" ]]; then
   echo "==> preparing the PyVista environment in $VENV"
-  echo "    (about 150 MB the first time)"
+  echo "    (about 400 MB the first time)"
   mkdir -p "$SUPPORT"
   "$UV" venv --quiet --allow-existing --python "$PYTHON_VERSION" "$VENV"
-  "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade --no-deps "$PYVISTA_SPEC"
-  "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade "${RUNTIME_DEPS[@]}"
+  # PyVista requires stock VTK, which cvista replaces; the override drops that requirement.
+  printf "vtk; python_version < '0'\n" > "$SUPPORT/overrides.txt"
+  "$UV" pip uninstall --quiet --python "$VENV/bin/python" vtk >/dev/null 2>&1 || true
+  "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade \
+    --override "$SUPPORT/overrides.txt" "$PYVISTA_SPEC" 'cvista[all]' "$CAD_SPEC"
   PYTHON="$VENV/bin/python"
 fi
 

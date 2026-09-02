@@ -24,7 +24,7 @@ rm -f "$HOME/Library/LaunchAgents/$LABEL.plist"
 /usr/bin/qlmanage -r cache >/dev/null 2>&1 || true
 
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
-rm -rf "$HOME/Library/Caches/PyVistaQuickLook" "$SUPPORT/venv" "$SUPPORT/src" "$SUPPORT/unpacked"
+rm -rf "$HOME/Library/Caches/PyVistaQuickLook" "$SUPPORT/venv" "$SUPPORT/src" "$SUPPORT/unpacked" "$SUPPORT/overrides.txt"
 echo "removed the app, the render service, the cache, the PyVista environment, and the download"
 echo "the config file was left at $SUPPORT/config.json"
 echo "remove the helper with:  uv tool uninstall pyvista-quicklook"
