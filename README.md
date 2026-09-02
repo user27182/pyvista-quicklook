@@ -94,11 +94,10 @@ When a preview fails, the Quick Look panel shows the error text instead.
 
 ### Still images
 
-An environment with the full PyVista, named with `--pyvista`, can also render still
-images with `pyvista plot --off-screen --screenshot`, which keep the scalar bar and axes
-the interactive view leaves out. They are used when a dataset has no surface to show,
-or always when `"interactive"` is `false`. The default environment has no rendering
-modules and shows the error instead.
+The environment can also render still images with `pyvista plot --off-screen
+--screenshot`, which keep the scalar bar and axes the interactive view leaves out. They
+are used when a dataset has no surface to show, or always when `"interactive"` is
+`false`.
 
 ### The render service
 
@@ -132,7 +131,7 @@ Privacy & Security.
 | Key | Default | Effect |
 | --- | --- | --- |
 | `python` | set at install | Interpreter of the PyVista environment |
-| `pyvista` | unset | `pyvista` executable of an environment that can render still images |
+| `pyvista` | beside `python` | `pyvista` executable used for still images |
 | `pvql` | discovered | Absolute path to the `pvql` helper |
 | `interactive` | `true` | Show a turnable surface; `false` always uses a still image |
 | `max_scene_points` | `2000000` | Thin surfaces above this many points; `0` never does |

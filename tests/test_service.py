@@ -12,6 +12,7 @@ from pyvista_quicklook import config
 from pyvista_quicklook import convert
 from pyvista_quicklook import daemon
 from pyvista_quicklook import environment
+from pyvista_quicklook import render
 from pyvista_quicklook import warmup
 
 
@@ -65,3 +66,14 @@ def test_warm_runs_the_warmer_and_leaves_a_stamp(env):
     assert not warmup.warmed_recently()
     assert warmup.warm(env) > 0
     assert warmup.warmed_recently()
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='rendering needs a display server on Linux')
+def test_still_images_come_from_the_pyvista_command(tmp_path, env):
+    """The environment can render a still image, which is what non-interactive mode shows."""
+    source = tmp_path / 'sphere.vtp'
+    pv.Sphere().save(source)
+    png = render.preview(source, env)
+    assert png.suffix == '.png'
+    assert png.stat().st_size > 0
+    assert daemon.produce(source, {**env, 'interactive': False}) == png
