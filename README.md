@@ -32,8 +32,8 @@ result with `pvql doctor`.
    [pyvista-cad](https://github.com/pyvista/pyvista-cad). This is the step that takes a
    while: about 400 MB of wheels.
 5. Writes the configuration file and loads PyVista once, so the first preview is quick.
-6. Copies the app from the download into `~/Applications`, registers it with Launch
-   Services and Quick Look, and removes the downloaded copy.
+6. Copies the app from the download into `~/Applications` and registers it with Launch
+   Services and Quick Look. The downloads are removed once everything is installed.
 7. Installs the render service as a launch agent. It appears as PyVista Quick Look
    under Login Items in System Settings.
 
@@ -45,7 +45,6 @@ No system Python and no existing environment is used or changed.
 | --- | --- | --- |
 | `~/Library/Application Support/PyVistaQuickLook/venv` | The PyVista environment | 380 MB |
 | `~/Library/Application Support/PyVistaQuickLook/config.json` | Configuration | 4 KB |
-| `~/Library/Application Support/PyVistaQuickLook/src` | The installer scripts, kept for `uninstall.sh` | 1 MB |
 | `~/Applications/PyVistaQuickLook.app` | The app and its Quick Look extension | 500 KB |
 | `~/Library/Application Support/uv/tools/pyvista-quicklook` | The `pvql` helper | 400 KB |
 | `~/.local/bin/pvql`, `~/.local/bin/pyvista-quicklook` | Links to the helper | |

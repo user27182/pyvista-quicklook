@@ -65,11 +65,12 @@ if curl -LsSf -o "$ZIP" "$DOWNLOAD"; then
 fi
 
 if [ -n "$APP" ] && [ -d "$APP" ]; then
-  # The installer copies the app into place, so the unpacked download can go.
   "$ROOT/scripts/install.sh" --app "$APP" "$@" && outcome=0 || outcome=$?
-  rm -rf "$UNPACKED"
-  exit "$outcome"
+else
+  say '==> no published build for this release; building from source'
+  "$ROOT/scripts/install.sh" "$@" && outcome=0 || outcome=$?
 fi
-
-say '==> no published build for this release; building from source'
-exec "$ROOT/scripts/install.sh" "$@"
+# Nothing uses the downloads once the app and the helper are installed.
+rm -rf "$UNPACKED"
+[ "$ROOT" = "$SRC" ] && rm -rf "$SRC"
+exit "$outcome"
