@@ -128,6 +128,17 @@ def solidify(surface: pv.PolyData, max_glyphs: int) -> pv.PolyData:
     return surface
 
 
+def both_sides(surface: pv.PolyData) -> pv.PolyData:
+    """Add a flipped copy of an open surface, so it is drawn and lit from either side."""
+    back = surface.flip_faces()
+    if 'Normals' in back.point_data:
+        back.point_data['Normals'] = -np.asarray(back.point_data['Normals'])
+    both = pv.merge([surface, back], merge_points=False)
+    if 'Normals' in both.point_data:
+        both.point_data.active_normals_name = 'Normals'
+    return both
+
+
 def recentre(surface: pv.PolyData) -> pv.PolyData:
     """Move the mesh to the origin, so far-from-origin coordinates keep their precision."""
     return surface.translate(-np.array(surface.center), inplace=False)
@@ -205,6 +216,9 @@ def export(source: str, destination: str, max_points: int, max_glyphs: int) -> N
         message = 'the dataset has no surface to show'
         raise ValueError(message)
 
+    # Merging coincident points first, since the surface filter leaves a volume's faces
+    # unjoined at their edges. The budget counts a surface once, whatever its sides.
+    is_open = surface.clean().n_open_edges > 0
     # Splitting cells triples the points, so the cap is shared out beforehand.
     cap = max_points // 3 if max_points and has_cell_scalars(surface) else max_points
     if cap and surface.n_points > cap:
@@ -220,9 +234,9 @@ def export(source: str, destination: str, max_points: int, max_glyphs: int) -> N
         surface.point_data.active_normals_name = 'Normals'
     if colours is not None and len(colours) == surface.n_points:
         surface['RGB'] = colours
-        surface.save(destination, texture='RGB')
-    else:
-        surface.save(destination)
+    if is_open:
+        surface = both_sides(surface)
+    surface.save(destination, texture='RGB' if 'RGB' in surface.point_data else None)
 
 
 def main() -> int:

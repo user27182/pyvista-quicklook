@@ -192,9 +192,32 @@ def test_large_images_are_strided_to_the_budget(tmp_path):
     out = tmp_path / 'out.ply'
     export_mod.export(str(tmp_path / 'in.vti'), str(out), 10_000, 20_000)
     scene = pv.read(out)
-    assert scene.n_points == 100 * 100
+    assert scene.n_points == 2 * 100 * 100
     assert np.unique(scene.points[:, 0]).size == 100
     assert 'RGB' in scene.point_data
+
+
+def inside_the_bounds(scene):
+    """Return the share of points that lie strictly inside the scene's bounding box."""
+    points = np.asarray(scene.points)
+    low, high = points.min(axis=0), points.max(axis=0)
+    on_a_face = np.isclose(points, low) | np.isclose(points, high)
+    return float(np.mean(~on_a_face.any(axis=1)))
+
+
+def test_open_surfaces_are_written_from_both_sides(tmp_path):
+    """An open surface gets a flipped copy; a closed one does not."""
+    out = tmp_path / 'out.ply'
+    pv.Plane().save(tmp_path / 'plane.vtp')
+    export_mod.export(str(tmp_path / 'plane.vtp'), str(out), 2_000_000, 20_000)
+    plane = pv.read(out)
+    assert plane.n_faces == 2 * pv.Plane().triangulate().n_faces
+    normals = np.asarray(plane.point_data['Normals'])[:, 2]
+    assert (normals > 0).any()
+    assert (normals < 0).any()
+    pv.Sphere().save(tmp_path / 'sphere.vtp')
+    export_mod.export(str(tmp_path / 'sphere.vtp'), str(out), 2_000_000, 20_000)
+    assert pv.read(out).n_faces == pv.Sphere().n_faces
 
 
 def test_volumes_with_scalars_are_cut_into_slices(tmp_path):
@@ -205,7 +228,8 @@ def test_volumes_with_scalars_are_cut_into_slices(tmp_path):
     out = tmp_path / 'out.ply'
     export_mod.export(str(tmp_path / 'in.vti'), str(out), 2_000_000, 20_000)
     scene = pv.read(out)
-    assert scene.n_points == 3 * 30 * 30
+    assert scene.n_points == 2 * 3 * 30 * 30
+    assert inside_the_bounds(scene) > 0.5
     assert 'RGB' in scene.point_data
 
 
@@ -217,7 +241,7 @@ def test_volume_cell_data_is_drawn_flat_on_the_slices(tmp_path):
     out = tmp_path / 'out.ply'
     export_mod.export(str(tmp_path / 'in.vti'), str(out), 2_000_000, 20_000)
     scene = pv.read(out)
-    assert scene.n_points > 3 * 30 * 30
+    assert scene.n_points > 2 * 3 * 30 * 30
     assert 'RGB' in scene.point_data
 
 
@@ -231,16 +255,17 @@ def test_volume_cell_data_is_drawn_flat_on_the_slices(tmp_path):
         pytest.param('download_t3_grid_0', marks=pytest.mark.needs_rendering),  # .mnc
     ],
 )
-def test_medical_volumes_are_cut_into_slices(tmp_path, download):
-    """A medical volume from PyVista's examples is sliced through its centre and coloured."""
+def test_medical_images_are_drawn(tmp_path, download):
+    """A medical image from PyVista's examples is coloured; a volume is sliced through."""
     source = getattr(pv.examples.downloads, download)(load=False)
     out = tmp_path / 'out.ply'
     export_mod.export(str(source), str(out), 2_000_000, 20_000)
-    nx, ny, nz = pv.read(source).dimensions
     scene = pv.read(out)
-    # Three slices hold about one face's worth of points each; the box holds two.
-    assert scene.n_points <= 1.5 * (nx * ny + ny * nz + nx * nz)
+    assert scene.n_faces > 0
     assert 'RGB' in scene.point_data
+    if min(pv.read(source).dimensions) > 1:
+        # Slices run through the volume; its outer surface would leave nothing inside.
+        assert inside_the_bounds(scene) > 0.5
 
 
 def test_volume_skin_is_kept_whole_when_it_fits(tmp_path):

@@ -96,6 +96,19 @@ def test_lines_are_drawn(tmp_path):
     assert covered(rendered(line, tmp_path, name='line')) > 0.02
 
 
+def test_slices_are_visible_from_the_default_camera(tmp_path):
+    """A sliced volume shows from where the camera starts, not only after a rotation."""
+    volume = pv.ImageData(dimensions=(20, 20, 20))
+    volume['t'] = np.arange(volume.n_points, dtype=float)
+    assert covered(rendered(volume, tmp_path, name='slices')) > 0.05
+
+
+def test_a_surface_facing_away_is_drawn(tmp_path):
+    """A plane whose normal points away from the camera is still drawn, and lit."""
+    plane = pv.Plane(direction=(0, 0, -1))
+    assert covered(rendered(plane, tmp_path, name='away')) > 0.02
+
+
 def test_scalars_reach_the_render_as_colour(tmp_path):
     """A coloured dataset draws in more than one hue."""
     pixels = rendered(pv.Sphere(theta_resolution=16, phi_resolution=16).elevation(), tmp_path)
