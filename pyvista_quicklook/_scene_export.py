@@ -39,6 +39,8 @@ def thin(dataset: object, max_points: int) -> object:
 
 def to_surface(dataset: object) -> pv.PolyData:
     """Return the surface of any dataset PyVista can read, cells left as they are."""
+    if isinstance(dataset, pv.PartitionedDataSet):
+        dataset = pv.MultiBlock(list(dataset))
     if isinstance(dataset, pv.MultiBlock):
         dataset = dataset.combine()
     surface = (

@@ -203,6 +203,14 @@ def test_volume_skin_is_kept_whole_when_it_fits(tmp_path):
     assert pv.read(out).n_points <= 5_000
 
 
+def test_partitioned_datasets_are_drawn_as_one_surface(tmp_path):
+    """The partitions of a .vtpd or VTKHDF file are combined, as blocks are."""
+    pv.PartitionedDataSet([pv.Sphere(), pv.Cube()]).save(tmp_path / 'in.vtpd')
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(tmp_path / 'in.vtpd'), str(out), 2_000_000, 20_000)
+    assert pv.read(out).n_faces == pv.Sphere().n_faces + 12
+
+
 def missing_reader(ext: str) -> str | None:
     """Return why the runtime cannot read an extension, or None when it can."""
     try:
