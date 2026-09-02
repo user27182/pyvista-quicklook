@@ -16,8 +16,9 @@ class Format(NamedTuple):
 
 # Extensions ``pyvista.read`` supports, with pyvista-cad's readers. ``default=False``
 # entries are claimed only when listed in the ``extensions.add`` config key. Formats
-# macOS previews itself (STL, OBJ, PLY, glTF, images, DICOM) are absent: Launch
-# Services keeps its own type for those extensions, so a claim has no effect.
+# macOS previews itself (STL, OBJ, PLY, glTF, images, DICOM) and extensions another
+# type owns (.img, .raw, .xml) are absent: Launch Services keeps its own type for
+# those, so a claim has no effect.
 FORMATS: dict[str, Format] = {
     # VTK serial formats
     '.vtk': Format('VTK Legacy Data', True),
@@ -85,7 +86,6 @@ FORMATS: dict[str, Format] = {
     '.post': Format('PERMAS Result', False),
     '.node': Format('TetGen Nodes', False),
     '.ele': Format('TetGen Elements', False),
-    '.xml': Format('DOLFIN XML Mesh', False),
     # Off by default: these readers need CAD kernels the installer leaves out.
     '.iges': Format('IGES Model', False),
     '.igs': Format('IGES Model', False),
@@ -95,7 +95,6 @@ FORMATS: dict[str, Format] = {
     '.ifc': Format('IFC Building Model', False),
     '.scad': Format('OpenSCAD Script', False),
     # Off by default: medical formats other viewers usually claim.
-    '.dcm': Format('DICOM Image', False),
     '.nii': Format('NIfTI Volume', False),
     '.mha': Format('MetaImage Volume', False),
     '.mhd': Format('MetaImage Volume', False),
@@ -107,8 +106,6 @@ FORMATS: dict[str, Format] = {
     '.dat': Format('Tecplot Data', False),
     '.h5': Format('HDF5 Data', False),
     '.hdf': Format('HDF Data', False),
-    '.img': Format('Raw Image Volume', False),
-    '.raw': Format('Raw Volume', False),
     '.vrt': Format('GDAL Virtual Raster', False),
     '.inp': Format('AVS UCD Data', False),
     '.res': Format('Fluent Result', False),
