@@ -160,7 +160,7 @@ def sweep(directory: Path) -> None:
             pass
 
 
-def warm_in_background(config: dict[str, Any]) -> None:
+def warm_in_background(config: dict[str, Any]) -> threading.Thread:
     """Load PyVista in a thread, so requests are still answered while it happens."""
 
     def run() -> None:
@@ -170,7 +170,9 @@ def warm_in_background(config: dict[str, Any]) -> None:
         with contextlib.suppress(Exception):
             warmup_mod.warm(config)
 
-    threading.Thread(target=run, daemon=True).start()
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+    return thread
 
 
 def serve(poll: float = 0.05) -> int:

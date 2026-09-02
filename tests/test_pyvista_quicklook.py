@@ -7,8 +7,6 @@ import json
 from pathlib import Path
 import plistlib
 import sys
-import threading
-import time
 
 import pytest
 
@@ -315,6 +313,17 @@ def test_cache_reports_its_size(capsys, monkeypatch, tmp_path):
     assert '1 previews' in capsys.readouterr().out
 
 
+def test_cache_clear_removes_previews_but_not_the_stamp(capsys, monkeypatch, tmp_path):
+    """`pvql cache --clear` deletes the previews and leaves the warm-up stamp."""
+    (tmp_path / 'a.png').write_bytes(b'x')
+    (tmp_path / 'b.ply').write_bytes(b'x')
+    (tmp_path / '.warm').touch()
+    monkeypatch.setattr(cli.config_mod, 'CACHE_DIR', tmp_path)
+    assert cli.cmd_cache(argparse.Namespace(clear=True)) == 0
+    assert 'removed 2' in capsys.readouterr().out
+    assert [p.name for p in tmp_path.iterdir()] == ['.warm']
+
+
 def test_config_load_merges_over_defaults(tmp_path, monkeypatch):
     """Unknown keys are dropped and missing ones fall back to defaults."""
     path = tmp_path / 'config.json'
@@ -493,19 +502,21 @@ def test_warm_reports_a_missing_interpreter(monkeypatch):
         warmup.warm({})
 
 
-def test_warm_in_background_does_not_raise(monkeypatch):
+def test_warm_in_background_survives_a_failing_warm_up(monkeypatch):
     """A failing warm-up never brings the service down."""
-    started = threading.Event()
+    calls = []
 
     def explode(config):
-        started.set()
+        calls.append(config)
         message = 'no interpreter'
         raise environment.RenderError(message)
 
     monkeypatch.setattr(daemon.warmup_mod, 'warmed_recently', lambda: False)
     monkeypatch.setattr(daemon.warmup_mod, 'warm', explode)
-    daemon.warm_in_background({})
-    assert started.wait(timeout=5)
+    thread = daemon.warm_in_background({})
+    thread.join(timeout=5)
+    assert not thread.is_alive()
+    assert calls == [{}]
 
 
 def test_warmed_recently_reads_the_stamp(tmp_path, monkeypatch):
@@ -522,8 +533,7 @@ def test_warm_in_background_skips_a_recent_warm_up(monkeypatch):
     called = []
     monkeypatch.setattr(daemon.warmup_mod, 'warmed_recently', lambda: True)
     monkeypatch.setattr(daemon.warmup_mod, 'warm', lambda config: called.append(config))
-    daemon.warm_in_background({})
-    time.sleep(0.2)
+    daemon.warm_in_background({}).join(timeout=5)
     assert called == []
 
 

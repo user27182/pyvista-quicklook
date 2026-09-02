@@ -45,12 +45,12 @@ Homepage = 'https://github.com/user27182/pyvista-quicklook'
 
 [tool.coverage.run]
 branch = true
-omit = ['*/_scene_export.py', '*/_version.py', '*/_warmup.py']
+omit = ['*/_version.py', '*/_warmup.py']
 parallel = true
 source = ['pyvista_quicklook']
 
 [tool.pytest.ini_options]
-addopts = '--cov=pyvista_quicklook --cov-fail-under=50'
+addopts = '--cov=pyvista_quicklook --cov-fail-under=70'
 testpaths = 'tests'
 
 [tool.ruff]
