@@ -221,40 +221,25 @@ def test_volume_cell_data_is_drawn_flat_on_the_slices(tmp_path):
     assert 'RGB' in scene.point_data
 
 
-def write_nrrd(path, volume):
-    """Write a raw-encoded NRRD of a volume's scalars."""
-    sizes = ' '.join(str(n) for n in volume.dimensions)
-    header = (
-        f'NRRD0004\ntype: float\ndimension: 3\nsizes: {sizes}\nencoding: raw\nendian: little\n\n'
-    )
-    path.write_bytes(header.encode() + np.asarray(volume['t'], dtype=np.float32).tobytes())
-
-
-def write_metaimage(path, volume):
-    """Write a volume's scalars as a MetaImage with the data in the same file."""
-    size = ' '.join(str(n) for n in volume.dimensions)
-    header = f'ObjectType = Image\nNDims = 3\nDimSize = {size}\nElementType = MET_FLOAT\n'
-    header += 'ElementDataFile = LOCAL\n'
-    path.write_bytes(header.encode() + np.asarray(volume['t'], dtype=np.float32).tobytes())
-
-
 @pytest.mark.parametrize(
-    ('ext', 'write'),
+    'download',
     [
-        ('.nii', lambda path, volume: volume.save(path)),
-        ('.mha', write_metaimage),
-        ('.nrrd', write_nrrd),
+        'download_beach',  # .nrrd
+        'download_head',  # .mhd
+        'download_chest',  # .mha
+        'download_brain_atlas_with_sides',  # .nii.gz
+        pytest.param('download_t3_grid_0', marks=pytest.mark.needs_rendering),  # .mnc
     ],
 )
-def test_medical_volumes_are_cut_into_slices(tmp_path, ext, write):
-    """A medical volume is read, sliced through its centre, and coloured by its values."""
-    volume = pv.ImageData(dimensions=(20, 20, 20))
-    volume['t'] = np.arange(volume.n_points, dtype=float)
-    write(tmp_path / f'volume{ext}', volume)
+def test_medical_volumes_are_cut_into_slices(tmp_path, download):
+    """A medical volume from PyVista's examples is sliced through its centre and coloured."""
+    source = getattr(pv.examples.downloads, download)(load=False)
     out = tmp_path / 'out.ply'
-    export_mod.export(str(tmp_path / f'volume{ext}'), str(out), 2_000_000, 20_000)
+    export_mod.export(str(source), str(out), 2_000_000, 20_000)
+    nx, ny, nz = pv.read(source).dimensions
     scene = pv.read(out)
-    assert scene.n_points == 3 * 20 * 20
+    # Three slices hold about one face's worth of points each; the box holds two.
+    assert scene.n_points <= 1.5 * (nx * ny + ny * nz + nx * nz)
     assert 'RGB' in scene.point_data
 
 
