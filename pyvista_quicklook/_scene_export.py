@@ -141,6 +141,8 @@ def colours_for(surface: pv.PolyData) -> np.ndarray | None:
         return None
 
     scalars = np.asarray(scalars)
+    if scalars.dtype.kind not in 'biuf':
+        return None
     if scalars.ndim == 2:
         if scalars.shape[1] >= 3 and scalars.dtype == np.uint8:
             return scalars[:, :3]

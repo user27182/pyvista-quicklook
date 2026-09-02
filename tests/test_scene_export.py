@@ -9,6 +9,7 @@ import pytest
 import pyvista as pv
 from pyvista.core.utilities import reader as readers
 from pyvista.core.utilities import reader_registry
+from pyvista_cad import examples as cad_examples
 
 from pyvista_quicklook import _scene_export as export_mod
 from pyvista_quicklook import formats
@@ -212,6 +213,29 @@ def test_partitioned_datasets_are_drawn_as_one_surface(tmp_path):
     out = tmp_path / 'out.ply'
     export_mod.export(str(tmp_path / 'in.vtpd'), str(out), 2_000_000, 20_000)
     assert pv.read(out).n_faces == pv.Sphere().n_faces + 12
+
+
+def test_step_models_are_drawn(tmp_path):
+    """A STEP model is tessellated by pyvista-cad and drawn as a surface."""
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(cad_examples.bracket_step_path()), str(out), 2_000_000, 20_000)
+    assert pv.read(out).n_faces > 0
+
+
+def test_dxf_drawings_are_drawn_as_tubes(tmp_path):
+    """A DXF drawing holds only lines, which are given a surface."""
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(cad_examples.drawing_dxf_path()), str(out), 2_000_000, 20_000)
+    scene = pv.read(out)
+    assert scene.n_faces > 0
+    assert scene.n_lines == 0
+
+
+def test_3mf_assemblies_are_drawn_as_one_surface(tmp_path):
+    """The objects of a 3MF file are combined, as blocks are."""
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(cad_examples.assembly_3mf_path()), str(out), 2_000_000, 20_000)
+    assert pv.read(out).n_faces > 0
 
 
 def missing_reader(ext: str) -> str | None:
