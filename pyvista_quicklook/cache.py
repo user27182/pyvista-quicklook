@@ -30,9 +30,7 @@ def digest(identity: tuple[str, int, int], settings: list[str]) -> str:
     return hashlib.sha256('\0'.join(parts).encode()).hexdigest()
 
 
-def fill(
-    out: Path, config: dict[str, Any], label: str, build: Callable[[Path], None]
-) -> Path:
+def fill(out: Path, config: dict[str, Any], label: str, build: Callable[[Path], None]) -> Path:
     """Return ``out``, calling ``build(scratch)`` to make it unless it is already cached.
 
     The build writes to a scratch path that is renamed into place only when it is

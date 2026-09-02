@@ -43,6 +43,7 @@ def scene(
     config = config if config is not None else config_mod.load()
     path = environment.source_path(source)
     identity = identity or cache.identity_of(path)
+    environment.check_size(identity, config)
 
     def build(scratch: Path) -> None:
         command = [

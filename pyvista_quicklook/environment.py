@@ -40,6 +40,19 @@ def source_path(source: str | os.PathLike[str]) -> Path:
     return path
 
 
+def check_size(identity: tuple[str, int, int], config: dict[str, Any]) -> None:
+    """Refuse files above the configured size limit, explaining how to raise it."""
+    limit_mb = config.get('max_file_size_mb') or 0
+    size_mb = identity[2] / 1024 / 1024
+    if limit_mb and size_mb > limit_mb:
+        name = Path(identity[0]).name
+        message = (
+            f'{name} is {size_mb:.0f} MB, above the {limit_mb} MB preview limit.\n'
+            f'Raise "max_file_size_mb" in {config_mod.CONFIG_PATH} to preview it.'
+        )
+        raise RenderError(message)
+
+
 def interpreter(config: dict[str, Any]) -> str:
     """Return the configured interpreter, or say what to set when there is none."""
     found = config_mod.find_python(config)

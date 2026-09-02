@@ -57,15 +57,7 @@ def preview(
     config = config if config is not None else config_mod.load()
     path = environment.source_path(source)
     identity = identity or cache.identity_of(path)
-    limit_mb = config.get('max_file_size_mb') or 0
-    size_mb = identity[2] / 1024 / 1024
-    if limit_mb and size_mb > limit_mb:
-        name = Path(identity[0]).name
-        message = (
-            f'{name} is {size_mb:.0f} MB, above the {limit_mb} MB preview limit.\n'
-            f'Raise "max_file_size_mb" in {config_mod.CONFIG_PATH} to preview it.'
-        )
-        raise environment.RenderError(message)
+    environment.check_size(identity, config)
 
     def build(scratch: Path) -> None:
         executable = config_mod.resolve_pyvista(config)

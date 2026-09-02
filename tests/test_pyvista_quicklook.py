@@ -354,6 +354,15 @@ def test_scene_reports_a_missing_file(tmp_path):
         convert.scene(tmp_path / 'absent.vtu', {})
 
 
+def test_scene_rejects_files_above_the_limit(tmp_path):
+    """The interactive path honours the size limit before it looks for PyVista."""
+    sample = tmp_path / 'big.vtu'
+    sample.write_bytes(b'x')
+    config = {'max_file_size_mb': 1, 'python': str(tmp_path / 'absent')}
+    with pytest.raises(environment.RenderError, match='preview limit'):
+        convert.scene(sample, config, identity=(str(sample), 0, 5 * 1024 * 1024))
+
+
 def test_build_scene_is_skipped_when_not_interactive():
     """Turning interactivity off falls straight through to the rendered image."""
     assert daemon.build_scene('/mesh.vtu', {'interactive': False}, None) == (None, None)
