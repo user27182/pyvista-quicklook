@@ -18,8 +18,8 @@ from . import convert as convert_mod
 from . import render as render_mod
 from . import warmup as warmup_mod
 from .environment import RenderError
+from .plist import EXT_BUNDLE_ID
 
-EXT_BUNDLE_ID = 'io.github.user27182.PyVistaQuickLook.QuickLook'
 LABEL = 'io.github.user27182.pvqld'
 REQUEST_SUFFIX = '.pvqlreq'
 REPLY_SUFFIX = '.pvqlrep'
@@ -72,6 +72,7 @@ def readable(path: str, seconds: float = 2.0) -> bool:
     def expire(signum: int, frame: object) -> None:
         raise TimeoutError
 
+    # SIGALRM is delivered to the main thread, which is where serve() runs this.
     previous = signal.signal(signal.SIGALRM, expire)
     signal.setitimer(signal.ITIMER_REAL, seconds)
     try:
