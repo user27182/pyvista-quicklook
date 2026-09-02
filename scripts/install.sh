@@ -79,10 +79,13 @@ if [[ -z "$PYVISTA" ]]; then
   mkdir -p "$SUPPORT"
   "$UV" venv --quiet --allow-existing --python "$PYTHON_VERSION" "$VENV"
   # PyVista requires stock VTK, which cvista replaces; the override drops that requirement.
-  printf "vtk; python_version < '0'\n" > "$SUPPORT/overrides.txt"
+  # uv splits the override path on spaces, so the file cannot live in Application Support.
+  OVERRIDES=$(mktemp -t pvql-overrides)
+  printf "vtk; python_version < '0'\n" > "$OVERRIDES"
   "$UV" pip uninstall --quiet --python "$VENV/bin/python" vtk >/dev/null 2>&1 || true
   "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade \
-    --override "$SUPPORT/overrides.txt" "$PYVISTA_SPEC" 'cvista[all]' "$CAD_SPEC"
+    --override "$OVERRIDES" "$PYVISTA_SPEC" 'cvista[all]' "$CAD_SPEC"
+  rm -f "$OVERRIDES"
   PYTHON="$VENV/bin/python"
 fi
 
