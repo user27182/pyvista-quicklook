@@ -15,6 +15,7 @@ import uuid
 
 from . import config as config_mod
 from . import convert as convert_mod
+from . import environment
 from . import render as render_mod
 from . import warmup as warmup_mod
 from .environment import RenderError
@@ -124,13 +125,20 @@ def handle(request: Path) -> None:
     if payload.get('mtime') is not None and payload.get('size') is not None:
         identity = (source, int(payload['mtime']), int(payload['size']))
 
+    config = config_mod.load()
+    if identity is not None:
+        try:
+            environment.check_size(identity, config)
+        except RenderError as error:
+            write_json(reply, {'ok': False, 'error': str(error)})
+            return
+
     # Prefer the original so datasets that reference neighbouring files still resolve.
     target = source if folder_is_reachable(source) else payload.get('copy')
     if not target:
         write_json(reply, {'ok': False, 'error': UNREADABLE_MESSAGE.format(path=source)})
         return
 
-    config = config_mod.load()
     try:
         built = produce(target, config, identity)
     except RenderError as error:

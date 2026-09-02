@@ -66,7 +66,6 @@ enum Helper {
     static let hardTimeout: TimeInterval = 120
     static let requestSuffix = ".pvqlreq"
     static let replySuffix = ".pvqlrep"
-    static let maximumStagedBytes = 512 * 1024 * 1024
 
     static let serviceMissingMessage = """
     The PyVista Quick Look render service is not answering.
@@ -111,17 +110,28 @@ enum Helper {
         return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 
-    /// Returns the `pvql` path recorded in the configuration file, if present.
-    static func configuredPath() -> String? {
+    /// Returns the contents of the configuration file, if present.
+    static func configuration() -> [String: Any]? {
         let url = URL(fileURLWithPath: realHome())
             .appendingPathComponent("Library/Application Support/PyVistaQuickLook/config.json")
-        guard let data = try? Data(contentsOf: url),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let path = json["pvql"] as? String
-        else {
+        guard let data = try? Data(contentsOf: url) else {
+            return nil
+        }
+        return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+    }
+
+    /// Returns the `pvql` path recorded in the configuration file, if present.
+    static func configuredPath() -> String? {
+        guard let path = configuration()?["pvql"] as? String else {
             return nil
         }
         return (path as NSString).expandingTildeInPath
+    }
+
+    /// Files above this many bytes are not staged; the service refuses them at the same size.
+    static func maximumFileBytes() -> Int {
+        let megabytes = (configuration()?["max_file_size_mb"] as? NSNumber)?.intValue ?? 512
+        return megabytes > 0 ? megabytes * 1024 * 1024 : Int.max
     }
 
     /// Runs `pvql` with the given arguments and returns its exit status and output.
@@ -205,7 +215,7 @@ enum Helper {
                 body["mtime"] = Int(modified.timeIntervalSince1970)
             }
             // The service cannot read folders macOS keeps private, so leave it a copy.
-            if size > 0, size <= maximumStagedBytes {
+            if size > 0, size <= maximumFileBytes() {
                 let staged = (stagingPath as NSString).appendingPathComponent(url.lastPathComponent)
                 try? manager.createDirectory(atPath: stagingPath, withIntermediateDirectories: true)
                 if (try? manager.copyItem(atPath: url.path, toPath: staged)) != nil {

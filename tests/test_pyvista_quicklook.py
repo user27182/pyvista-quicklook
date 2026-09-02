@@ -206,6 +206,18 @@ def test_handle_reports_unreachable_files_without_a_copy(tmp_path, monkeypatch):
     assert 'Privacy & Security' in reply['error']
 
 
+def test_handle_refuses_a_large_file_before_touching_it(tmp_path, monkeypatch):
+    """The size limit is applied to the request itself, before any read or copy."""
+    monkeypatch.setattr(daemon.config_mod, 'load', lambda: {'max_file_size_mb': 1})
+    monkeypatch.setattr(daemon, 'folder_is_reachable', lambda path: pytest.fail('read attempted'))
+    request = tmp_path / 'token.pvqlreq'
+    request.write_text(json.dumps({'path': '/private/huge.vtu', 'mtime': 1, 'size': 5 * 2**30}))
+    daemon.handle(request)
+    reply = json.loads((tmp_path / 'token.pvqlrep').read_text())
+    assert reply['ok'] is False
+    assert 'preview limit' in reply['error']
+
+
 def test_agent_plist_runs_the_daemon():
     """The launch agent starts the render service and keeps it running."""
     agent = daemon.agent_plist('/usr/local/bin/pvql')

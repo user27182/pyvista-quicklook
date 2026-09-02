@@ -136,7 +136,7 @@ Privacy & Security.
 | `interactive` | `true` | Show a turnable surface; `false` always uses a still image |
 | `max_scene_points` | `2000000` | Thin surfaces above this many points; `0` never does |
 | `max_glyph_points` | `20000` | Draw at most this many points of a point cloud; `0` draws all |
-| `max_file_size_mb` | `512` | Files above this size show a notice instead of a preview |
+| `max_file_size_mb` | `512` | Files above this size show a notice instead of a preview, and are never copied |
 | `timeout` | `60` | Seconds before a conversion is abandoned |
 | `warm_on_start` | `true` | Load PyVista and VTK when the render service starts |
 | `window_size` | `[1024, 1024]` | Still image size in pixels |
