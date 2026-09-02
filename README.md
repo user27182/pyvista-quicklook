@@ -80,28 +80,27 @@ which needs the Xcode command line tools (`xcode-select --install`):
 
 ## Supported files
 
-56 extensions are claimed by default, so pressing space on any of them opens this
+63 extensions are claimed by default, so pressing space on any of them opens this
 preview:
 
 `.3ds`, `.3mf`, `.avs`, `.bdf`, `.cas`, `.case`, `.cgns`, `.cube`, `.dem`, `.dxf`,
 `.ex2`, `.exii`, `.exo`, `.f3grid`, `.facet`, `.fem`, `.foam`, `.frd`, `.grdecl`,
-`.mdpa`, `.mesh`, `.meshb`, `.nas`, `.nek5000`, `.neu`, `.off`, `.p3d`, `.pdb`, `.pv`,
-`.pvd`, `.pvti`, `.pvtk`, `.pvtr`, `.pvtu`, `.segy`, `.sgy`, `.slc`, `.step`, `.stp`,
-`.tec`, `.tri`, `.vol`, `.vrml`, `.vti`, `.vtk`, `.vtkhdf`, `.vtm`, `.vtmb`, `.vtp`,
-`.vtpd`, `.vtr`, `.vts`, `.vtu`, `.wrl`, `.xdmf`, `.zvtk`
+`.mdpa`, `.mesh`, `.meshb`, `.mha`, `.mhd`, `.mnc`, `.mr`, `.nas`, `.nek5000`, `.neu`,
+`.nhdr`, `.nii`, `.nrrd`, `.off`, `.p3d`, `.pdb`, `.pv`, `.pvd`, `.pvti`, `.pvtk`,
+`.pvtr`, `.pvtu`, `.segy`, `.sgy`, `.slc`, `.step`, `.stp`, `.tec`, `.tri`, `.vol`,
+`.vrml`, `.vti`, `.vtk`, `.vtkhdf`, `.vtm`, `.vtmb`, `.vtp`, `.vtpd`, `.vtr`, `.vts`,
+`.vtu`, `.wrl`, `.xdmf`, `.zvtk`
 
-29 more are available with `extensions.add`. They are off by default because the
+22 more are available with `extensions.add`. They are off by default because the
 extension is shared with other kinds of file or the reader needs more than the installer
 provides:
 
 `.brep` BREP Model, `.brp` BREP Model, `.dat` Tecplot Data, `.dato` PERMAS Data,
 `.e` Exodus II Data, `.ele` TetGen Elements, `.fcstd` FreeCAD Document,
 `.g` BYU Geometry, `.h5` HDF5 Data, `.hdf` HDF Data, `.ifc` IFC Building Model,
-`.iges` IGES Model, `.igs` IGES Model, `.inp` AVS UCD Data, `.mha` MetaImage Volume,
-`.mhd` MetaImage Volume, `.mnc` MINC Volume, `.mr` MR Image, `.msh` Gmsh Mesh,
-`.nhdr` NRRD Header, `.nii` NIfTI Volume, `.node` TetGen Nodes, `.nrrd` NRRD Volume,
-`.post` PERMAS Result, `.pts` Point Cloud, `.res` Fluent Result, `.scad` OpenSCAD Script,
-`.series` VTK File Series, `.vrt` GDAL Virtual Raster
+`.iges` IGES Model, `.igs` IGES Model, `.inp` AVS UCD Data, `.msh` Gmsh Mesh,
+`.node` TetGen Nodes, `.post` PERMAS Result, `.pts` Point Cloud, `.res` Fluent Result,
+`.scad` OpenSCAD Script, `.series` VTK File Series, `.vrt` GDAL Virtual Raster
 
 macOS previews STL, OBJ, PLY, glTF, images, and DICOM itself, and its previewer cannot
 be replaced, so those are not listed. Claim more, or fewer, of the rest in the config

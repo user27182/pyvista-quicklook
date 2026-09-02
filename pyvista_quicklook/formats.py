@@ -97,14 +97,14 @@ FORMATS: dict[str, Format] = {
     '.fcstd': Format('FreeCAD Document', False),
     '.ifc': Format('IFC Building Model', False),
     '.scad': Format('OpenSCAD Script', False),
-    # Off by default: medical formats other viewers usually claim.
-    '.nii': Format('NIfTI Volume', False),
-    '.mha': Format('MetaImage Volume', False),
-    '.mhd': Format('MetaImage Volume', False),
-    '.nrrd': Format('NRRD Volume', False),
-    '.nhdr': Format('NRRD Header', False),
-    '.mnc': Format('MINC Volume', False),
-    '.mr': Format('MR Image', False),
+    # Medical volumes
+    '.nii': Format('NIfTI Volume', True),
+    '.mha': Format('MetaImage Volume', True),
+    '.mhd': Format('MetaImage Volume', True),
+    '.nrrd': Format('NRRD Volume', True),
+    '.nhdr': Format('NRRD Header', True),
+    '.mnc': Format('MINC Volume', True),
+    '.mr': Format('GE Signa MR Image', True),
     # Off by default: extensions too generic to claim safely.
     '.dat': Format('Tecplot Data', False),
     '.h5': Format('HDF5 Data', False),

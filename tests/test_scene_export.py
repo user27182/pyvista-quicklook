@@ -218,6 +218,43 @@ def test_volume_cell_data_is_drawn_flat_on_the_slices(tmp_path):
     assert 'RGB' in scene.point_data
 
 
+def write_nrrd(path, volume):
+    """Write a raw-encoded NRRD of a volume's scalars."""
+    sizes = ' '.join(str(n) for n in volume.dimensions)
+    header = (
+        f'NRRD0004\ntype: float\ndimension: 3\nsizes: {sizes}\nencoding: raw\nendian: little\n\n'
+    )
+    path.write_bytes(header.encode() + np.asarray(volume['t'], dtype=np.float32).tobytes())
+
+
+def write_metaimage(path, volume):
+    """Write a volume with VTK's MetaImage writer."""
+    writer = pv._vtk.vtkMetaImageWriter()
+    writer.SetFileName(str(path))
+    writer.SetInputData(volume)
+    writer.Write()
+
+
+@pytest.mark.parametrize(
+    ('ext', 'write'),
+    [
+        ('.nii', lambda path, volume: volume.save(path)),
+        ('.mha', write_metaimage),
+        ('.nrrd', write_nrrd),
+    ],
+)
+def test_medical_volumes_are_cut_into_slices(tmp_path, ext, write):
+    """A medical volume is read, sliced through its centre, and coloured by its values."""
+    volume = pv.ImageData(dimensions=(20, 20, 20))
+    volume['t'] = np.arange(volume.n_points, dtype=float)
+    write(tmp_path / f'volume{ext}', volume)
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(tmp_path / f'volume{ext}'), str(out), 2_000_000, 20_000)
+    scene = pv.read(out)
+    assert scene.n_points == 3 * 20 * 20
+    assert 'RGB' in scene.point_data
+
+
 def test_volume_skin_is_kept_whole_when_it_fits(tmp_path):
     """A volume with nothing to colour shows its outer surface, whole while it fits."""
     volume = pv.ImageData(dimensions=(60, 60, 60))
