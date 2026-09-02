@@ -7,7 +7,32 @@ import SceneKit
 enum Preview {
     case scene(SCNScene)
     case image(Data)
+    case text(String)
     case message(String)
+}
+
+/// How much of a text file is shown.
+let textPreviewLimit = 2_000_000
+
+/// Returns the file's contents when it reads as text, which a claimed file may turn out to be.
+func textContents(of url: URL) -> String? {
+    guard let handle = try? FileHandle(forReadingFrom: url) else {
+        return nil
+    }
+    defer { try? handle.close() }
+    let data = handle.readData(ofLength: textPreviewLimit)
+    guard !data.isEmpty, !data.contains(0) else {
+        return nil
+    }
+    let controls = data.filter { $0 < 0x20 && $0 != 0x09 && $0 != 0x0A && $0 != 0x0D }.count
+    guard controls * 100 < data.count else {
+        return nil
+    }
+    guard let text = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .isoLatin1) else {
+        return nil
+    }
+    let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? data.count
+    return size > data.count ? text + "\n\n[first \(data.count / 1_000_000) MB of \(size / 1_000_000) MB]" : text
 }
 
 /// Builds a view that lets the reader turn the mesh with the mouse.
@@ -22,6 +47,26 @@ func sceneView(for scene: SCNScene) -> SCNView {
 
     view.pointOfView = previewCamera(for: scene)
     return view
+}
+
+/// Builds a scrolling view of a file's text, for claimed files that are not meshes.
+@MainActor
+func textView(_ text: String) -> NSView {
+    let view = NSTextView()
+    view.string = text
+    view.isEditable = false
+    view.isSelectable = true
+    view.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+    view.textContainerInset = NSSize(width: 12, height: 12)
+    view.autoresizingMask = [.width]
+    view.isVerticallyResizable = true
+    view.isHorizontallyResizable = false
+    view.textContainer?.widthTracksTextView = true
+
+    let scroll = NSScrollView()
+    scroll.hasVerticalScroller = true
+    scroll.documentView = view
+    return scroll
 }
 
 /// Builds a view showing text, used when a mesh cannot be previewed.
@@ -83,7 +128,12 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
                 }
             } catch {
                 let message = (error as? Helper.Failure)?.message ?? error.localizedDescription
-                outcome = .message("Could not preview \(url.lastPathComponent)\n\n\(message)")
+                pvqlLog("not a mesh: \(message.prefix(120))")
+                if let text = textContents(of: url) {
+                    outcome = .text(text)
+                } else {
+                    outcome = .message("Could not preview \(url.lastPathComponent)\n\n\(message)")
+                }
             }
 
             DispatchQueue.main.async {
@@ -97,6 +147,9 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
                     imageView.image = NSImage(data: png)
                     self.show(imageView)
                     pvqlLog("showing a rendered image in \(self.view.bounds.size)")
+                case let .text(text):
+                    self.show(textView(text))
+                    pvqlLog("showing text, \(text.count) characters")
                 case let .message(text):
                     self.show(messageView(text))
                     pvqlLog("showing a message: \(text.prefix(120))")

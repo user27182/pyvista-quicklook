@@ -168,7 +168,9 @@ Surfaces are sent whole up to `max_scene_points`. Above that, images and volumes
 thinned on their lattice and other surfaces are decimated. Set it to `0` to never
 thin.
 
-When a preview fails, the Quick Look panel shows the error text instead.
+A claimed file that turns out not to be a mesh, such as a `.dat` holding a table of
+numbers or a `.g` holding G-code, is shown as plain text, the way Quick Look would have
+shown it. When a preview fails for another reason, the panel shows the error text.
 
 ### Still images
 
