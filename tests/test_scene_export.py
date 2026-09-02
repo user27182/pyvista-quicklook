@@ -228,11 +228,11 @@ def write_nrrd(path, volume):
 
 
 def write_metaimage(path, volume):
-    """Write a volume with VTK's MetaImage writer."""
-    writer = pv._vtk.vtkMetaImageWriter()
-    writer.SetFileName(str(path))
-    writer.SetInputData(volume)
-    writer.Write()
+    """Write a volume's scalars as a MetaImage with the data in the same file."""
+    size = ' '.join(str(n) for n in volume.dimensions)
+    header = f'ObjectType = Image\nNDims = 3\nDimSize = {size}\nElementType = MET_FLOAT\n'
+    header += 'ElementDataFile = LOCAL\n'
+    path.write_bytes(header.encode() + np.asarray(volume['t'], dtype=np.float32).tobytes())
 
 
 @pytest.mark.parametrize(
