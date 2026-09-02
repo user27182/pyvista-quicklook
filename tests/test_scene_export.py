@@ -318,6 +318,18 @@ def test_binary_gmsh_files_are_drawn(tmp_path):
     assert pv.read(out).n_faces == pv.Sphere().n_faces
 
 
+def readable_extensions() -> set[str]:
+    """Return every extension ``pyvista.read`` accepts in this environment."""
+    registered = {entry.extension for entry in reader_registry.registered_readers()}
+    return set(readers.CLASS_READERS) | registered | set(meshio.extension_to_filetypes)
+
+
+def test_format_table_accounts_for_every_readable_extension():
+    """Each extension the environment reads is listed or deliberately unclaimed, and no other."""
+    assert set(formats.FORMATS).isdisjoint(formats.UNCLAIMED)
+    assert readable_extensions() == set(formats.FORMATS) | set(formats.UNCLAIMED)
+
+
 def missing_reader(ext: str) -> str | None:
     """Return why the runtime cannot read an extension, or None when it can."""
     if ext not in readers.CLASS_READERS:

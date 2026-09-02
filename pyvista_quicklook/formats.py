@@ -119,6 +119,45 @@ FORMATS: dict[str, Format] = {
 }
 
 
+# Extensions the environment can read that are deliberately not claimed, and why.
+UNCLAIMED: dict[str, str] = {
+    # macOS previews these itself, and Launch Services keeps its own type for them.
+    '.stl': 'macOS previews it',
+    '.obj': 'macOS previews it',
+    '.ply': 'macOS previews it',
+    '.glb': 'macOS previews it',
+    '.gltf': 'macOS previews it',
+    '.bmp': 'macOS previews it',
+    '.gif': 'macOS previews it',
+    '.hdr': 'macOS previews it',
+    '.jpeg': 'macOS previews it',
+    '.jpg': 'macOS previews it',
+    '.png': 'macOS previews it',
+    '.pnm': 'macOS previews it',
+    '.tif': 'macOS previews it',
+    '.tiff': 'macOS previews it',
+    '.dcm': 'macOS previews it',
+    # Launch Services gives the extension to another kind of file.
+    '.img': 'disk images own the extension',
+    '.raw': 'camera raw images own the extension',
+    '.xml': 'XML owns the extension',
+    # The Finder sees only the last suffix.
+    '.dato.gz': 'the Finder sees .gz',
+    '.nii.gz': 'the Finder sees .gz',
+    '.post.gz': 'the Finder sees .gz',
+    '.vol.gz': 'the Finder sees .gz',
+    # meshio lists these but cannot read them as installed.
+    '.h5m': 'needs h5py',
+    '.hmf': 'needs h5py',
+    '.med': 'needs h5py',
+    '.xmf': 'needs h5py',
+    '.su2': 'meshio fails to read it',
+    '.ugrid': 'meshio fails to read it',
+    '.wkt': 'meshio hangs on it',
+    '.svg': 'meshio writes it but does not read it',
+}
+
+
 def uti_for(ext: str) -> str:
     """Return the exported uniform type identifier for an extension."""
     return f'{UTI_PREFIX}.{ext.lstrip(".").replace(".", "-")}'

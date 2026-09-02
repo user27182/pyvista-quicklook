@@ -781,6 +781,15 @@ wheels = [
 ]
 
 [[package]]
+name = "fsspec"
+version = "2026.7.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/78/f34251dadb8f3921264a1d9b8946f5e542014ee2614b285261b4e40e6775/fsspec-2026.7.0.tar.gz", hash = "sha256:c803c40f4cf860b49dea58ee3e1c33cb9c790520e233537e1340049f89b82a88", size = 317040, upload-time = "2026-07-28T16:34:51.052Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fd/3c/6a2bf344106328fd04963664a60b9bb6496fc25df8e962fcdc1367285fb9/fsspec-2026.7.0-py3-none-any.whl", hash = "sha256:b57ddbafedfaef7018c1ecab32aa200a9d7ca26b77965f64e48b70061249d279", size = 206583, upload-time = "2026-07-28T16:34:49.538Z" },
+]
+
+[[package]]
 name = "identify"
 version = "2.6.19"
 source = { registry = "https://pypi.org/simple" }
@@ -796,6 +805,21 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/5f/f7/abb373e5757eaec4b922b92f97ec8d6d7e057cf06778247604fbc4e7c3f3/idna-3.19.tar.gz", hash = "sha256:5e0811a4383b21dc5838069f801c4fb62113b7447663d2530d2bd6e77b49bf15", size = 215237, upload-time = "2026-08-18T05:14:24.27Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/57/b0/0e52c878c53f245edd3a11020f20979b3f490f245af532c7cae3027754b5/idna-3.19-py3-none-any.whl", hash = "sha256:815e7be7a7806d54abb586dc943addc79e8b2ee16915059658cbeff4b1b43bf4", size = 68550, upload-time = "2026-08-18T05:14:22.343Z" },
+]
+
+[[package]]
+name = "imageio"
+version = "2.37.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+    { name = "pillow" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/48/62/aa770a9307508d2a2a2c62d536a49347bffe9e55322db27838d3c93d0b07/imageio-2.37.4.tar.gz", hash = "sha256:e45cbc5e83502047fb138f7f585f7f105a136a57eea5f4b3cfc6ce1b52720bd3", size = 390173, upload-time = "2026-07-20T05:26:11.369Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3e/2d/ca050652104bab2cf55e569db2a178b1b61cb041fef28307f2db383f6d9f/imageio-2.37.4-py3-none-any.whl", hash = "sha256:1ab2e22c8debf700f24c3ac43e8f95f3b3a8110c83b93411e97b4b0b2cd1c7e6", size = 318000, upload-time = "2026-07-20T05:26:09.874Z" },
 ]
 
 [[package]]
@@ -1645,7 +1669,7 @@ wheels = [
 [[package]]
 name = "pyvista"
 version = "0.49.dev0"
-source = { git = "https://github.com/pyvista/pyvista.git#a69e14b6517c930bbcabc3b84c5c05ffb2a90dfc" }
+source = { git = "https://github.com/pyvista/pyvista.git?rev=f96cb9990ec77ba0d12d4d19cba6035e6b1841aa#f96cb9990ec77ba0d12d4d19cba6035e6b1841aa" }
 dependencies = [
     { name = "cyclopts" },
     { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
@@ -1656,8 +1680,17 @@ dependencies = [
     { name = "pillow" },
     { name = "pooch" },
     { name = "pyobjc-framework-cocoa", marker = "sys_platform == 'darwin'" },
+    { name = "pyvista-validation" },
     { name = "scooby" },
     { name = "typing-extensions" },
+]
+
+[package.optional-dependencies]
+io = [
+    { name = "fsspec" },
+    { name = "imageio" },
+    { name = "meshio" },
+    { name = "pyvista-zstd" },
 ]
 
 [[package]]
@@ -1693,13 +1726,11 @@ source = { editable = "." }
 dev = [
     { name = "cvista", extra = ["io"] },
     { name = "cvista", extra = ["rendering"], marker = "python_full_version < '3.13'" },
-    { name = "meshio" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "pyvista" },
+    { name = "pyvista", extra = ["io"] },
     { name = "pyvista-cad", extra = ["3mf", "step-light"] },
-    { name = "pyvista-zstd" },
 ]
 
 [package.metadata]
@@ -1708,13 +1739,25 @@ dev = [
 dev = [
     { name = "cvista", extras = ["io"] },
     { name = "cvista", extras = ["rendering"], marker = "python_full_version < '3.13'" },
-    { name = "meshio" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "pyvista", git = "https://github.com/pyvista/pyvista.git" },
+    { name = "pyvista", extras = ["io"], git = "https://github.com/pyvista/pyvista.git?rev=f96cb9990ec77ba0d12d4d19cba6035e6b1841aa" },
     { name = "pyvista-cad", extras = ["step-light", "3mf"] },
-    { name = "pyvista-zstd" },
+]
+
+[[package]]
+name = "pyvista-validation"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e8/3f/5e76cea5cde23486cd561918980439060df51b890d0616b1955d3107d3cb/pyvista_validation-0.1.0.tar.gz", hash = "sha256:2643f8668ae0c6d282ea8bf8404e0642d0fb7523acdada55206ad661f565e66e", size = 41499, upload-time = "2026-08-29T23:25:34.126Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1b/2d/181373f0033c9790d6319cf984f31785faa6ad1d7df517506d4ffd653a8a/pyvista_validation-0.1.0-py3-none-any.whl", hash = "sha256:305ebdd47ef3d528eaafb9f7c6120435347c85039d3c89e3beca45fa9e941e48", size = 26489, upload-time = "2026-08-29T23:25:32.859Z" },
 ]
 
 [[package]]

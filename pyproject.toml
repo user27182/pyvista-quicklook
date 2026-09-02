@@ -8,13 +8,12 @@ dev = [
   'cvista[io]',
   # The rendering wheels stop at Python 3.12; still images are tested where they exist.
   'cvista[rendering]; python_version < "3.13"',
-  'meshio',
   'pre-commit',
   'pytest',
   'pytest-cov',
-  'pyvista @ git+https://github.com/pyvista/pyvista.git',
+  # Pinned to one commit; bumping it reruns the test that locks the readable extensions.
   'pyvista-cad[step-light,3mf]',
-  'pyvista-zstd',
+  'pyvista[io] @ git+https://github.com/pyvista/pyvista.git@f96cb9990ec77ba0d12d4d19cba6035e6b1841aa',
 ]
 
 [project]

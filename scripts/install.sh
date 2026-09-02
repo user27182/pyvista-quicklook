@@ -10,8 +10,9 @@ VENV="$SUPPORT/venv"
 DEST="$HOME/Applications"
 # cvista's rendering wheels stop at 3.12.
 PYTHON_VERSION="${PVQL_PYTHON:-3.12}"
-# PyVista 0.49 is the floor and is not released yet.
-PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista @ git+https://github.com/pyvista/pyvista.git}"
+# PyVista 0.49 is the floor and is not released yet. The commit matches pyproject.toml;
+# the io extra brings meshio and pyvista-zstd, whichever readers PyVista routes to them.
+PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista[io] @ git+https://github.com/pyvista/pyvista.git@f96cb9990ec77ba0d12d4d19cba6035e6b1841aa}"
 # STEP, DXF, and 3MF readers; IGES and the heavier CAD kernels need stock VTK or OCP.
 CAD_SPEC="${PVQL_CAD_SPEC:-pyvista-cad[step-light,3mf]}"
 PYTHON=""
@@ -81,7 +82,7 @@ OVERRIDES=$(mktemp -t pvql-overrides)
 printf "vtk; python_version < '0'\n" > "$OVERRIDES"
 "$UV" pip uninstall --quiet --python "$VENV/bin/python" vtk >/dev/null 2>&1 || true
 "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade \
-  --override "$OVERRIDES" "$PYVISTA_SPEC" 'cvista[all]' "$CAD_SPEC" meshio pyvista-zstd
+  --override "$OVERRIDES" "$PYVISTA_SPEC" 'cvista[all]' "$CAD_SPEC"
 rm -f "$OVERRIDES"
 PYTHON="$VENV/bin/python"
 

@@ -24,8 +24,9 @@ result with `pvql doctor`.
 2. Installs [uv](https://docs.astral.sh/uv/) if it is missing, and a Python 3.12 if uv
    finds none on the machine.
 3. Installs the `pvql` helper as a uv tool.
-4. Creates a private Python environment and installs PyVista, cvista, pyvista-cad, and
-   meshio into it. This is the step that takes a while: about 400 MB of wheels.
+4. Creates a private Python environment and installs PyVista with its io extras,
+   cvista, and pyvista-cad into it. This is the step that takes a while: about 400 MB
+   of wheels.
 5. Writes the configuration file and loads PyVista once, so the first preview is quick.
 6. Copies the app into `~/Applications` and registers it with Launch Services and
    Quick Look.
@@ -232,6 +233,11 @@ uv run pre-commit run --all-files
 `.python-version` pins the interpreter to 3.12, the last release cvista ships rendering
 wheels for, and `[tool.uv]` in `pyproject.toml` overrides PyVista's stock VTK requirement
 so the test environment holds the same packages the installer provisions.
+
+PyVista is pinned to one commit, in `pyproject.toml` and `scripts/install.sh` alike.
+Bumping it reruns a test that compares every extension the environment can read with
+the format table, so a reader that PyVista adds, drops, or moves to a plugin shows up as
+a failure to resolve in `formats.py`.
 
 `main` is protected by a pre-commit hook, so work on a branch.
 
