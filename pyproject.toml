@@ -39,6 +39,8 @@ requires-python = '>=3.10'
 
 [project.scripts]
 pvql = 'pyvista_quicklook.cli:main'
+# The render service runs under this name, which is what macOS shows for it.
+pyvista-quicklook = 'pyvista_quicklook.cli:main'
 
 [project.urls]
 Homepage = 'https://github.com/user27182/pyvista-quicklook'

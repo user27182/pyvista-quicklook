@@ -97,9 +97,6 @@ fi
 echo "==> warming PyVista and VTK"
 "$HELPER" warmup || echo "warm-up skipped; the first preview will be slower" >&2
 
-echo "==> installing the render service"
-"$HELPER" service --install --helper "$HELPER"
-
 if [[ -n "$PREBUILT" ]]; then
   SOURCE_APP="$PREBUILT"
 else
@@ -120,6 +117,10 @@ LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchSe
 /usr/bin/pluginkit -e use -i "$EXT_ID" 2>/dev/null || true
 /usr/bin/qlmanage -r >/dev/null 2>&1 || true
 /usr/bin/qlmanage -r cache >/dev/null 2>&1 || true
+
+# After the app, so macOS lists the service under the app's name.
+echo "==> installing the render service"
+"$HELPER" service --install --helper "$HELPER"
 
 echo
 echo "Installed. Select a .vtu, .vtp, or .vtk file in the Finder and press space."

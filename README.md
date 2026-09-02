@@ -110,7 +110,8 @@ pvql service --install  # (re)install and start it
 pvql service --uninstall
 ```
 
-Its output goes to `~/Library/Logs/pvqld.log`.
+It appears as PyVista Quick Look under Login Items in System Settings, and its output
+goes to `~/Library/Logs/pvqld.log`.
 
 ### Files in the Desktop, Documents, and Downloads folders
 

@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 import plistlib
+import subprocess
 import sys
 
 import pytest
@@ -211,6 +212,23 @@ def test_agent_plist_runs_the_daemon():
     assert agent['ProgramArguments'] == ['/usr/local/bin/pvql', 'daemon']
     assert agent['KeepAlive'] is True
     assert agent['Label'] == daemon.LABEL
+    assert agent['AssociatedBundleIdentifiers'] == [plist.APP_BUNDLE_ID]
+
+
+def test_service_install_runs_the_daemon_under_the_package_name(tmp_path, monkeypatch):
+    """The agent runs the pyvista-quicklook entry point, which is the name macOS shows."""
+    for name in ('pvql', 'pyvista-quicklook'):
+        (tmp_path / name).write_text('#!/bin/sh\n')
+        (tmp_path / name).chmod(0o755)
+    agent = tmp_path / 'agent.plist'
+    monkeypatch.setattr(cli.daemon_mod, 'agent_path', lambda: agent)
+    monkeypatch.setattr(
+        cli.subprocess, 'run', lambda *a, **k: subprocess.CompletedProcess(a[0], 0, '', '')
+    )
+    args = argparse.Namespace(install=True, uninstall=False, helper=str(tmp_path / 'pvql'))
+    assert cli.cmd_service(args) == 0
+    stored = plistlib.loads(agent.read_bytes())
+    assert stored['ProgramArguments'] == [str(tmp_path / 'pyvista-quicklook'), 'daemon']
 
 
 def test_parser_accepts_every_subcommand():

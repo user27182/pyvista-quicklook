@@ -82,9 +82,12 @@ def cmd_service(args: argparse.Namespace) -> int:
 
     if args.install:
         helper = args.helper or shutil.which('pvql') or str(Path.home() / '.local/bin/pvql')
+        # macOS names a background item after its program until the app is registered.
+        named = Path(helper).with_name('pyvista-quicklook')
+        program = str(named) if named.is_file() else helper
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open('wb') as handle:
-            plistlib.dump(daemon_mod.agent_plist(helper), handle, sort_keys=False)
+            plistlib.dump(daemon_mod.agent_plist(program), handle, sort_keys=False)
         subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True, check=False)
         # launchd reports an I/O error when it is still tearing the old job down.
         for attempt in range(5):

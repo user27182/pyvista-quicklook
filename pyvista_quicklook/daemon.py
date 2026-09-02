@@ -18,6 +18,7 @@ from . import convert as convert_mod
 from . import render as render_mod
 from . import warmup as warmup_mod
 from .environment import RenderError
+from .plist import APP_BUNDLE_ID
 from .plist import EXT_BUNDLE_ID
 
 LABEL = 'io.github.user27182.pvqld'
@@ -236,6 +237,8 @@ def agent_plist(helper: str) -> dict[str, Any]:
     return {
         'Label': LABEL,
         'ProgramArguments': [helper, 'daemon'],
+        # Listed under the app's name in Login Items, rather than the program's.
+        'AssociatedBundleIdentifiers': [APP_BUNDLE_ID],
         'RunAtLoad': True,
         'KeepAlive': True,
         # Background would throttle the renderer; previews answer a key press.
