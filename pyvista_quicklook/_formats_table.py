@@ -6,6 +6,7 @@ This module is run by the PyVista interpreter, not by ``pvql`` itself:
 
 from __future__ import annotations
 
+from itertools import zip_longest
 from pathlib import Path
 import sys
 from typing import NamedTuple
@@ -65,6 +66,11 @@ def section() -> str:
     def cell(row: Row) -> str:
         return ', '.join(f'`{ext}`' for ext in row.extensions)
 
+    def pair(left: Row, right: Row | None) -> str:
+        tail = f' {right.name} | {cell(right)} |' if right else ' | |'
+        return f'| {left.name} | {cell(left)} |{tail}'
+
+    half = (len(claimed) + 1) // 2
     lines = [
         '',
         (
@@ -73,9 +79,9 @@ def section() -> str:
         ),
         'preview:',
         '',
-        '| Format | Extensions |',
-        '| --- | --- |',
-        *(f'| {row.name} | {cell(row)} |' for row in claimed),
+        '| Format | Extensions | Format | Extensions |',
+        '| --- | --- | --- | --- |',
+        *(pair(left, right) for left, right in zip_longest(claimed[:half], claimed[half:])),
         '',
         f'{sum(len(r.extensions) for r in optional)} more can be claimed with `extensions.add`:',
         '',

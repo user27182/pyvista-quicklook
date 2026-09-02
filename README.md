@@ -83,59 +83,34 @@ which needs the Xcode command line tools (`xcode-select --install`):
 63 extensions are claimed by default, so pressing space on any of them opens this
 preview:
 
-| Format | Extensions |
-| --- | --- |
-| 3D Studio Model | `.3ds` |
-| 3MF Model | `.3mf` |
-| AVS UCD Mesh | `.avs` |
-| Binary Marching Cubes Surface | `.tri` |
-| CalculiX Result | `.frd` |
-| CGNS Data | `.cgns` |
-| Digital Elevation Model | `.dem` |
-| DXF Drawing | `.dxf` |
-| Eclipse GRDECL Grid | `.grdecl` |
-| EnSight Case | `.case` |
-| Exodus II Data | `.ex2`, `.exii`, `.exo` |
-| Facet Surface | `.facet` |
-| FLAC3D Grid | `.f3grid` |
-| Fluent Case | `.cas` |
-| GAMBIT Neutral Mesh | `.neu` |
-| Gaussian Cube | `.cube` |
-| GE Signa MR Image | `.mr` |
-| Kratos Model Part | `.mdpa` |
-| Medit Mesh | `.mesh`, `.meshb` |
-| MetaImage Volume | `.mha`, `.mhd` |
-| MINC Volume | `.mnc` |
-| Nastran Bulk Data | `.bdf`, `.fem`, `.nas` |
-| Nek5000 Data | `.nek5000` |
-| Netgen Mesh | `.vol` |
-| NIfTI Volume | `.nii` |
-| NRRD Volume | `.nhdr`, `.nrrd` |
-| Object File Format Mesh | `.off` |
-| OpenFOAM Case | `.foam` |
-| ParaView Data Collection | `.pvd` |
-| PLOT3D Metadata | `.p3d` |
-| Protein Data Bank | `.pdb` |
-| PyVista Zstandard Data | `.pv`, `.zvtk` |
-| SEG-Y Seismic Data | `.segy`, `.sgy` |
-| SLC Volume | `.slc` |
-| STEP Model | `.step`, `.stp` |
-| Tecplot ASCII Data | `.tec` |
-| VRML Model | `.vrml`, `.wrl` |
-| VTK HDF | `.vtkhdf` |
-| VTK Image Data | `.vti` |
-| VTK Legacy Data | `.vtk` |
-| VTK MultiBlock | `.vtm`, `.vtmb` |
-| VTK Parallel Image Data | `.pvti` |
-| VTK Parallel Legacy Data | `.pvtk` |
-| VTK Parallel Rectilinear Grid | `.pvtr` |
-| VTK Parallel Unstructured Grid | `.pvtu` |
-| VTK Partitioned Dataset | `.vtpd` |
-| VTK PolyData | `.vtp` |
-| VTK Rectilinear Grid | `.vtr` |
-| VTK Structured Grid | `.vts` |
-| VTK Unstructured Grid | `.vtu` |
-| XDMF Data | `.xdmf` |
+| Format | Extensions | Format | Extensions |
+| --- | --- | --- | --- |
+| 3D Studio Model | `.3ds` | Object File Format Mesh | `.off` |
+| 3MF Model | `.3mf` | OpenFOAM Case | `.foam` |
+| AVS UCD Mesh | `.avs` | ParaView Data Collection | `.pvd` |
+| Binary Marching Cubes Surface | `.tri` | PLOT3D Metadata | `.p3d` |
+| CalculiX Result | `.frd` | Protein Data Bank | `.pdb` |
+| CGNS Data | `.cgns` | PyVista Zstandard Data | `.pv`, `.zvtk` |
+| Digital Elevation Model | `.dem` | SEG-Y Seismic Data | `.segy`, `.sgy` |
+| DXF Drawing | `.dxf` | SLC Volume | `.slc` |
+| Eclipse GRDECL Grid | `.grdecl` | STEP Model | `.step`, `.stp` |
+| EnSight Case | `.case` | Tecplot ASCII Data | `.tec` |
+| Exodus II Data | `.ex2`, `.exii`, `.exo` | VRML Model | `.vrml`, `.wrl` |
+| Facet Surface | `.facet` | VTK HDF | `.vtkhdf` |
+| FLAC3D Grid | `.f3grid` | VTK Image Data | `.vti` |
+| Fluent Case | `.cas` | VTK Legacy Data | `.vtk` |
+| GAMBIT Neutral Mesh | `.neu` | VTK MultiBlock | `.vtm`, `.vtmb` |
+| Gaussian Cube | `.cube` | VTK Parallel Image Data | `.pvti` |
+| GE Signa MR Image | `.mr` | VTK Parallel Legacy Data | `.pvtk` |
+| Kratos Model Part | `.mdpa` | VTK Parallel Rectilinear Grid | `.pvtr` |
+| Medit Mesh | `.mesh`, `.meshb` | VTK Parallel Unstructured Grid | `.pvtu` |
+| MetaImage Volume | `.mha`, `.mhd` | VTK Partitioned Dataset | `.vtpd` |
+| MINC Volume | `.mnc` | VTK PolyData | `.vtp` |
+| Nastran Bulk Data | `.bdf`, `.fem`, `.nas` | VTK Rectilinear Grid | `.vtr` |
+| Nek5000 Data | `.nek5000` | VTK Structured Grid | `.vts` |
+| Netgen Mesh | `.vol` | VTK Unstructured Grid | `.vtu` |
+| NIfTI Volume | `.nii` | XDMF Data | `.xdmf` |
+| NRRD Volume | `.nhdr`, `.nrrd` | | |
 
 22 more can be claimed with `extensions.add`:
 
