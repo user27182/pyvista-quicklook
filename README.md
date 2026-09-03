@@ -302,5 +302,6 @@ pvql uninstall
 
 It lists what it is about to remove and asks first: the app, the render service, the
 PyVista environment, the cache, and the `pvql` command itself. The configuration file
-is kept unless you pass `--all`; uv is left in place. The app's own window has an
-Uninstall button that does the same.
+is kept unless you pass `--all`, and uv is left in place, with a note on how to remove
+that too if the installer is what put it there. The app's own window has an Uninstall
+button that does the same.

@@ -329,6 +329,20 @@ def uninstall_targets(everything: bool) -> list[Path]:
     return [path for path in candidates if path.exists()]
 
 
+def uv_note(uv: Path) -> str:
+    """Return what to tell the reader about the uv that provisioned the environment."""
+    if not uv.is_relative_to(Path.home()):
+        return f'uv is left in place at {uv}; remove it with whatever installed it.'
+    return (
+        f'uv is left in place at {uv}. The installer fetches it when it is missing, so\n'
+        'remove it too if nothing else on this Mac uses it:\n'
+        '    uv cache clean\n'
+        '    rm -r "$(uv python dir)" "$(uv tool dir)"\n'
+        f'    rm {uv} {uv.with_name("uvx")}\n'
+        'That takes every tool and every Python uv manages, not only this one.'
+    )
+
+
 def cmd_uninstall(args: argparse.Namespace) -> int:
     """Remove the app, the render service, the PyVista environment, and the helper."""
     targets = uninstall_targets(args.all)
@@ -337,12 +351,16 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
         print(f'  {target}')
     print(f'  the render service {daemon_mod.LABEL}')
     print('  the pvql command')
-    if not args.all and config_mod.CONFIG_PATH.exists():
-        print(f'and keeps {config_mod.CONFIG_PATH}; pass --all to remove it too.')
+    keeps_config = not args.all and config_mod.CONFIG_PATH.exists()
+    if keeps_config:
+        print(f'and keeps {config_mod.CONFIG_PATH}.')
     if not args.yes:
+        also = ' --all' if keeps_config else ''
         if not sys.stdin.isatty():
-            print('Run again with --yes to remove them.')
+            print(f'Run "pvql uninstall --yes{also}" to remove them.')
             return 1
+        if keeps_config:
+            print('To remove that too, answer n and run "pvql uninstall --all".')
         if input('Remove? [y/N] ').strip().lower() != 'y':
             return 1
 
@@ -361,16 +379,17 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
         subprocess.run(command, capture_output=True, check=False)
 
     print('removed', file=sys.stdout, flush=True)
-    uv = shutil.which('uv') or str(Path.home() / '.local' / 'bin' / 'uv')
-    if Path(uv).is_file():
-        subprocess.run(
-            [uv, 'tool', 'uninstall', 'pyvista-quicklook'], capture_output=True, check=False
-        )
-        print('removed the pvql command; uv itself was left in place')
-    else:
+    uv = Path(shutil.which('uv') or Path.home() / '.local' / 'bin' / 'uv')
+    if not uv.is_file():
         print(
             'uv was not found; remove the pvql command with: uv tool uninstall pyvista-quicklook'
         )
+        return 0
+    subprocess.run(
+        [str(uv), 'tool', 'uninstall', 'pyvista-quicklook'], capture_output=True, check=False
+    )
+    print('removed the pvql command')
+    print(uv_note(uv))
     return 0
 
 

@@ -322,7 +322,17 @@ def test_uninstall_only_reports_without_a_terminal(installation, capsys):
     assert cli.cmd_uninstall(argparse.Namespace(yes=False, all=False)) == 1
     assert (tmp_path / 'Applications' / plist.APP_BUNDLE).exists()
     assert commands == []
-    assert '--yes' in capsys.readouterr().out
+    # The config file is kept by default, so the offer names the flag that takes it too.
+    assert 'pvql uninstall --yes --all' in capsys.readouterr().out
+
+
+def test_uv_note_explains_how_to_remove_an_installed_uv(tmp_path, monkeypatch):
+    """Uv the installer fetched is explained; uv from elsewhere is left to its owner."""
+    monkeypatch.setattr(cli.Path, 'home', classmethod(lambda cls: tmp_path))
+    ours = cli.uv_note(tmp_path / '.local' / 'bin' / 'uv')
+    assert 'uv cache clean' in ours
+    assert 'not only this one' in ours
+    assert 'whatever installed it' in cli.uv_note(Path('/opt/homebrew/bin/uv'))
 
 
 def test_agent_plist_runs_the_daemon():
