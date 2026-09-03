@@ -32,9 +32,9 @@ def log(config: dict[str, Any], message: str) -> None:
 
 
 def source_path(source: str | os.PathLike[str]) -> Path:
-    """Return the resolved path of a file to preview, which must exist."""
+    """Return the resolved path of what is to be previewed, a file or a folder of slices."""
     path = Path(source).expanduser().resolve()
-    if not path.is_file():
+    if not path.exists():
         message = f'No such file: {path}'
         raise RenderError(message)
     return path

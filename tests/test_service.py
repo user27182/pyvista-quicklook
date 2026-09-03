@@ -40,6 +40,12 @@ def test_scene_is_built_by_the_exporter_and_cached(tmp_path, env, monkeypatch):
     assert convert.scene(source, env) == out
 
 
+def test_a_folder_of_slices_is_converted(tmp_path, env):
+    """A DICOM series arrives as a folder, and the whole folder is what gets read."""
+    out = convert.scene(pv.examples.download_dicom_stack(load=False), env)
+    assert pv.read(out).n_faces > 0
+
+
 def test_scene_reports_what_the_exporter_said(tmp_path, env):
     """A file the exporter cannot handle is reported, and nothing is left in the cache."""
     source = tmp_path / 'broken.vtp'
