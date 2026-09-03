@@ -3,7 +3,10 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-APP_NAME="PyVistaQuickLook"
+BUNDLE_NAME="PyVista Quick Look"
+# Installations before 0.4.1 named the bundle after the build.
+LEGACY_BUNDLE_NAME="PyVistaQuickLook"
+EXT_NAME="PyVistaQuickLookExtension"
 EXT_ID="io.github.user27182.PyVistaQuickLook.QuickLook"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
 VENV="$SUPPORT/venv"
@@ -96,19 +99,26 @@ if [[ -n "$PREBUILT" ]]; then
   SOURCE_APP="$PREBUILT"
 else
   "$ROOT/scripts/build.sh" --helper "$HELPER"
-  SOURCE_APP="$ROOT/build/$APP_NAME.app"
+  SOURCE_APP="$ROOT/build/$BUNDLE_NAME.app"
 fi
 
-APP="$DEST/$APP_NAME.app"
+APP="$DEST/$BUNDLE_NAME.app"
 echo "==> installing $APP"
 mkdir -p "$DEST"
 rm -rf "$APP"
 cp -R "$SOURCE_APP" "$APP"
 
+LEGACY_APP="$DEST/$LEGACY_BUNDLE_NAME.app"
+if [[ -d "$LEGACY_APP" ]]; then
+  echo "==> removing the previous $LEGACY_APP"
+  /usr/bin/pluginkit -r "$LEGACY_APP/Contents/PlugIns/$EXT_NAME.appex" 2>/dev/null || true
+  rm -rf "$LEGACY_APP"
+fi
+
 echo "==> registering with Launch Services and Quick Look"
 LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
 "$LSREGISTER" -f -R -trusted "$APP"
-/usr/bin/pluginkit -a "$APP/Contents/PlugIns/${APP_NAME}Extension.appex" 2>/dev/null || true
+/usr/bin/pluginkit -a "$APP/Contents/PlugIns/$EXT_NAME.appex" 2>/dev/null || true
 /usr/bin/pluginkit -e use -i "$EXT_ID" 2>/dev/null || true
 /usr/bin/qlmanage -r >/dev/null 2>&1 || true
 /usr/bin/qlmanage -r cache >/dev/null 2>&1 || true

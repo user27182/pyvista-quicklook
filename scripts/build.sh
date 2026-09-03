@@ -4,6 +4,8 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 BUILD="$ROOT/build"
+# The bundle carries the reader's name; the binary inside carries the build's.
+BUNDLE_NAME="PyVista Quick Look"
 APP_NAME="PyVistaQuickLook"
 EXT_NAME="PyVistaQuickLookExtension"
 APP_ID="io.github.user27182.PyVistaQuickLook"
@@ -28,7 +30,7 @@ if [[ -z "$HELPER" ]]; then
   HELPER="$HOME/.local/bin/pvql"
 fi
 
-APP="$BUILD/$APP_NAME.app"
+APP="$BUILD/$BUNDLE_NAME.app"
 APPEX="$APP/Contents/PlugIns/$EXT_NAME.appex"
 TARGET="$(uname -m)-apple-macos$DEPLOYMENT_TARGET"
 

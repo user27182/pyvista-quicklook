@@ -45,7 +45,7 @@ No system Python and no existing environment is used or changed.
 | --- | --- | --- |
 | `~/Library/Application Support/PyVistaQuickLook/venv` | The PyVista environment | 380 MB |
 | `~/Library/Application Support/PyVistaQuickLook/config.json` | Configuration | 4 KB |
-| `~/Applications/PyVistaQuickLook.app` | The app and its Quick Look extension | 500 KB |
+| `~/Applications/PyVista Quick Look.app` | The app and its Quick Look extension | 500 KB |
 | `~/Library/Application Support/uv/tools/pyvista-quicklook` | The `pvql` helper | 400 KB |
 | `~/.local/bin/pvql`, `~/.local/bin/pyvista-quicklook` | Links to the helper | |
 | `~/Library/LaunchAgents/io.github.user27182.pvqld.plist` | The render service | 4 KB |
@@ -193,7 +193,8 @@ pvql service --uninstall
 ```
 
 It appears as PyVista Quick Look under Login Items in System Settings, and its output
-goes to `~/Library/Logs/pvqld.log`.
+goes to `~/Library/Logs/pvqld.log`. macOS names it `pyvista-quicklook` when it asks
+whether to let it read a folder, since that is the program the service runs as.
 
 ### Files in the Desktop, Documents, and Downloads folders
 
@@ -279,6 +280,12 @@ PyVista's reader tables and checked by another test:
 ```bash
 uv run python -m pyvista_quicklook._formats_table README.md
 ```
+
+One project, three names, each where its own conventions apply: `pyvista-quicklook` is
+the package on PyPI and the program the render service runs as, `pvql` is the command,
+and `PyVista Quick Look` is what the reader sees, from the app bundle to the panel. The
+build's own files keep the compact `PyVistaQuickLook` spelling: the bundle identifier,
+the executables, and the downloadable zip.
 
 `main` is protected by a pre-commit hook, so work on a branch.
 

@@ -248,7 +248,7 @@ def installation(tmp_path, monkeypatch):
         (support / folder).mkdir(parents=True)
         (support / folder / 'file').write_text('x')
     (support / 'config.json').write_text('{}')
-    app = tmp_path / 'Applications' / 'PyVistaQuickLook.app'
+    app = tmp_path / 'Applications' / plist.APP_BUNDLE
     (app / 'Contents' / 'PlugIns').mkdir(parents=True)
     (tmp_path / 'cache').mkdir()
     (tmp_path / 'agent.plist').write_text('x')
@@ -280,7 +280,7 @@ def test_uninstall_removes_everything_but_the_config(installation, capsys):
     tmp_path, commands = installation
     assert cli.cmd_uninstall(argparse.Namespace(yes=True, all=False)) == 0
     for gone in (
-        'Applications/PyVistaQuickLook.app',
+        f'Applications/{plist.APP_BUNDLE}',
         'agent.plist',
         'cache',
         'container',
@@ -299,6 +299,16 @@ def test_uninstall_removes_everything_but_the_config(installation, capsys):
     assert 'keeps' in capsys.readouterr().out
 
 
+def test_uninstall_removes_a_bundle_under_the_old_name(installation):
+    """A bundle installed before the rename is found and removed as well."""
+    tmp_path, _ = installation
+    legacy = tmp_path / 'Applications' / plist.LEGACY_APP_BUNDLE
+    (legacy / 'Contents' / 'PlugIns').mkdir(parents=True)
+    assert legacy in cli.installed_apps()
+    assert cli.cmd_uninstall(argparse.Namespace(yes=True, all=False)) == 0
+    assert not legacy.exists()
+
+
 def test_uninstall_all_removes_the_config_too(installation):
     """`pvql uninstall --all` removes the config file as well."""
     tmp_path, _ = installation
@@ -310,7 +320,7 @@ def test_uninstall_only_reports_without_a_terminal(installation, capsys):
     """Without --yes and without a terminal to ask on, nothing is removed."""
     tmp_path, commands = installation
     assert cli.cmd_uninstall(argparse.Namespace(yes=False, all=False)) == 1
-    assert (tmp_path / 'Applications' / 'PyVistaQuickLook.app').exists()
+    assert (tmp_path / 'Applications' / plist.APP_BUNDLE).exists()
     assert commands == []
     assert '--yes' in capsys.readouterr().out
 

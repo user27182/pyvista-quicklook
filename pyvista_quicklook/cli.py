@@ -267,7 +267,7 @@ def cmd_doctor(_: argparse.Namespace) -> int:
             print(f'✓ app        {candidate}')
     else:
         problems += 1
-        print('✗ app        not installed; run scripts/install.sh')
+        print('✗ app        not installed; reinstall PyVista Quick Look')
 
     registered = _run(['/usr/bin/pluginkit', '-m', '-i', plist_mod.EXT_BUNDLE_ID])
     if registered:
@@ -305,12 +305,9 @@ def cmd_doctor(_: argparse.Namespace) -> int:
 
 
 def installed_apps() -> list[Path]:
-    """Return every copy of the app bundle that is installed."""
-    return [
-        d / f'{plist_mod.APP_EXECUTABLE}.app'
-        for d in APP_DIRS
-        if (d / f'{plist_mod.APP_EXECUTABLE}.app').is_dir()
-    ]
+    """Return every installed copy of the app bundle, under either name it has had."""
+    names = (plist_mod.APP_BUNDLE, plist_mod.LEGACY_APP_BUNDLE)
+    return [d / name for d in APP_DIRS for name in names if (d / name).is_dir()]
 
 
 def uninstall_targets(everything: bool) -> list[Path]:

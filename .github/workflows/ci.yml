@@ -67,7 +67,7 @@ jobs:
     - run: ./scripts/build.sh --universal
     - name: Check the bundle is complete and signed
       run: |
-        app=build/PyVistaQuickLook.app
+        app="build/PyVista Quick Look.app"
         appex="$app/Contents/PlugIns/PyVistaQuickLookExtension.appex"
         test -x "$app/Contents/MacOS/PyVistaQuickLook"
         test -x "$appex/Contents/MacOS/PyVistaQuickLookExtension"
@@ -79,7 +79,7 @@ jobs:
         lipo -archs "$appex/Contents/MacOS/PyVistaQuickLookExtension" | grep -q arm64
     - run: uv run pytest tests/
     - name: Package the app
-      run: ditto -c -k --keepParent build/PyVistaQuickLook.app build/PyVistaQuickLook.zip
+      run: ditto -c -k --keepParent "build/PyVista Quick Look.app" build/PyVistaQuickLook.zip
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a   # v7.0.1
       with:
         name: PyVistaQuickLook.zip

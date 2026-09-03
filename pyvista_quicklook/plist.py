@@ -12,6 +12,10 @@ from .formats import FORMATS
 from .formats import uti_for
 
 APP_NAME = 'PyVista Quick Look'
+# The bundle is named for the reader, since the Finder shows its file name and ignores
+# CFBundleDisplayName. Everything inside it is named for the build.
+APP_BUNDLE = f'{APP_NAME}.app'
+LEGACY_APP_BUNDLE = 'PyVistaQuickLook.app'
 APP_BUNDLE_ID = 'io.github.user27182.PyVistaQuickLook'
 APP_EXECUTABLE = 'PyVistaQuickLook'
 EXT_BUNDLE_ID = f'{APP_BUNDLE_ID}.QuickLook'
@@ -73,7 +77,7 @@ def app_plist(extensions: list[str], helper: str | None = None) -> dict[str, Any
 def extension_plist(extensions: list[str], helper: str | None = None) -> dict[str, Any]:
     """Return the Quick Look extension's Info.plist contents."""
     plist: dict[str, Any] = {
-        'CFBundleName': EXT_EXECUTABLE,
+        'CFBundleName': APP_NAME,
         'CFBundleDisplayName': f'{APP_NAME} Extension',
         'CFBundleIdentifier': EXT_BUNDLE_ID,
         'CFBundleExecutable': EXT_EXECUTABLE,
