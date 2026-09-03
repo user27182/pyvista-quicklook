@@ -50,7 +50,7 @@ def test_readme_lists_exactly_the_known_formats():
     readme = (Path(__file__).parents[1] / 'README.md').read_text()
     section = readme.split('## Supported files', 1)[1].split('\n## ', 1)[0]
     listed = set(re.findall(r'`(\.[a-z0-9.]+)`', section))
-    assert listed == set(formats.FORMATS) | set(formats.UNCLAIMED)
+    assert listed == set(formats.FORMATS) | set(formats.UNCLAIMED) | set(formats.VIA_SYSTEM_TYPE)
 
 
 def test_unclaimed_extensions_say_why():

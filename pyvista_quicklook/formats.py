@@ -106,6 +106,15 @@ FORMATS: dict[str, str] = {
 }
 
 
+# Extensions claimed through a type in SYSTEM_TYPES rather than by their own, since
+# Launch Services sees only the last suffix of a compressed dataset.
+VIA_SYSTEM_TYPE: dict[str, str] = {
+    '.dato.gz': 'org.gnu.gnu-zip-archive',
+    '.nii.gz': 'org.gnu.gnu-zip-archive',
+    '.post.gz': 'org.gnu.gnu-zip-archive',
+    '.vol.gz': 'org.gnu.gnu-zip-archive',
+}
+
 # Extensions the environment can read that are deliberately not claimed, and why.
 UNCLAIMED: dict[str, str] = {
     # macOS previews these itself, and Launch Services keeps its own type for them.
@@ -128,11 +137,6 @@ UNCLAIMED: dict[str, str] = {
     '.img': 'disk images own the extension',
     '.raw': 'camera raw images own the extension',
     '.xml': 'XML owns the extension',
-    # Reached through the gzip type above, since Launch Services sees only .gz.
-    '.dato.gz': 'previewed as a gzip archive',
-    '.nii.gz': 'previewed as a gzip archive',
-    '.post.gz': 'previewed as a gzip archive',
-    '.vol.gz': 'previewed as a gzip archive',
     # Readers pyvista-cad registers whose kernels the installer leaves out.
     '.brep': 'needs an OpenCascade kernel',
     '.brp': 'needs an OpenCascade kernel',

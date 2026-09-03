@@ -16,7 +16,9 @@ from pyvista.core.utilities.reader import CLASS_READERS
 from pyvista.core.utilities.reader_registry import registered_readers
 
 from .formats import FORMATS
+from .formats import SYSTEM_TYPES
 from .formats import UNCLAIMED
+from .formats import VIA_SYSTEM_TYPE
 
 START = '## Supported files\n'
 END = 'Claims on the extensions macOS previews itself'
@@ -66,6 +68,9 @@ def section() -> str:
         return f'| {left.name} | {cell(left)} |{tail}'
 
     half = (len(claimed) + 1) // 2
+    via: dict[str, list[str]] = {}
+    for ext, uti in VIA_SYSTEM_TYPE.items():
+        via.setdefault(uti, []).append(ext)
     reasons: dict[str, list[str]] = {}
     for ext, reason in UNCLAIMED.items():
         reasons.setdefault(reason, []).append(ext)
@@ -78,6 +83,19 @@ def section() -> str:
         '| Format | Extensions | Format | Extensions |',
         '| --- | --- | --- | --- |',
         *(pair(left, right) for left, right in zip_longest(claimed[:half], claimed[half:])),
+        '',
+        (
+            f'{len(VIA_SYSTEM_TYPE)} more are claimed through a type macOS declares, since'
+            ' Launch Services sees only'
+        ),
+        'the last suffix of a compressed dataset:',
+        '',
+        *(
+            f'- {SYSTEM_TYPES[uti]} (`{uti}`): ' + ', '.join(f'`{e}`' for e in sorted(exts))
+            for uti, exts in via.items()
+        ),
+        '',
+        'A folder of DICOM slices is claimed the same way, through `public.folder`.',
         '',
         'PyVista can also read these, which are not claimed:',
         '',

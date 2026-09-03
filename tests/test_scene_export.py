@@ -435,8 +435,11 @@ def test_readme_tables_match_the_readers():
 
 def test_format_table_accounts_for_every_readable_extension():
     """Each extension the environment reads is listed or deliberately unclaimed, and no other."""
+    accounted = set(formats.FORMATS) | set(formats.UNCLAIMED) | set(formats.VIA_SYSTEM_TYPE)
     assert set(formats.FORMATS).isdisjoint(formats.UNCLAIMED)
-    assert readable_extensions() == set(formats.FORMATS) | set(formats.UNCLAIMED)
+    assert set(formats.FORMATS).isdisjoint(formats.VIA_SYSTEM_TYPE)
+    assert all(uti in formats.SYSTEM_TYPES for uti in formats.VIA_SYSTEM_TYPE.values())
+    assert readable_extensions() == accounted
 
 
 def missing_reader(ext: str) -> str | None:

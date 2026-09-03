@@ -118,13 +118,19 @@ of numbers, is shown as plain text instead, the way Quick Look would have shown 
 | NRRD Volume | `.nhdr`, `.nrrd` | XDMF Data | `.xdmf` |
 | Object File Format Mesh | `.off` | | |
 
+4 more are claimed through a type macOS declares, since Launch Services sees only
+the last suffix of a compressed dataset:
+
+- Gzip Archive (`org.gnu.gnu-zip-archive`): `.dato.gz`, `.nii.gz`, `.post.gz`, `.vol.gz`
+
+A folder of DICOM slices is claimed the same way, through `public.folder`.
+
 PyVista can also read these, which are not claimed:
 
 - macOS previews it: `.bmp`, `.dcm`, `.gif`, `.glb`, `.gltf`, `.hdr`, `.jpeg`, `.jpg`, `.obj`, `.ply`, `.png`, `.pnm`, `.stl`, `.tif`, `.tiff`
 - disk images own the extension: `.img`
 - camera raw images own the extension: `.raw`
 - XML owns the extension: `.xml`
-- previewed as a gzip archive: `.dato.gz`, `.nii.gz`, `.post.gz`, `.vol.gz`
 - needs an OpenCascade kernel: `.brep`, `.brp`, `.fcstd`, `.iges`, `.igs`
 - needs ifcopenshell: `.ifc`
 - needs the openscad program: `.scad`
