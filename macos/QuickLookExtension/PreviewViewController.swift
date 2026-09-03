@@ -70,6 +70,32 @@ func textView(_ text: String) -> NSView {
     return scroll
 }
 
+/// How many entries of a folder are examined when looking for a DICOM series.
+let dicomSampleSize = 8
+
+/// Returns whether a folder holds DICOM slices, the one kind of folder that is a dataset.
+/// Every DICOM file carries "DICM" after a 128 byte preamble, whatever it is named.
+func holdsDicomFiles(_ url: URL) -> Bool {
+    let manager = FileManager.default
+    let entries = (try? manager.contentsOfDirectory(
+        at: url,
+        includingPropertiesForKeys: [.isRegularFileKey],
+        options: [.skipsHiddenFiles, .skipsSubdirectoryDescendants]
+    )) ?? []
+    for entry in entries.sorted(by: { $0.lastPathComponent < $1.lastPathComponent })
+        .prefix(dicomSampleSize) {
+        guard let handle = try? FileHandle(forReadingFrom: entry) else {
+            continue
+        }
+        defer { try? handle.close() }
+        let head = handle.readData(ofLength: 132)
+        if head.count == 132, head.suffix(4) == Data("DICM".utf8) {
+            return true
+        }
+    }
+    return false
+}
+
 /// Builds the Finder's own account of a file: its icon, name, size, and date. Shown for
 /// a claimed file that holds no mesh, such as a gzip archive of something else.
 @MainActor
@@ -82,10 +108,15 @@ func detailsView(_ url: URL, reason: String) -> NSView {
     name.lineBreakMode = .byTruncatingMiddle
     name.alignment = .center
 
-    let keys: Set<URLResourceKey> = [.fileSizeKey, .totalFileSizeKey, .contentModificationDateKey]
+    let keys: Set<URLResourceKey> = [
+        .fileSizeKey, .totalFileSizeKey, .contentModificationDateKey, .isDirectoryKey,
+    ]
     let values = try? url.resourceValues(forKeys: keys)
     var lines: [String] = []
-    if let bytes = values?.totalFileSize ?? values?.fileSize {
+    if values?.isDirectory == true {
+        let entries = (try? FileManager.default.contentsOfDirectory(atPath: url.path)) ?? []
+        lines.append(entries.count == 1 ? "1 item" : "\(entries.count) items")
+    } else if let bytes = values?.totalFileSize ?? values?.fileSize {
         lines.append(ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file))
     }
     if let modified = values?.contentModificationDate {
@@ -98,6 +129,7 @@ func detailsView(_ url: URL, reason: String) -> NSView {
     facts.alignment = .center
 
     let note = NSTextField(wrappingLabelWithString: reason)
+    note.isHidden = reason.isEmpty
     note.font = NSFont.systemFont(ofSize: 11)
     note.textColor = .tertiaryLabelColor
     note.alignment = .center
@@ -170,6 +202,18 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
         pvqlLog("preview requested for \(url.path)")
         DispatchQueue.global(qos: .userInitiated).async {
             // Only file work here; AppKit views are built on the main thread below.
+            var isFolder: ObjCBool = false
+            FileManager.default.fileExists(atPath: url.path, isDirectory: &isFolder)
+            if isFolder.boolValue, !holdsDicomFiles(url) {
+                // Answer for an ordinary folder here, rather than waiting on the service.
+                DispatchQueue.main.async {
+                    self.show(detailsView(url, reason: ""))
+                    pvqlLog("showing folder details")
+                    handler(nil)
+                }
+                return
+            }
+
             let outcome: Preview
             do {
                 switch try Helper.requestPreview(url) {

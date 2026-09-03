@@ -8,7 +8,13 @@ UTI_PREFIX = 'io.github.user27182.pyvista-quicklook'
 # compressed dataset is named .nii.gz or .vol.gz, but Launch Services sees only .gz and
 # keeps its own type for it, so the type is what has to be claimed. Nothing else
 # previews a gzip, so this claim wins; files that are not meshes show their details.
-SYSTEM_TYPES: dict[str, str] = {'org.gnu.gnu-zip-archive': 'Gzip Archive'}
+SYSTEM_TYPES: dict[str, str] = {
+    'org.gnu.gnu-zip-archive': 'Gzip Archive',
+    # A DICOM series is a folder of slices, so the folder is what gets previewed. The
+    # extension answers for one only when it holds DICOM files, and shows the folder's
+    # own details otherwise, so previewing an ordinary folder stays immediate.
+    'public.folder': 'Folder',
+}
 
 # Every extension the environment reads that is worth claiming, with the format's name.
 # Files a claim catches that turn out not to be meshes are shown as text by the extension.

@@ -177,9 +177,23 @@ numbers, and otherwise as its icon, name, size, and date, with a line saying why
 holds no mesh. A problem with the installation itself, such as a render service that is
 not running, is reported in full instead.
 
-Compressed datasets are previewed too. Launch Services sees only `.gz` and keeps its own
-type for it, so the extension claims that type: a gzipped NIfTI or Netgen mesh is drawn,
-and every other gzip shows its details.
+### Compressed and multi-file datasets
+
+Two kinds of dataset are not a single file with a claimable extension, and both are
+reached by claiming the type macOS gives them instead.
+
+A compressed dataset is named `.nii.gz` or `.vol.gz`, but Launch Services sees only
+`.gz` and keeps its own type for it, so declaring those extensions does nothing. The
+extension claims the gzip type: press space on a gzipped NIfTI, PERMAS, Netgen, or
+Medit file and it is drawn like any other. Every other gzip, a tarball or a compressed
+log, shows its details.
+
+A DICOM series is a folder of slices, so the folder is what gets previewed. Press space
+on one in the Finder and the slices are read as a single volume, cut through its centre
+and coloured, the same as any other volume. Folders are claimed for this, so the
+extension checks whether a folder holds DICOM files before it asks the render service:
+it looks for the `DICM` marker in the first few entries, whatever they are named, and an
+ordinary folder shows its own details immediately, as the Finder would.
 
 ### Still images
 

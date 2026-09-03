@@ -217,7 +217,10 @@ enum Helper {
                 body["mtime"] = Int(modified.timeIntervalSince1970)
             }
             // The service cannot read folders macOS keeps private, so leave it a copy.
-            if size > 0, size <= maximumFileBytes() {
+            // A directory is never staged: its own size says nothing about what it holds.
+            var isFolder: ObjCBool = false
+            manager.fileExists(atPath: url.path, isDirectory: &isFolder)
+            if !isFolder.boolValue, size > 0, size <= maximumFileBytes() {
                 let staged = (stagingPath as NSString).appendingPathComponent(url.lastPathComponent)
                 try? manager.createDirectory(atPath: stagingPath, withIntermediateDirectories: true)
                 if (try? manager.copyItem(atPath: url.path, toPath: staged)) != nil {

@@ -245,6 +245,16 @@ def test_volume_cell_data_is_drawn_flat_on_the_slices(tmp_path):
     assert 'RGB' in scene.point_data
 
 
+def test_a_dicom_folder_is_drawn(tmp_path):
+    """A folder of DICOM slices is read as one volume and sliced through."""
+    out = tmp_path / 'out.ply'
+    source = pv.examples.download_dicom_stack(load=False)
+    export_mod.export(str(source), str(out), 2_000_000, 20_000)
+    scene = pv.read(out)
+    assert scene.n_faces > 0
+    assert 'RGB' in scene.point_data
+
+
 @pytest.mark.parametrize(
     'download',
     [
