@@ -322,8 +322,10 @@ def test_uninstall_only_reports_without_a_terminal(installation, capsys):
     assert cli.cmd_uninstall(argparse.Namespace(yes=False, all=False)) == 1
     assert (tmp_path / 'Applications' / plist.APP_BUNDLE).exists()
     assert commands == []
-    # The config file is kept by default, so the offer names the flag that takes it too.
-    assert 'pvql uninstall --yes --all' in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert 'pvql uninstall --yes' in out
+    # The config file is kept, so the flag that takes it too is named separately.
+    assert '--all' in out
 
 
 def test_uv_note_explains_how_to_remove_an_installed_uv(tmp_path, monkeypatch):

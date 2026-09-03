@@ -355,9 +355,10 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
     if keeps_config:
         print(f'and keeps {config_mod.CONFIG_PATH}.')
     if not args.yes:
-        also = ' --all' if keeps_config else ''
         if not sys.stdin.isatty():
-            print(f'Run "pvql uninstall --yes{also}" to remove them.')
+            print('Run "pvql uninstall --yes" to remove them.')
+            if keeps_config:
+                print('Add --all to remove the configuration file as well.')
             return 1
         if keeps_config:
             print('To remove that too, answer n and run "pvql uninstall --all".')
