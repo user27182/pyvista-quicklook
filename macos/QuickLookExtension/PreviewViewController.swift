@@ -103,6 +103,9 @@ func holdsDicomFiles(_ url: URL) -> Bool {
     return false
 }
 
+/// How large the file's icon is drawn beside its details.
+let iconSide: CGFloat = 128
+
 /// Returns a folder's total size and how many items it holds, as the Finder reports them.
 func folderFacts(_ url: URL) -> String {
     let manager = FileManager.default
@@ -129,13 +132,20 @@ func folderFacts(_ url: URL) -> String {
 /// an extension cannot hand a file back to Quick Look to preview in its own way.
 @MainActor
 func detailsView(_ url: URL) -> NSView {
-    let icon = NSImageView(image: NSWorkspace.shared.icon(forFile: url.path))
+    // A file icon is drawn at 1024 points unless it is asked to be smaller, which is
+    // wider than the panel; the size has to be set on the image, not on the view.
+    let image = NSWorkspace.shared.icon(forFile: url.path)
+    image.size = NSSize(width: iconSide, height: iconSide)
+    let icon = NSImageView(image: image)
     icon.imageScaling = .scaleProportionallyUpOrDown
     icon.translatesAutoresizingMaskIntoConstraints = false
+    icon.setContentHuggingPriority(.required, for: .horizontal)
+    icon.setContentHuggingPriority(.required, for: .vertical)
 
     let name = NSTextField(labelWithString: url.lastPathComponent)
     name.font = NSFont.systemFont(ofSize: 28, weight: .bold)
     name.lineBreakMode = .byTruncatingMiddle
+    name.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
     let values = try? url.resourceValues(forKeys: [
         .fileSizeKey, .contentModificationDateKey, .isDirectoryKey,
@@ -170,8 +180,8 @@ func detailsView(_ url: URL) -> NSView {
     let container = NSView()
     container.addSubview(row)
     NSLayoutConstraint.activate([
-        icon.widthAnchor.constraint(equalToConstant: 128),
-        icon.heightAnchor.constraint(equalToConstant: 128),
+        icon.widthAnchor.constraint(equalToConstant: iconSide),
+        icon.heightAnchor.constraint(equalToConstant: iconSide),
         row.centerXAnchor.constraint(equalTo: container.centerXAnchor),
         row.centerYAnchor.constraint(equalTo: container.centerYAnchor),
         row.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 24),
