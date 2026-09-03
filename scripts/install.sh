@@ -122,6 +122,9 @@ LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchSe
 /usr/bin/pluginkit -e use -i "$EXT_ID" 2>/dev/null || true
 /usr/bin/qlmanage -r >/dev/null 2>&1 || true
 /usr/bin/qlmanage -r cache >/dev/null 2>&1 || true
+# Quick Look keeps the extension running between previews, and would go on using the
+# copy that was replaced; it starts the new one on the next preview.
+/usr/bin/pkill -x "$EXT_NAME" 2>/dev/null || true
 
 # After the app, so macOS lists the service under the app's name.
 echo "==> installing the render service"

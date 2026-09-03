@@ -368,6 +368,9 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
         if input('Remove? [y/N] ').strip().lower() != 'y':
             return 1
 
+    subprocess.run(
+        ['/usr/bin/pkill', '-x', plist_mod.EXT_EXECUTABLE], capture_output=True, check=False
+    )
     for app in installed_apps():
         appex = app / 'Contents' / 'PlugIns' / f'{plist_mod.EXT_EXECUTABLE}.appex'
         subprocess.run(['/usr/bin/pluginkit', '-r', str(appex)], capture_output=True, check=False)
