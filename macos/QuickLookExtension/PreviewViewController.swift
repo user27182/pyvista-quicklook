@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import QuickLookUI
 import SceneKit
+import UniformTypeIdentifiers
 
 /// What to put in the panel once the render service has answered.
 enum Preview {
@@ -101,6 +102,15 @@ func holdsDicomFiles(_ url: URL) -> Bool {
         }
     }
     return false
+}
+
+let utiPrefix = "io.github.user27182.pyvista-quicklook"
+
+/// Whether the file's type is one this app exported. A type macOS owns, a gzip archive or
+/// a folder, has a preview of its own, which is better than any imitation of it here.
+func isOwnType(_ url: URL) -> Bool {
+    let type = (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType
+    return type?.identifier.hasPrefix(utiPrefix) ?? false
 }
 
 /// How large the file's icon is drawn beside its details.
@@ -212,6 +222,15 @@ func messageView(_ text: String) -> NSView {
 /// Shows PyVista-readable mesh files in the Quick Look panel.
 @objc(PVQLPreviewViewController)
 final class PVQLPreviewViewController: NSViewController, QLPreviewingController {
+    /// Handed back for a file this extension has nothing to add to. Quick Look then draws
+    /// the preview it would have drawn anyway; the description is empty because Quick Look
+    /// puts it above that preview, where there is nothing worth saying.
+    static let noPreview = NSError(
+        domain: utiPrefix,
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: ""]
+    )
+
     override func loadView() {
         view = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
     }
@@ -240,12 +259,10 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
             // Only file work here; AppKit views are built on the main thread below.
             let isFolder = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory
             if isFolder == true, !holdsDicomFiles(url) {
-                // Answer here rather than waiting on the service, which has nothing to add.
-                pvqlLog("showing folder details")
-                DispatchQueue.main.async {
-                    self.show(detailsView(url))
-                    handler(nil)
-                }
+                // Hand it straight back, without waiting on the service, so Quick Look
+                // shows the folder preview it would have shown anyway.
+                pvqlLog("declining an ordinary folder")
+                DispatchQueue.main.async { handler(Self.noPreview) }
                 return
             }
 
@@ -264,6 +281,11 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
                 pvqlLog("not a mesh: \(message.prefix(120))")
                 if failure?.isSetup == true {
                     outcome = .message("Could not preview \(url.lastPathComponent)\n\n\(message)")
+                } else if !isOwnType(url) {
+                    // macOS has a preview of its own for this type; let it show that.
+                    pvqlLog("declining, not a mesh: \(briefly(message))")
+                    DispatchQueue.main.async { handler(Self.noPreview) }
+                    return
                 } else if let text = textContents(of: url) {
                     outcome = .text(text)
                 } else {
