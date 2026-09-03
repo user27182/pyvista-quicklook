@@ -70,6 +70,13 @@ func textView(_ text: String) -> NSView {
     return scroll
 }
 
+/// Returns the opening of a failure, which is all the details view has room for.
+func briefly(_ reason: String, limit: Int = 200) -> String {
+    let joined = reason.split(whereSeparator: \.isNewline).map(String.init).prefix(2)
+        .joined(separator: " ")
+    return joined.count > limit ? String(joined.prefix(limit)) + "…" : joined
+}
+
 /// How many entries of a folder are examined when looking for a DICOM series.
 let dicomSampleSize = 8
 
@@ -128,7 +135,7 @@ func detailsView(_ url: URL, reason: String) -> NSView {
     facts.textColor = .secondaryLabelColor
     facts.alignment = .center
 
-    let note = NSTextField(wrappingLabelWithString: reason)
+    let note = NSTextField(wrappingLabelWithString: briefly(reason))
     note.isHidden = reason.isEmpty
     note.font = NSFont.systemFont(ofSize: 11)
     note.textColor = .tertiaryLabelColor
@@ -202,9 +209,8 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
         pvqlLog("preview requested for \(url.path)")
         DispatchQueue.global(qos: .userInitiated).async {
             // Only file work here; AppKit views are built on the main thread below.
-            var isFolder: ObjCBool = false
-            FileManager.default.fileExists(atPath: url.path, isDirectory: &isFolder)
-            if isFolder.boolValue, !holdsDicomFiles(url) {
+            let isFolder = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory
+            if isFolder == true, !holdsDicomFiles(url) {
                 // Answer for an ordinary folder here, rather than waiting on the service.
                 DispatchQueue.main.async {
                     self.show(detailsView(url, reason: ""))

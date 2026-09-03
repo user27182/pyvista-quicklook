@@ -244,6 +244,8 @@ def test_handle_reports_unreachable_files_without_a_copy(tmp_path, monkeypatch):
     reply = json.loads((tmp_path / 'token.pvqlrep').read_text())
     assert reply['ok'] is False
     assert 'Privacy & Security' in reply['error']
+    # Marked so the panel shows the whole message rather than the file's details.
+    assert reply['actionable'] is True
 
 
 def test_handle_refuses_a_large_file_before_touching_it(tmp_path, monkeypatch):
@@ -256,6 +258,7 @@ def test_handle_refuses_a_large_file_before_touching_it(tmp_path, monkeypatch):
     reply = json.loads((tmp_path / 'token.pvqlrep').read_text())
     assert reply['ok'] is False
     assert 'preview limit' in reply['error']
+    assert reply['actionable'] is True
 
 
 @pytest.fixture

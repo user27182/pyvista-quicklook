@@ -127,13 +127,15 @@ def handle(request: Path) -> None:
         try:
             environment.check_size(identity, config)
         except RenderError as error:
-            write_json(reply, {'ok': False, 'error': str(error)})
+            # The reader can raise the limit, so this is worth saying in full.
+            write_json(reply, {'ok': False, 'error': str(error), 'actionable': True})
             return
 
     # Prefer the original so datasets that reference neighbouring files still resolve.
     target = source if folder_is_reachable(source) else payload.get('copy')
     if not target:
-        write_json(reply, {'ok': False, 'error': UNREADABLE_MESSAGE.format(path=source)})
+        message = UNREADABLE_MESSAGE.format(path=source)
+        write_json(reply, {'ok': False, 'error': message, 'actionable': True})
         return
 
     try:

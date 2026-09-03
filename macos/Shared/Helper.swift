@@ -263,7 +263,11 @@ enum Helper {
                 }
             }
             let reported = json["error"] as? String
-            throw Failure(message: reported ?? "The render service could not produce a preview.")
+            // The service marks what the reader can act on, such as a folder it may not read.
+            throw Failure(
+                message: reported ?? "The render service could not produce a preview.",
+                isSetup: json["actionable"] as? Bool == true
+            )
         }
 
         try? manager.removeItem(atPath: requestPath)
