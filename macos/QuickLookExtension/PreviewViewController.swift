@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import QuickLookUI
 import SceneKit
+import UniformTypeIdentifiers
 
 /// What to put in the panel once the render service has answered.
 enum Preview {
@@ -70,6 +71,15 @@ func textView(_ text: String) -> NSView {
     return scroll
 }
 
+/// Whether the file's type is one this app exported. A type macOS owns, a gzip archive
+/// or a folder, keeps whatever preview macOS gives it when there is no mesh to show.
+func isOwnType(_ url: URL) -> Bool {
+    let type = (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType
+    return type?.identifier.hasPrefix(utiPrefix) ?? false
+}
+
+let utiPrefix = "io.github.user27182.pyvista-quicklook"
+
 /// Returns the opening of a failure, which is all the details view has room for.
 func briefly(_ reason: String, limit: Int = 200) -> String {
     let joined = reason.split(whereSeparator: \.isNewline).map(String.init).prefix(2)
@@ -103,60 +113,57 @@ func holdsDicomFiles(_ url: URL) -> Bool {
     return false
 }
 
-/// Builds the Finder's own account of a file: its icon, name, size, and date. Shown for
-/// a claimed file that holds no mesh, such as a gzip archive of something else.
+/// Builds the account of a file that Quick Look gives one it cannot open: its icon on
+/// the left, and its name, size, and date beside it. Shown for a file of a type this app
+/// exported that turns out to hold no mesh; a type macOS owns keeps its own preview.
 @MainActor
 func detailsView(_ url: URL, reason: String) -> NSView {
     let icon = NSImageView(image: NSWorkspace.shared.icon(forFile: url.path))
     icon.imageScaling = .scaleProportionallyUpOrDown
+    icon.translatesAutoresizingMaskIntoConstraints = false
 
     let name = NSTextField(labelWithString: url.lastPathComponent)
-    name.font = NSFont.systemFont(ofSize: 20, weight: .semibold)
+    name.font = NSFont.systemFont(ofSize: 28, weight: .bold)
     name.lineBreakMode = .byTruncatingMiddle
-    name.alignment = .center
 
-    let keys: Set<URLResourceKey> = [
-        .fileSizeKey, .totalFileSizeKey, .contentModificationDateKey, .isDirectoryKey,
-    ]
-    let values = try? url.resourceValues(forKeys: keys)
+    let values = try? url.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey])
     var lines: [String] = []
-    if values?.isDirectory == true {
-        let entries = (try? FileManager.default.contentsOfDirectory(atPath: url.path)) ?? []
-        lines.append(entries.count == 1 ? "1 item" : "\(entries.count) items")
-    } else if let bytes = values?.totalFileSize ?? values?.fileSize {
+    if let bytes = values?.fileSize {
         lines.append(ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file))
     }
     if let modified = values?.contentModificationDate {
-        let stamp = DateFormatter.localizedString(from: modified, dateStyle: .medium, timeStyle: .short)
+        let stamp = DateFormatter.localizedString(from: modified, dateStyle: .medium, timeStyle: .medium)
         lines.append("Last modified \(stamp)")
     }
     let facts = NSTextField(labelWithString: lines.joined(separator: "\n"))
-    facts.font = NSFont.systemFont(ofSize: 13)
+    facts.font = NSFont.systemFont(ofSize: 16)
     facts.textColor = .secondaryLabelColor
-    facts.alignment = .center
 
     let note = NSTextField(wrappingLabelWithString: briefly(reason))
-    note.isHidden = reason.isEmpty
     note.font = NSFont.systemFont(ofSize: 11)
     note.textColor = .tertiaryLabelColor
-    note.alignment = .center
-    note.isSelectable = true
-    note.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+    note.isHidden = reason.isEmpty
 
-    let stack = NSStackView(views: [icon, name, facts, note])
-    stack.orientation = .vertical
-    stack.alignment = .centerX
-    stack.spacing = 10
-    stack.translatesAutoresizingMaskIntoConstraints = false
+    let text = NSStackView(views: [name, facts, note])
+    text.orientation = .vertical
+    text.alignment = .leading
+    text.spacing = 8
+
+    let row = NSStackView(views: [icon, text])
+    row.orientation = .horizontal
+    row.alignment = .centerY
+    row.spacing = 24
+    row.translatesAutoresizingMaskIntoConstraints = false
 
     let container = NSView()
-    container.addSubview(stack)
+    container.addSubview(row)
     NSLayoutConstraint.activate([
-        icon.widthAnchor.constraint(equalToConstant: 96),
-        icon.heightAnchor.constraint(equalToConstant: 96),
-        stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-        stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 24),
-        stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -24),
+        icon.widthAnchor.constraint(equalToConstant: 128),
+        icon.heightAnchor.constraint(equalToConstant: 128),
+        row.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+        row.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+        row.leadingAnchor.constraint(greaterThanOrEqualTo: container.leadingAnchor, constant: 24),
+        row.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -24),
     ])
     return container
 }
@@ -183,6 +190,13 @@ func messageView(_ text: String) -> NSView {
 /// Shows PyVista-readable mesh files in the Quick Look panel.
 @objc(PVQLPreviewViewController)
 final class PVQLPreviewViewController: NSViewController, QLPreviewingController {
+    /// Handed back for a file this extension has nothing to add to.
+    static let noPreview = NSError(
+        domain: utiPrefix,
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "No mesh to preview."]
+    )
+
     override func loadView() {
         view = NSView(frame: NSRect(x: 0, y: 0, width: 800, height: 600))
     }
@@ -211,12 +225,10 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
             // Only file work here; AppKit views are built on the main thread below.
             let isFolder = (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory
             if isFolder == true, !holdsDicomFiles(url) {
-                // Answer for an ordinary folder here, rather than waiting on the service.
-                DispatchQueue.main.async {
-                    self.show(detailsView(url, reason: ""))
-                    pvqlLog("showing folder details")
-                    handler(nil)
-                }
+                // Hand an ordinary folder straight back, without waiting on the service,
+                // so Quick Look shows the folder preview it would have shown anyway.
+                pvqlLog("declining an ordinary folder")
+                DispatchQueue.main.async { handler(Self.noPreview) }
                 return
             }
 
@@ -235,6 +247,11 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
                 pvqlLog("not a mesh: \(message.prefix(120))")
                 if failure?.isSetup == true {
                     outcome = .message("Could not preview \(url.lastPathComponent)\n\n\(message)")
+                } else if !isOwnType(url) {
+                    // The type belongs to macOS, so its own preview is the right one.
+                    pvqlLog("declining, not a mesh: \(briefly(message))")
+                    DispatchQueue.main.async { handler(Self.noPreview) }
+                    return
                 } else if let text = textContents(of: url) {
                     outcome = .text(text)
                 } else {
