@@ -4,6 +4,12 @@ from __future__ import annotations
 
 UTI_PREFIX = 'io.github.user27182.pyvista-quicklook'
 
+# Types macOS declares itself, which the extension supports rather than exports. A
+# compressed dataset is named .nii.gz or .vol.gz, but Launch Services sees only .gz and
+# keeps its own type for it, so the type is what has to be claimed. Nothing else
+# previews a gzip, so this claim wins; files that are not meshes show their details.
+SYSTEM_TYPES: dict[str, str] = {'org.gnu.gnu-zip-archive': 'Gzip Archive'}
+
 # Every extension the environment reads that is worth claiming, with the format's name.
 # Files a claim catches that turn out not to be meshes are shown as text by the extension.
 FORMATS: dict[str, str] = {
@@ -116,11 +122,11 @@ UNCLAIMED: dict[str, str] = {
     '.img': 'disk images own the extension',
     '.raw': 'camera raw images own the extension',
     '.xml': 'XML owns the extension',
-    # The Finder sees only the last suffix.
-    '.dato.gz': 'the Finder sees .gz',
-    '.nii.gz': 'the Finder sees .gz',
-    '.post.gz': 'the Finder sees .gz',
-    '.vol.gz': 'the Finder sees .gz',
+    # Reached through the gzip type above, since Launch Services sees only .gz.
+    '.dato.gz': 'previewed as a gzip archive',
+    '.nii.gz': 'previewed as a gzip archive',
+    '.post.gz': 'previewed as a gzip archive',
+    '.vol.gz': 'previewed as a gzip archive',
     # Readers pyvista-cad registers whose kernels the installer leaves out.
     '.brep': 'needs an OpenCascade kernel',
     '.brp': 'needs an OpenCascade kernel',

@@ -55,6 +55,8 @@ func realHome() -> String {
 enum Helper {
     struct Failure: Error {
         let message: String
+        /// Whether the installation is at fault rather than the file being previewed.
+        var isSetup = false
     }
 
     /// What the render service returned: a scene to explore, or a rendered image.
@@ -138,7 +140,7 @@ enum Helper {
     static func run(_ arguments: [String]) throws -> (status: Int32, output: String, errors: String) {
         guard let tool = locate() else {
             pvqlLog("helper not found")
-            throw Failure(message: missingHelperMessage)
+            throw Failure(message: missingHelperMessage, isSetup: true)
         }
         pvqlLog("running \(tool) \(arguments)")
 
@@ -160,7 +162,7 @@ enum Helper {
             try process.run()
         } catch {
             pvqlLog("spawn failed: \(error.localizedDescription)")
-            throw Failure(message: "Could not run \(tool)\n\n\(error.localizedDescription)")
+            throw Failure(message: "Could not run \(tool)\n\n\(error.localizedDescription)", isSetup: true)
         }
 
         var outData = Data()
@@ -230,7 +232,7 @@ enum Helper {
             try payload.write(to: URL(fileURLWithPath: scratchPath))
             try manager.moveItem(atPath: scratchPath, toPath: requestPath)
         } catch {
-            throw Failure(message: "Could not reach the render service.\n\n\(error.localizedDescription)")
+            throw Failure(message: "Could not reach the render service.\n\n\(error.localizedDescription)", isSetup: true)
         }
 
         let deadline = Date().addingTimeInterval(timeout)
@@ -241,7 +243,7 @@ enum Helper {
             }
             try? manager.removeItem(atPath: replyPath)
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                throw Failure(message: "The render service sent a malformed reply.")
+                throw Failure(message: "The render service sent a malformed reply.", isSetup: true)
             }
             if json["ok"] as? Bool == true {
                 if let scene = json["scene"] as? String {
@@ -263,6 +265,6 @@ enum Helper {
 
         try? manager.removeItem(atPath: requestPath)
         pvqlLog("service did not answer")
-        throw Failure(message: serviceMissingMessage)
+        throw Failure(message: serviceMissingMessage, isSetup: true)
     }
 }

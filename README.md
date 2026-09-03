@@ -124,7 +124,7 @@ PyVista can also read these, which are not claimed:
 - disk images own the extension: `.img`
 - camera raw images own the extension: `.raw`
 - XML owns the extension: `.xml`
-- the Finder sees .gz: `.dato.gz`, `.nii.gz`, `.post.gz`, `.vol.gz`
+- previewed as a gzip archive: `.dato.gz`, `.nii.gz`, `.post.gz`, `.vol.gz`
 - needs an OpenCascade kernel: `.brep`, `.brp`, `.fcstd`, `.iges`, `.igs`
 - needs ifcopenshell: `.ifc`
 - needs the openscad program: `.scad`
@@ -171,9 +171,15 @@ Surfaces are sent whole up to `max_scene_points`. Above that, images and volumes
 thinned on their lattice and other surfaces are decimated. Set it to `0` to never
 thin.
 
-A claimed file that turns out not to be a mesh, such as a `.dat` holding a table of
-numbers or a `.g` holding G-code, is shown as plain text, the way Quick Look would have
-shown it. When a preview fails for another reason, the panel shows the error text.
+A claimed file that turns out not to be a mesh is shown the way Quick Look would have
+shown it: as plain text when it reads as text, such as a `.dat` holding a table of
+numbers, and otherwise as its icon, name, size, and date, with a line saying why it
+holds no mesh. A problem with the installation itself, such as a render service that is
+not running, is reported in full instead.
+
+Compressed datasets are previewed too. Launch Services sees only `.gz` and keeps its own
+type for it, so the extension claims that type: a gzipped NIfTI or Netgen mesh is drawn,
+and every other gzip shows its details.
 
 ### Still images
 

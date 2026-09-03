@@ -9,6 +9,7 @@ from typing import Any
 
 from . import __version__
 from .formats import FORMATS
+from .formats import SYSTEM_TYPES
 from .formats import uti_for
 
 APP_NAME = 'PyVista Quick Look'
@@ -93,7 +94,7 @@ def extension_plist(extensions: list[str], helper: str | None = None) -> dict[st
             'NSExtensionPointIdentifier': 'com.apple.quicklook.preview',
             'NSExtensionPrincipalClass': EXT_PRINCIPAL_CLASS,
             'NSExtensionAttributes': {
-                'QLSupportedContentTypes': [uti_for(ext) for ext in extensions],
+                'QLSupportedContentTypes': [uti_for(e) for e in extensions] + list(SYSTEM_TYPES),
                 'QLSupportsSearchableItems': False,
             },
         },

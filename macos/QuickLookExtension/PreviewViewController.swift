@@ -8,6 +8,7 @@ enum Preview {
     case scene(SCNScene)
     case image(Data)
     case text(String)
+    case details(URL, String)
     case message(String)
 }
 
@@ -69,6 +70,58 @@ func textView(_ text: String) -> NSView {
     return scroll
 }
 
+/// Builds the Finder's own account of a file: its icon, name, size, and date. Shown for
+/// a claimed file that holds no mesh, such as a gzip archive of something else.
+@MainActor
+func detailsView(_ url: URL, reason: String) -> NSView {
+    let icon = NSImageView(image: NSWorkspace.shared.icon(forFile: url.path))
+    icon.imageScaling = .scaleProportionallyUpOrDown
+
+    let name = NSTextField(labelWithString: url.lastPathComponent)
+    name.font = NSFont.systemFont(ofSize: 20, weight: .semibold)
+    name.lineBreakMode = .byTruncatingMiddle
+    name.alignment = .center
+
+    let keys: Set<URLResourceKey> = [.fileSizeKey, .totalFileSizeKey, .contentModificationDateKey]
+    let values = try? url.resourceValues(forKeys: keys)
+    var lines: [String] = []
+    if let bytes = values?.totalFileSize ?? values?.fileSize {
+        lines.append(ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file))
+    }
+    if let modified = values?.contentModificationDate {
+        let stamp = DateFormatter.localizedString(from: modified, dateStyle: .medium, timeStyle: .short)
+        lines.append("Last modified \(stamp)")
+    }
+    let facts = NSTextField(labelWithString: lines.joined(separator: "\n"))
+    facts.font = NSFont.systemFont(ofSize: 13)
+    facts.textColor = .secondaryLabelColor
+    facts.alignment = .center
+
+    let note = NSTextField(wrappingLabelWithString: reason)
+    note.font = NSFont.systemFont(ofSize: 11)
+    note.textColor = .tertiaryLabelColor
+    note.alignment = .center
+    note.isSelectable = true
+    note.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+
+    let stack = NSStackView(views: [icon, name, facts, note])
+    stack.orientation = .vertical
+    stack.alignment = .centerX
+    stack.spacing = 10
+    stack.translatesAutoresizingMaskIntoConstraints = false
+
+    let container = NSView()
+    container.addSubview(stack)
+    NSLayoutConstraint.activate([
+        icon.widthAnchor.constraint(equalToConstant: 96),
+        icon.heightAnchor.constraint(equalToConstant: 96),
+        stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+        stack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 24),
+        stack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -24),
+    ])
+    return container
+}
+
 /// Builds a view showing text, used when a mesh cannot be previewed.
 @MainActor
 func messageView(_ text: String) -> NSView {
@@ -127,12 +180,15 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
                     outcome = .image(png)
                 }
             } catch {
-                let message = (error as? Helper.Failure)?.message ?? error.localizedDescription
+                let failure = error as? Helper.Failure
+                let message = failure?.message ?? error.localizedDescription
                 pvqlLog("not a mesh: \(message.prefix(120))")
-                if let text = textContents(of: url) {
+                if failure?.isSetup == true {
+                    outcome = .message("Could not preview \(url.lastPathComponent)\n\n\(message)")
+                } else if let text = textContents(of: url) {
                     outcome = .text(text)
                 } else {
-                    outcome = .message("Could not preview \(url.lastPathComponent)\n\n\(message)")
+                    outcome = .details(url, message)
                 }
             }
 
@@ -150,6 +206,9 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
                 case let .text(text):
                     self.show(textView(text))
                     pvqlLog("showing text, \(text.count) characters")
+                case let .details(fileURL, reason):
+                    self.show(detailsView(fileURL, reason: reason))
+                    pvqlLog("showing file details: \(reason.prefix(80))")
                 case let .message(text):
                     self.show(messageView(text))
                     pvqlLog("showing a message: \(text.prefix(120))")

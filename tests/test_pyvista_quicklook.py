@@ -87,9 +87,20 @@ def test_extension_plist_matches_the_app():
     ext = plist.extension_plist(extensions)
     exported = [d['UTTypeIdentifier'] for d in app['UTExportedTypeDeclarations']]
     supported = ext['NSExtension']['NSExtensionAttributes']['QLSupportedContentTypes']
-    assert exported == supported
+    assert exported == supported[: len(exported)]
     assert ext['NSExtension']['NSExtensionPrincipalClass'] == plist.EXT_PRINCIPAL_CLASS
     assert ext['NSExtension']['NSExtensionPointIdentifier'] == 'com.apple.quicklook.preview'
+
+
+def test_system_types_are_supported_but_not_exported():
+    """A type macOS declares is claimed by the extension and never exported by the app."""
+    app = plist.app_plist(['.vtu'])
+    ext = plist.extension_plist(['.vtu'])
+    supported = ext['NSExtension']['NSExtensionAttributes']['QLSupportedContentTypes']
+    exported = [d['UTTypeIdentifier'] for d in app['UTExportedTypeDeclarations']]
+    for uti in formats.SYSTEM_TYPES:
+        assert uti in supported
+        assert uti not in exported
 
 
 def test_plists_are_writable(tmp_path):
