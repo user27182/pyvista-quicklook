@@ -69,7 +69,8 @@ def readable(path: str, seconds: float = 2.0) -> bool:
     """Return whether a file can be opened before the guard expires.
 
     Reading a file in a folder macOS protects can block rather than fail, so the
-    attempt is abandoned once the timer fires.
+    attempt is abandoned once the timer fires. A folder counts as readable when it
+    can be listed, since a DICOM series is previewed as a whole.
     """
 
     def expire(signum: int, frame: object) -> None:
@@ -79,8 +80,12 @@ def readable(path: str, seconds: float = 2.0) -> bool:
     previous = signal.signal(signal.SIGALRM, expire)
     signal.setitimer(signal.ITIMER_REAL, seconds)
     try:
-        with open(path, 'rb') as handle:
-            handle.read(1)
+        # A DICOM series is a folder, and opening one raises rather than reading.
+        if os.path.isdir(path):
+            os.listdir(path)
+        else:
+            with open(path, 'rb') as handle:
+                handle.read(1)
     except (OSError, TimeoutError):
         return False
     else:

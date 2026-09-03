@@ -184,6 +184,13 @@ def test_readable_accepts_an_ordinary_file(tmp_path):
     assert daemon.readable(str(sample)) is True
 
 
+def test_readable_accepts_a_folder(tmp_path):
+    """A folder that can be listed is readable, which is how a DICOM series arrives."""
+    series = tmp_path / 'series'
+    series.mkdir()
+    assert daemon.readable(str(series)) is True
+
+
 def test_handle_reports_a_malformed_request(tmp_path):
     """A request that is not valid JSON produces an error reply."""
     request = tmp_path / 'token.pvqlreq'
