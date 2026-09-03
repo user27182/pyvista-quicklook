@@ -34,12 +34,9 @@ jobs:
         SKIP: no-commit-to-branch
 
   test:
-      # The helper is pure standard library, so it is tested away from macOS too.
+      # The helper is pure standard library, so it is tested away from macOS too, on the
+      # one Python the app is built for.
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
       with:
@@ -48,7 +45,7 @@ jobs:
     - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d   # v10.0.1
       with:
         enable-cache: false
-    - run: uv sync --group dev --python ${{ matrix.python-version }}
+    - run: uv sync --group dev
     - run: uv run pytest tests/
 
   app:

@@ -149,7 +149,7 @@ def cmd_warm(args: argparse.Namespace) -> int:
     for target in targets:
         try:
             daemon_mod.produce(target, config)
-        except RenderError as error:  # noqa: PERF203
+        except RenderError as error:
             failures += 1
             print(f'✗ {target}: {str(error).splitlines()[0]}', file=sys.stderr)
         else:

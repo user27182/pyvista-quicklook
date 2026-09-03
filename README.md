@@ -293,9 +293,10 @@ uv run pre-commit run --all-files
 ./scripts/build.sh            # compile and sign the app bundle
 ```
 
-`.python-version` pins the interpreter to 3.12, the last release cvista ships rendering
-wheels for, and `[tool.uv]` in `pyproject.toml` overrides PyVista's stock VTK requirement
-so the test environment holds the same packages the installer provisions.
+Everything runs on one Python, 3.12, the last release cvista ships rendering wheels for:
+the tests, the `pvql` helper in its uv tool environment, and the PyVista environment
+beside it. `[tool.uv]` in `pyproject.toml` overrides PyVista's stock VTK requirement so
+the test environment holds the same packages the installer provisions.
 
 PyVista is pinned to one commit, in `pyproject.toml` and `scripts/install.sh` alike.
 Bumping it reruns a test that compares every extension the environment can read with

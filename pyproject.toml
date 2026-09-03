@@ -6,8 +6,7 @@ requires = ['setuptools>=64', 'setuptools_scm>=8']
 # The tests run the exporter under the same environment the installer builds.
 dev = [
   'cvista[io]',
-  # The rendering wheels stop at Python 3.12; still images are tested where they exist.
-  'cvista[rendering]; python_version < "3.13"',
+  'cvista[rendering]',
   'pre-commit',
   'pytest',
   'pytest-cov',
@@ -25,11 +24,7 @@ classifiers = [
   'Intended Audience :: Science/Research',
   'Operating System :: MacOS :: MacOS X',
   'Programming Language :: Python :: 3',
-  'Programming Language :: Python :: 3.10',
-  'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
-  'Programming Language :: Python :: 3.13',
-  'Programming Language :: Python :: 3.14',
   'Topic :: Scientific/Engineering :: Visualization',
 ]
 dependencies = []
@@ -39,7 +34,9 @@ keywords = ['macos', 'mesh', 'preview', 'pyvista', 'quicklook', 'vtk']
 license = 'MIT'
 name = 'pyvista-quicklook'
 readme = 'README.md'
-requires-python = '>=3.10'
+# One version throughout: the helper and the PyVista environment are the same Python, the
+# last one cvista publishes rendering wheels for.
+requires-python = '>=3.12,<3.13'
 
 [project.scripts]
 pvql = 'pyvista_quicklook.cli:main'
@@ -57,9 +54,6 @@ source = ['pyvista_quicklook']
 
 [tool.pytest.ini_options]
 addopts = '--cov=pyvista_quicklook --cov-fail-under=70'
-markers = [
-  'needs_rendering: needs the rendering half of cvista, absent on Python 3.13 and later',
-]
 testpaths = 'tests'
 
 [tool.ruff]

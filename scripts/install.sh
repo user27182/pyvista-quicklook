@@ -11,7 +11,7 @@ EXT_ID="io.github.user27182.PyVistaQuickLook.QuickLook"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
 VENV="$SUPPORT/venv"
 DEST="$HOME/Applications"
-# cvista's rendering wheels stop at 3.12.
+# The one version this is built for: the last cvista publishes rendering wheels for.
 PYTHON_VERSION="${PVQL_PYTHON:-3.12}"
 # PyVista 0.49 is the floor and is not released yet. The commit matches pyproject.toml;
 # the io extra brings meshio and pyvista-zstd, whichever readers PyVista routes to them.
@@ -64,7 +64,7 @@ fi
 
 if [[ "$SKIP_HELPER" -eq 0 ]]; then
   echo "==> installing the pvql helper"
-  "$UV" tool install --force --reinstall --quiet "$ROOT"
+  "$UV" tool install --force --reinstall --quiet --python "$PYTHON_VERSION" "$ROOT"
 fi
 
 HELPER=$(command -v pvql || echo "$HOME/.local/bin/pvql")

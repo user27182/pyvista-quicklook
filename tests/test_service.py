@@ -75,7 +75,6 @@ def test_warm_runs_the_warmer_and_leaves_a_stamp(env):
     assert warmup.warmed_recently()
 
 
-@pytest.mark.needs_rendering
 @pytest.mark.skipif(sys.platform != 'darwin', reason='rendering needs a display server on Linux')
 def test_still_images_come_from_the_pyvista_command(tmp_path, env):
     """The environment can render a still image, which is what non-interactive mode shows."""

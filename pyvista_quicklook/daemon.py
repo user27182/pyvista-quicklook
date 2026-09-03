@@ -164,7 +164,7 @@ def sweep(directory: Path) -> None:
         try:
             if entry.stat().st_mtime < cutoff:
                 entry.unlink(missing_ok=True)
-        except OSError:  # noqa: PERF203
+        except OSError:
             pass
 
 

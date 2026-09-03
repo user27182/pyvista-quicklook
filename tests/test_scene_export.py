@@ -262,7 +262,7 @@ def test_a_dicom_folder_is_drawn(tmp_path):
         'download_head',  # .mhd
         'download_chest',  # .mha
         'download_brain_atlas_with_sides',  # .nii.gz
-        pytest.param('download_t3_grid_0', marks=pytest.mark.needs_rendering),  # .mnc
+        'download_t3_grid_0',  # .mnc
     ],
 )
 def test_medical_images_are_drawn(tmp_path, download):
@@ -298,7 +298,6 @@ def test_partitioned_datasets_are_drawn_as_one_surface(tmp_path):
     assert pv.read(out).n_faces == pv.Sphere().n_faces + 12
 
 
-@pytest.mark.needs_rendering
 def test_step_models_are_drawn(tmp_path):
     """A STEP model is tessellated by pyvista-cad, read back as glTF, and drawn."""
     out = tmp_path / 'out.ply'
@@ -457,7 +456,6 @@ def missing_reader(ext: str) -> str | None:
     return None
 
 
-@pytest.mark.needs_rendering
 def test_every_default_extension_has_a_reader():
     """The installed environment can read every format that is claimed by default."""
     missing = {ext: why for ext in formats.default_extensions() if (why := missing_reader(ext))}
