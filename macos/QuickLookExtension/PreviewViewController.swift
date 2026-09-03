@@ -9,7 +9,7 @@ enum Preview {
     case scene(SCNScene)
     case image(Data)
     case text(String)
-    case details(URL, String)
+    case details(URL)
     case message(String)
 }
 
@@ -117,7 +117,7 @@ func holdsDicomFiles(_ url: URL) -> Bool {
 /// the left, and its name, size, and date beside it. Shown for a file of a type this app
 /// exported that turns out to hold no mesh; a type macOS owns keeps its own preview.
 @MainActor
-func detailsView(_ url: URL, reason: String) -> NSView {
+func detailsView(_ url: URL) -> NSView {
     let icon = NSImageView(image: NSWorkspace.shared.icon(forFile: url.path))
     icon.imageScaling = .scaleProportionallyUpOrDown
     icon.translatesAutoresizingMaskIntoConstraints = false
@@ -139,12 +139,7 @@ func detailsView(_ url: URL, reason: String) -> NSView {
     facts.font = NSFont.systemFont(ofSize: 16)
     facts.textColor = .secondaryLabelColor
 
-    let note = NSTextField(wrappingLabelWithString: briefly(reason))
-    note.font = NSFont.systemFont(ofSize: 11)
-    note.textColor = .tertiaryLabelColor
-    note.isHidden = reason.isEmpty
-
-    let text = NSStackView(views: [name, facts, note])
+    let text = NSStackView(views: [name, facts])
     text.orientation = .vertical
     text.alignment = .leading
     text.spacing = 8
@@ -255,7 +250,7 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
                 } else if let text = textContents(of: url) {
                     outcome = .text(text)
                 } else {
-                    outcome = .details(url, message)
+                    outcome = .details(url)
                 }
             }
 
@@ -273,9 +268,9 @@ final class PVQLPreviewViewController: NSViewController, QLPreviewingController 
                 case let .text(text):
                     self.show(textView(text))
                     pvqlLog("showing text, \(text.count) characters")
-                case let .details(fileURL, reason):
-                    self.show(detailsView(fileURL, reason: reason))
-                    pvqlLog("showing file details: \(reason.prefix(80))")
+                case let .details(fileURL):
+                    self.show(detailsView(fileURL))
+                    pvqlLog("showing file details")
                 case let .message(text):
                     self.show(messageView(text))
                     pvqlLog("showing a message: \(text.prefix(120))")
