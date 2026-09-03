@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import os
 from pathlib import Path
 import sys
 
@@ -247,7 +248,15 @@ def main() -> int:
     parser.add_argument('--max-points', type=int, required=True)
     parser.add_argument('--max-glyphs', type=int, required=True)
     args = parser.parse_args()
-    export(args.source, args.destination, args.max_points, args.max_glyphs)
+    try:
+        export(args.source, args.destination, args.max_points, args.max_glyphs)
+    except Exception as error:
+        # The reason is shown in the Quick Look panel, where a traceback would fill it.
+        if os.environ.get('PVQL_TRACEBACK'):
+            raise
+        summary = ' '.join(str(error).split())[:200] or type(error).__name__
+        sys.stderr.write(f'{type(error).__name__}: {summary}\n')
+        return 1
     return 0
 
 

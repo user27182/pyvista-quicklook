@@ -398,6 +398,28 @@ def test_binary_gmsh_files_are_drawn(tmp_path):
     assert pv.read(out).n_faces == pv.Sphere().n_faces
 
 
+def test_a_failure_is_reported_in_one_line(tmp_path, capsys, monkeypatch):
+    """What the panel is shown is a sentence, not a traceback."""
+    source = tmp_path / 'not-a-mesh.vtu'
+    source.write_text('nonsense')
+    monkeypatch.setattr(
+        'sys.argv',
+        [
+            'export',
+            str(source),
+            str(tmp_path / 'out.ply'),
+            '--max-points',
+            '0',
+            '--max-glyphs',
+            '0',
+        ],
+    )
+    assert export_mod.main() == 1
+    reported = capsys.readouterr().err.strip()
+    assert len(reported.splitlines()) == 1
+    assert len(reported) <= 240
+
+
 def readable_extensions() -> set[str]:
     """Return every extension ``pyvista.read`` accepts in this environment."""
     registered = {entry.extension for entry in reader_registry.registered_readers()}
