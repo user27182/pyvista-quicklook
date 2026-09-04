@@ -36,7 +36,7 @@ def load() -> dict[str, Any]:
     if CONFIG_PATH.is_file():
         try:
             user = json.loads(CONFIG_PATH.read_text())
-        except (OSError, json.JSONDecodeError):
+        except OSError, json.JSONDecodeError:
             user = {}
         if isinstance(user, dict):
             config.update({k: v for k, v in user.items() if k in DEFAULTS})

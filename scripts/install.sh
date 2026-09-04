@@ -11,8 +11,8 @@ EXT_ID="io.github.user27182.PyVistaQuickLook.QuickLook"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
 VENV="$SUPPORT/venv"
 DEST="$HOME/Applications"
-# The one version this is built for: the last cvista publishes rendering wheels for.
-PYTHON_VERSION="${PVQL_PYTHON:-3.12}"
+# The one version this is built for.
+PYTHON_VERSION="${PVQL_PYTHON:-3.14}"
 # PyVista 0.49 is the floor and is not released yet. The commit matches pyproject.toml;
 # the io extra brings meshio and pyvista-zstd, whichever readers PyVista routes to them.
 PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista[io] @ git+https://github.com/pyvista/pyvista.git@f96cb9990ec77ba0d12d4d19cba6035e6b1841aa}"

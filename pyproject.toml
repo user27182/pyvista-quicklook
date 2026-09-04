@@ -24,7 +24,7 @@ classifiers = [
   'Intended Audience :: Science/Research',
   'Operating System :: MacOS :: MacOS X',
   'Programming Language :: Python :: 3',
-  'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.14',
   'Topic :: Scientific/Engineering :: Visualization',
 ]
 dependencies = []
@@ -34,9 +34,8 @@ keywords = ['macos', 'mesh', 'preview', 'pyvista', 'quicklook', 'vtk']
 license = 'MIT'
 name = 'pyvista-quicklook'
 readme = 'README.md'
-# One version throughout: the helper and the PyVista environment are the same Python, the
-# last one cvista publishes rendering wheels for.
-requires-python = '>=3.12,<3.13'
+# One version throughout: the helper and the PyVista environment are the same Python.
+requires-python = '>=3.14,<3.15'
 
 [project.scripts]
 pvql = 'pyvista_quicklook.cli:main'

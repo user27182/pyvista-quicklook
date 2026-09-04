@@ -86,7 +86,7 @@ def readable(path: str, seconds: float = 2.0) -> bool:
         else:
             with open(path, 'rb') as handle:
                 handle.read(1)
-    except (OSError, TimeoutError):
+    except OSError, TimeoutError:
         return False
     else:
         return True

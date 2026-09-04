@@ -226,7 +226,7 @@ def _run(command: list[str]) -> str:
         completed = subprocess.run(
             command, capture_output=True, text=True, timeout=20, check=False
         )
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         return ''
     return (completed.stdout + completed.stderr).strip()
 
@@ -235,7 +235,7 @@ def _succeeds(command: list[str]) -> bool:
     """Return whether a command runs and exits cleanly."""
     try:
         completed = subprocess.run(command, capture_output=True, timeout=20, check=False)
-    except (OSError, subprocess.SubprocessError):
+    except OSError, subprocess.SubprocessError:
         return False
     return completed.returncode == 0
 
