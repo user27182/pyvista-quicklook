@@ -13,6 +13,7 @@ from typing import NamedTuple
 
 import meshio
 from pyvista.core.utilities.reader import CLASS_READERS
+from pyvista.core.utilities.reader_registry import _OPTIONAL_READERS
 from pyvista.core.utilities.reader_registry import registered_readers
 
 from .formats import FORMATS
@@ -38,6 +39,9 @@ def reader_of(ext: str) -> str:
             return entry.source
     if ext in CLASS_READERS:
         return CLASS_READERS[ext].__name__
+    optional = _OPTIONAL_READERS.get(ext)
+    if optional is not None:
+        return optional.module
     return 'meshio:' + ','.join(meshio.extension_to_filetypes[ext])
 
 

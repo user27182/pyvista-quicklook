@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 
 import meshio
@@ -419,10 +420,31 @@ def test_a_failure_is_reported_in_one_line(tmp_path, capsys, monkeypatch):
     assert len(reported) <= 240
 
 
+def optional_readers() -> set[str]:
+    """Return the extensions read by a package PyVista names but imports only on demand.
+
+    These reach neither ``CLASS_READERS`` nor ``registered_readers`` until something asks
+    for one, so the tables PyVista keeps them in are what has to be read.
+    """
+    reader_registry._ensure_entry_points()
+    pending = set(reader_registry._pending_ext_readers)
+    optional = {
+        ext
+        for ext, reader in reader_registry._OPTIONAL_READERS.items()
+        if importlib.util.find_spec(reader.module) is not None
+    }
+    return pending | optional
+
+
 def readable_extensions() -> set[str]:
     """Return every extension ``pyvista.read`` accepts in this environment."""
     registered = {entry.extension for entry in reader_registry.registered_readers()}
-    return set(readers.CLASS_READERS) | registered | set(meshio.extension_to_filetypes)
+    return (
+        set(readers.CLASS_READERS)
+        | registered
+        | optional_readers()
+        | set(meshio.extension_to_filetypes)
+    )
 
 
 def test_readme_tables_match_the_readers():
@@ -444,9 +466,7 @@ def test_format_table_accounts_for_every_readable_extension():
 def missing_reader(ext: str) -> str | None:
     """Return why the runtime cannot read an extension, or None when it can."""
     if ext not in readers.CLASS_READERS:
-        registered = {entry.extension for entry in reader_registry.registered_readers()}
-        registered |= set(meshio.extension_to_filetypes)
-        return None if ext in registered else 'no reader is registered'
+        return None if ext in readable_extensions() else 'no reader is registered'
     try:
         readers.CLASS_READERS[ext](f'/nonexistent/sample{ext}')
     except ImportError as error:

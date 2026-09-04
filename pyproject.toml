@@ -12,7 +12,7 @@ dev = [
   'pytest-cov',
   # Pinned to one commit; bumping it reruns the test that locks the readable extensions.
   'pyvista-cad[step-light,3mf]',
-  'pyvista[io] @ git+https://github.com/pyvista/pyvista.git@f96cb9990ec77ba0d12d4d19cba6035e6b1841aa',
+  'pyvista[io,io-override] @ git+https://github.com/pyvista/pyvista.git@d18608ac0f5e427600a08200a4ae6c3c5b40720c',
 ]
 
 [project]

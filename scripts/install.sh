@@ -14,8 +14,8 @@ DEST="$HOME/Applications"
 # The one version this is built for.
 PYTHON_VERSION="${PVQL_PYTHON:-3.14}"
 # PyVista 0.49 is the floor and is not released yet. The commit matches pyproject.toml;
-# the io extra brings meshio and pyvista-zstd, whichever readers PyVista routes to them.
-PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista[io] @ git+https://github.com/pyvista/pyvista.git@f96cb9990ec77ba0d12d4d19cba6035e6b1841aa}"
+# the io extras bring every reader PyVista hands to a package of its own.
+PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista[io,io-override] @ git+https://github.com/pyvista/pyvista.git@d18608ac0f5e427600a08200a4ae6c3c5b40720c}"
 # STEP, DXF, and 3MF readers; IGES and the heavier CAD kernels need stock VTK or OCP.
 CAD_SPEC="${PVQL_CAD_SPEC:-pyvista-cad[step-light,3mf]}"
 PYTHON=""
