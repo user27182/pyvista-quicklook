@@ -25,8 +25,8 @@ result with `pvql doctor`.
    finds none on the machine.
 3. Installs the `pvql` helper as a uv tool.
 4. Creates a private Python environment and installs
-   [PyVista](https://github.com/pyvista/pyvista) with its io extras, among them
-   [meshio](https://github.com/nschloe/meshio) and, from PyVista 0.49,
+   [PyVista](https://github.com/pyvista/pyvista) 0.49 with its io extras, among them
+   [meshio](https://github.com/nschloe/meshio) and
    [pyvista-frd-reader](https://github.com/pyvista/pyvista-frd-reader), along with
    [cvista](https://github.com/pyvista/cvista) and
    [pyvista-cad](https://github.com/pyvista/pyvista-cad). This is the step that takes a
@@ -43,7 +43,7 @@ No system Python and no existing environment is used or changed.
 
 | Path | What | Size |
 | --- | --- | --- |
-| `~/Library/Application Support/PyVistaQuickLook/venv` | The PyVista environment | 380 MB |
+| `~/Library/Application Support/PyVistaQuickLook/venv` | The PyVista environment | 370 MB |
 | `~/Library/Application Support/PyVistaQuickLook/config.json` | Configuration | 4 KB |
 | `~/Applications/PyVista Quick Look.app` | The app and its Quick Look extension | 500 KB |
 | `~/Library/Application Support/uv/tools/pyvista-quicklook` | The `pvql` helper | 400 KB |
@@ -64,8 +64,8 @@ of it:
 - matplotlib, 28 MB
 - numpy, 25 MB
 - ezdxf, pyvista-cad's DXF reader, 20 MB
-- PyVista, from git until 0.49 is released, [meshio](https://github.com/nschloe/meshio),
-  and the remaining dependencies, about 100 MB
+- PyVista 0.49, [meshio](https://github.com/nschloe/meshio), and the remaining
+  dependencies, about 100 MB
 
 `pvql cache --clear` empties the preview cache. `pvql uninstall` removes everything
 above except the configuration file and uv.
@@ -297,10 +297,10 @@ Everything runs on one Python, 3.14: the tests, the `pvql` helper in its uv tool
 environment, and the PyVista environment beside it. `[tool.uv]` in `pyproject.toml` overrides PyVista's stock VTK requirement so
 the test environment holds the same packages the installer provisions.
 
-PyVista is pinned to one commit, in `pyproject.toml` and `scripts/install.sh` alike.
-Bumping it reruns a test that compares every extension the environment can read with
-the format table, so a reader that PyVista adds, drops, or moves to a plugin shows up as
-a failure to resolve in `formats.py`. The README's format tables are generated from
+PyVista and cvista are pinned to one release each, in `pyproject.toml` and
+`scripts/install.sh` alike. Bumping either reruns a test that compares every extension
+the environment can read with the format table, so a reader that PyVista adds, drops, or
+moves to a package of its own shows up as a failure to resolve in `formats.py`. The README's format tables are generated from
 PyVista's reader tables and checked by another test:
 
 ```bash

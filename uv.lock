@@ -194,49 +194,47 @@ wheels = [
 
 [[package]]
 name = "cvista"
-version = "9.7.0.3"
+version = "9.7.0.4"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ca/80/db94074c8a582481d2020baf9b58daadc95cca4216bafdb5ca9597cf7879/cvista-9.7.0.3-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:656c24ddf2b9e043a0855b6709faad949fd35d0692a4de8a2bbc840daef2e2f9", size = 22553861, upload-time = "2026-08-25T00:11:04.124Z" },
-    { url = "https://files.pythonhosted.org/packages/a4/9c/55eb58ee9b8e3f71f2d219835a3a8202e8c6df84a7ef98d86a626ea4399b/cvista-9.7.0.3-cp312-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:548ab3647205f16f71fb4f7603dbe2d48d4fc71a10be64ad3cd0575aa48bb956", size = 22127820, upload-time = "2026-08-25T00:11:07.379Z" },
-    { url = "https://files.pythonhosted.org/packages/85/54/72ffbd066694d73aa23203c7c652956424a027081e06de3dc0e34120f05f/cvista-9.7.0.3-cp312-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:9242d9841efddd540239768cc6957bd79e8b93bf720b84ebee73b7b323ba9ace", size = 23848993, upload-time = "2026-08-25T00:11:11.174Z" },
-    { url = "https://files.pythonhosted.org/packages/45/40/dbed16f190310b59a6ef47b1598ae02db639c8db7d44ae75ab31b66d01a4/cvista-9.7.0.3-cp312-abi3-win_amd64.whl", hash = "sha256:7ac04b9a6b32342f34a5c82728c250e5fb6a650cb855c6ad027449de4c24ed74", size = 18040433, upload-time = "2026-08-25T00:11:14.236Z" },
+    { url = "https://files.pythonhosted.org/packages/03/1b/e364bfcf8a569e35b3d4c8bd9a1c56ad9d936322c42013730b5a4849f6a7/cvista-9.7.0.4-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:2fd57cd883574868836257b89fcfabcb21c5d06162c301df4fb077744711d8a5", size = 22559487, upload-time = "2026-09-05T00:41:45.401Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/fa/10dc217d55c3b4d303010baf851115d725480fc7c42987c305fcae936eea/cvista-9.7.0.4-cp312-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:a93d7f72bce241dcd4fe3a44f3155b61135bc49bbc5fa88e7d5e9a0eb41bf066", size = 22134265, upload-time = "2026-09-05T00:41:47.688Z" },
+    { url = "https://files.pythonhosted.org/packages/37/9c/1f09e5dcd239ad0e9dc47dcde3d2db7b8d7d595fce1e4f21bea20f29a28e/cvista-9.7.0.4-cp312-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:063c4e7781c7fd4a7a6929d25625b1a143599ae97b170ef394271be867ebd6cb", size = 23855849, upload-time = "2026-09-05T00:41:50.495Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/2c/317885c826e3c8bb8d824f2d3d05b946747a96f37226ba6c6d24a224137e/cvista-9.7.0.4-cp312-abi3-win_amd64.whl", hash = "sha256:aaa29808abf37456257fea03690b1893fc512a341bd0d5eeb29a8da2cde1d933", size = 18045999, upload-time = "2026-09-05T00:41:53.425Z" },
 ]
 
 [package.optional-dependencies]
-io = [
+all = [
     { name = "cvista-io" },
-]
-rendering = [
     { name = "cvista-rendering" },
 ]
 
 [[package]]
 name = "cvista-io"
-version = "9.7.0.3"
+version = "9.7.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cvista" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6a/7e/f42682aa11b96202f86ea6eeb5e7c5f13c0e5851916887bb58d03f5f38c9/cvista_io-9.7.0.3-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:e4460d416fce4c336f5e5097c2c789b2616703d8323dfb2fb060308fe1abe032", size = 6352448, upload-time = "2026-08-25T00:11:08.171Z" },
-    { url = "https://files.pythonhosted.org/packages/cf/bb/50579936d36ce5f176cacffb610a6aa1b34e995a0bb211fefcb58170e49e/cvista_io-9.7.0.3-cp312-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:889cf5cb65b5f8bb35b813621d8fd1977539c8df129e6f87a6fda933449643d6", size = 6876091, upload-time = "2026-08-25T00:11:10.452Z" },
-    { url = "https://files.pythonhosted.org/packages/14/e4/5d56331874e52f5c352a2bcda5267600bd29a02093117db17fa2574bc62f/cvista_io-9.7.0.3-cp312-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:2707ff2d9d1d9941e7cef12dca0a610055400af1ae02b20a375beb9c4f16e364", size = 7398703, upload-time = "2026-08-25T00:11:12.974Z" },
-    { url = "https://files.pythonhosted.org/packages/4a/62/1797c2db65a12d905c41037c4695eb2f047e82b32a58f0ecbbad2d488309/cvista_io-9.7.0.3-cp312-abi3-win_amd64.whl", hash = "sha256:af743704e32b056abcc7203a3d77f91a9d426c77d16f19b4ddaaf609e22ed93e", size = 7334090, upload-time = "2026-08-25T00:11:14.951Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/27/104610498e819fdb455a022c64e55a327fe3907d6fc7f41fe62c6f0623fb/cvista_io-9.7.0.4-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:b7080f2dbbbb4dcfe8e72e464955fc42e070d9af5b3e8269b661ffe56ccb677a", size = 6352453, upload-time = "2026-09-05T00:34:45.958Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/ff/cd9f526f1d4800c4d85762785475ae3aa9ad4d25e6b8b4504aed7e394000/cvista_io-9.7.0.4-cp312-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:acda37a4e52ee1a4e88212a830742f1d0cda11a0b6f93ba410d3a281e7647efb", size = 6876090, upload-time = "2026-09-05T00:34:47.736Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/25/3981533fb895167cd748e991290f801a0ee42d7447aa6e3d99a256314e7c/cvista_io-9.7.0.4-cp312-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:d006223a9f94803299a6b5371d3117650d57d446f882402e91eafbce1ffd7a5d", size = 7398704, upload-time = "2026-09-05T00:34:49.475Z" },
+    { url = "https://files.pythonhosted.org/packages/c7/75/76fa30014ec80dfb7e02857abcc624ca7c78cf903e1207a015ef1c1a0c9c/cvista_io-9.7.0.4-cp312-abi3-win_amd64.whl", hash = "sha256:ba9ded194135637401ca120f9964e4e2e1d14f0c4cb77e2ac2dcae4750363147", size = 7334051, upload-time = "2026-09-05T00:34:50.995Z" },
 ]
 
 [[package]]
 name = "cvista-rendering"
-version = "9.7.0.3"
+version = "9.7.0.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cvista" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/84/e0/0e03f1b979cd27735191e848b46ff8c1bf87865eef82d832470154a289a7/cvista_rendering-9.7.0.3-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:327df3a3c4bd198946519f7c56622fb5a2732c280f96f55e697eec3c3cb00316", size = 7496457, upload-time = "2026-08-25T00:10:43.881Z" },
-    { url = "https://files.pythonhosted.org/packages/31/e1/12e51d7b8b36ee953c37e3594f4987795f7f46bf2f2837cf1716150767cd/cvista_rendering-9.7.0.3-cp312-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:7eb0d1531e6e8b1523b085a75a7d66555e73e6e80947c2abc92c2498415cbd42", size = 8792400, upload-time = "2026-08-25T00:10:45.793Z" },
-    { url = "https://files.pythonhosted.org/packages/36/12/9a225a124e50b638f27a44fa276061f204f9151f19f714e7437660fa2692/cvista_rendering-9.7.0.3-cp312-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:8684e161a5d01f9cac887e5e7244c807dca3dc9fba329738c01eadd2a5caa6d3", size = 9041614, upload-time = "2026-08-25T00:10:47.547Z" },
-    { url = "https://files.pythonhosted.org/packages/d2/ec/ca6a70e7f9355776944d30e8319f8fc70c10498188be90a31723c702a3de/cvista_rendering-9.7.0.3-cp312-abi3-win_amd64.whl", hash = "sha256:b3bc6a91f479e54af3d2dde07ac69d826c9ae46134fdfb0b359b56334e52244f", size = 7586615, upload-time = "2026-08-25T00:10:50.144Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/4d/94b6fd6fe0964bedbda052a858d7dba5f050d3789354835f2ea22ef56ef0/cvista_rendering-9.7.0.4-cp312-abi3-macosx_11_0_arm64.whl", hash = "sha256:a3dc4d3d3e46c9e4a6f6726c459e11e5df65111d8295f352d86745c4fb2267d5", size = 7504914, upload-time = "2026-09-05T00:31:32.222Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/b1/e29c765a2941234c84d8d4d0bdcf7b9f262e836e6094c9e552242c12f420/cvista_rendering-9.7.0.4-cp312-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:5f192cee70e53b8b5ef021e8efe683178e8457da17d17478c22bce786c503fc3", size = 8802085, upload-time = "2026-09-05T00:31:34.302Z" },
+    { url = "https://files.pythonhosted.org/packages/73/ca/7592d3842e9e4998e0714372e5c7a464680387680d426f4b9d4a98daa644/cvista_rendering-9.7.0.4-cp312-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:2c5d3512063237f84e6f15822639a3a1a7fe391bb54e699770919fd8c7c58dbd", size = 9051650, upload-time = "2026-09-05T00:31:36.207Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/8b/62331c83e39a2ab6f54f3b91772bdc43a89e2a440bc8e89aa9bc8cd2cda8/cvista_rendering-9.7.0.4-cp312-abi3-win_amd64.whl", hash = "sha256:becb1c67c1d8715e0615eba15fa37518771909c21fdcc4f3d9401a38a00257e4", size = 7593471, upload-time = "2026-09-05T00:31:38.173Z" },
 ]
 
 [[package]]
@@ -718,8 +716,8 @@ wheels = [
 
 [[package]]
 name = "pyvista"
-version = "0.49.dev0"
-source = { git = "https://github.com/pyvista/pyvista.git?rev=d18608ac0f5e427600a08200a4ae6c3c5b40720c#d18608ac0f5e427600a08200a4ae6c3c5b40720c" }
+version = "0.49.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cyclopts" },
     { name = "matplotlib" },
@@ -730,6 +728,10 @@ dependencies = [
     { name = "pyvista-validation" },
     { name = "scooby" },
     { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/99/8f/fc7f2662d989d489d4b9048fdc030f6960ad5a0d09dd00016abc64ffa02d/pyvista-0.49.0.tar.gz", hash = "sha256:5bc914769dfa9baeedb3b761c81e3326bd4c7a3aeed475c25f164c798806dba2", size = 2704091, upload-time = "2026-09-08T03:50:50.682Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/13/28/10413555dd9cbd410c2762c8e6172ce9bd88c8c7997f7290f173969614dc/pyvista-0.49.0-py3-none-any.whl", hash = "sha256:8528b753baf9a32dd7a44f4e88912fe5c8771f7d921c813e1cbac35fc5a37996", size = 2732156, upload-time = "2026-09-08T03:50:48.933Z" },
 ]
 
 [package.optional-dependencies]
@@ -807,7 +809,7 @@ source = { editable = "." }
 
 [package.dev-dependencies]
 dev = [
-    { name = "cvista", extra = ["io", "rendering"] },
+    { name = "cvista", extra = ["all"] },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -819,12 +821,11 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "cvista", extras = ["io"] },
-    { name = "cvista", extras = ["rendering"] },
+    { name = "cvista", extras = ["all"], specifier = "==9.7.0.4" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "pyvista", extras = ["io", "io-override"], git = "https://github.com/pyvista/pyvista.git?rev=d18608ac0f5e427600a08200a4ae6c3c5b40720c" },
+    { name = "pyvista", extras = ["io", "io-override"], specifier = "==0.49.0" },
     { name = "pyvista-cad", extras = ["step-light", "3mf"] },
 ]
 
@@ -846,14 +847,21 @@ wheels = [
 
 [[package]]
 name = "pyvista-validation"
-version = "0.1.1"
+version = "0.2.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7f/7a/0696dc1861bf4b4302e965aff9f812c21ce686af7d6c6e10fd6d1d8514b5/pyvista_validation-0.1.1.tar.gz", hash = "sha256:eb01f2af9abd68b11fdaa77f958f2e274293263384eb870005788f2c7d52b281", size = 496528, upload-time = "2026-09-02T16:59:29.314Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b5/c5/d800d91bae144a71fbae31fcb6b3279c55179acf93639e3443ae87373782/pyvista_validation-0.2.2.tar.gz", hash = "sha256:af234130a3b34b3e1af49584d75b41fafc694752b2958b36e9dbfd9f188e6a0c", size = 554920, upload-time = "2026-09-06T08:42:14.076Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/61/5b/9848b7302d6bb833aed16c7cd7f4cb5d9a04a4f3c7834742d60119793533/pyvista_validation-0.1.1-py3-none-any.whl", hash = "sha256:f2fb8028b1fbc9ab8691718dd6109c5a0f84eaebc74354eee82f50062a119b45", size = 27030, upload-time = "2026-09-02T16:59:27.754Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/9f/6371ab13987d3655f11e1feef0fd3f8729dd3c1322a814e40e81e4a03d76/pyvista_validation-0.2.2-cp310-abi3-macosx_10_9_x86_64.whl", hash = "sha256:4ae9af24e888e4ffc941fc01529cc3a4668bd0de7066f98e41aa1d02a5e23d58", size = 83841, upload-time = "2026-09-06T08:42:03.68Z" },
+    { url = "https://files.pythonhosted.org/packages/17/a0/a71388af7e416ff100b3e6498e71b9c6d8f0b1f0576536e8ea27158bffc9/pyvista_validation-0.2.2-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:8b7156dec1699d65501df65578d759dbab6ddfccd803213fc837fff0c2e41a92", size = 87934, upload-time = "2026-09-06T08:42:04.954Z" },
+    { url = "https://files.pythonhosted.org/packages/9e/38/84e7eba0dace65cc68edb0e2c18f7bd8363cf9de449290dc6e4420eebf22/pyvista_validation-0.2.2-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:1be12fb7dbc05035a58a3245a0fac018a6be41837be9ec90a0796db700bd7dfa", size = 293409, upload-time = "2026-09-06T08:42:06.153Z" },
+    { url = "https://files.pythonhosted.org/packages/75/e7/24d49960620aa770fc1fb527a019ec5a860e27c73bcd69c4bdfcc510c7a7/pyvista_validation-0.2.2-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:a45b633b89d843329db1608ba2bbed75d075ab63c5a7427c8dfa9ad9c23eadb4", size = 261436, upload-time = "2026-09-06T08:42:07.546Z" },
+    { url = "https://files.pythonhosted.org/packages/81/b8/c6d1c79a293a7c6927995ed77af01a1c77d16ad1b71bfbfd47922104ec6b/pyvista_validation-0.2.2-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:aba7a1fc01ba9c762f14d1418329b2a462c881aa7a42b65b2088b6ab9fe8e530", size = 291065, upload-time = "2026-09-06T08:42:08.876Z" },
+    { url = "https://files.pythonhosted.org/packages/51/c9/1dd3831f373dfc0b3ba8fe3a8de0b17f4b8610df9f262f6904f20f7d507b/pyvista_validation-0.2.2-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:672991acf11588de5ce4042cf4f1cc59d0f2b0e84bca792c3358fac6b07e2b38", size = 259212, upload-time = "2026-09-06T08:42:10.297Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/8a/fe3dd14c804dc8bfade2d247f33fedaa3ebebf916f12cdd002203440b82b/pyvista_validation-0.2.2-cp310-abi3-win32.whl", hash = "sha256:6ba8b5f39a9c4e1f75c4dd9adc037cfeb5a50be9fdb93d787a34e98245bba51a", size = 68929, upload-time = "2026-09-06T08:42:11.649Z" },
+    { url = "https://files.pythonhosted.org/packages/21/fc/b98d6dbbd458eeb197b63486c64eb8ed3ef1216d4bf17c353d1153edca97/pyvista_validation-0.2.2-cp310-abi3-win_amd64.whl", hash = "sha256:9ee46b4177e6b8fcc5d750d9c471d30fa05f1384668a67cef0b19a700a797659", size = 74885, upload-time = "2026-09-06T08:42:12.861Z" },
 ]
 
 [[package]]

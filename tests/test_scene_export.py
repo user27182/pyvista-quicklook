@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
 
 import meshio
 import numpy as np
 import pytest
 import pyvista as pv
+from pyvista.core.utilities import _optional_formats as optional_formats
 from pyvista.core.utilities import reader as readers
 from pyvista.core.utilities import reader_registry
 from pyvista_cad import examples as cad_examples
@@ -420,29 +420,19 @@ def test_a_failure_is_reported_in_one_line(tmp_path, capsys, monkeypatch):
     assert len(reported) <= 240
 
 
-def optional_readers() -> set[str]:
-    """Return the extensions read by a package PyVista names but imports only on demand.
+def readable_extensions() -> set[str]:
+    """Return every extension this environment can read.
 
-    These reach neither ``CLASS_READERS`` nor ``registered_readers`` until something asks
-    for one, so the tables PyVista keeps them in are what has to be read.
+    A reader that lives in a package of its own is named in a table of PyVista's rather
+    than registered, until a file asks for it.
     """
     reader_registry._ensure_entry_points()
-    pending = set(reader_registry._pending_ext_readers)
-    optional = {
-        ext
-        for ext, reader in reader_registry._OPTIONAL_READERS.items()
-        if importlib.util.find_spec(reader.module) is not None
-    }
-    return pending | optional
-
-
-def readable_extensions() -> set[str]:
-    """Return every extension ``pyvista.read`` accepts in this environment."""
     registered = {entry.extension for entry in reader_registry.registered_readers()}
     return (
         set(readers.CLASS_READERS)
         | registered
-        | optional_readers()
+        | set(reader_registry._pending_ext_readers)
+        | optional_formats._installed_extensions(optional_formats._READ)
         | set(meshio.extension_to_filetypes)
     )
 
@@ -464,7 +454,7 @@ def test_format_table_accounts_for_every_readable_extension():
 
 
 def missing_reader(ext: str) -> str | None:
-    """Return why the runtime cannot read an extension, or None when it can."""
+    """Return why the environment cannot read an extension, or None when it can."""
     if ext not in readers.CLASS_READERS:
         return None if ext in readable_extensions() else 'no reader is registered'
     try:

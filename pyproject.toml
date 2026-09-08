@@ -5,14 +5,12 @@ requires = ['setuptools>=64', 'setuptools_scm>=8']
 [dependency-groups]
 # The tests run the exporter under the same environment the installer builds.
 dev = [
-  'cvista[io]',
-  'cvista[rendering]',
+  'cvista[all]==9.7.0.4',
   'pre-commit',
   'pytest',
   'pytest-cov',
-  # Pinned to one commit; bumping it reruns the test that locks the readable extensions.
   'pyvista-cad[step-light,3mf]',
-  'pyvista[io,io-override] @ git+https://github.com/pyvista/pyvista.git@d18608ac0f5e427600a08200a4ae6c3c5b40720c',
+  'pyvista[io,io-override]==0.49.0',
 ]
 
 [project]
