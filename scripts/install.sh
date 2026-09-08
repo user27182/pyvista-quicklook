@@ -79,6 +79,14 @@ echo "==> preparing the PyVista environment in $VENV"
 echo "    (about 400 MB the first time)"
 mkdir -p "$SUPPORT"
 "$UV" venv --quiet --allow-existing --python "$PYTHON_VERSION" "$VENV"
+# An environment that has been through a Python change keeps the packages of the Python
+# it was built for, which nothing reads any more.
+for stale in "$VENV"/lib/python*; do
+  if [[ -d "$stale" && "$(basename "$stale")" != "python$PYTHON_VERSION" ]]; then
+    echo "    (removing $(basename "$stale") packages, left by an earlier Python)"
+    rm -rf "$stale"
+  fi
+done
 # PyVista requires stock VTK, which cvista replaces; the override drops that requirement.
 # uv splits the override path on spaces, so the file cannot live in Application Support.
 OVERRIDES=$(mktemp -t pvql-overrides)
