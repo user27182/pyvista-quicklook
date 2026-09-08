@@ -13,9 +13,9 @@ VENV="$SUPPORT/venv"
 DEST="$HOME/Applications"
 # The one version this is built for.
 PYTHON_VERSION="${PVQL_PYTHON:-3.14}"
-# PyVista 0.49 is the floor and is not released yet. The commit matches pyproject.toml;
-# the io extras bring every reader PyVista hands to a package of its own.
-PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista[io,io-override] @ git+https://github.com/pyvista/pyvista.git@d18608ac0f5e427600a08200a4ae6c3c5b40720c}"
+# The versions in pyproject.toml, so the tests run what the installer provisions.
+PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista[io,io-override]==0.49.0}"
+CVISTA_SPEC="${PVQL_CVISTA_SPEC:-cvista[all]==9.7.0.4}"
 # STEP, DXF, and 3MF readers; IGES and the heavier CAD kernels need stock VTK or OCP.
 CAD_SPEC="${PVQL_CAD_SPEC:-pyvista-cad[step-light,3mf]}"
 PYTHON=""
@@ -85,7 +85,7 @@ OVERRIDES=$(mktemp -t pvql-overrides)
 printf "vtk; python_version < '0'\n" > "$OVERRIDES"
 "$UV" pip uninstall --quiet --python "$VENV/bin/python" vtk >/dev/null 2>&1 || true
 "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade \
-  --override "$OVERRIDES" "$PYVISTA_SPEC" 'cvista[all]' "$CAD_SPEC"
+  --override "$OVERRIDES" "$PYVISTA_SPEC" "$CVISTA_SPEC" "$CAD_SPEC"
 rm -f "$OVERRIDES"
 PYTHON="$VENV/bin/python"
 
