@@ -109,7 +109,7 @@ keep-runtime-typing = true
 
 [tool.uv]
 # PyVista requires stock VTK, which cvista replaces; without this every resolve installs both.
-override-dependencies = ["vtk; python_version < '0'"]
+exclude-dependencies = ["vtk"]
 
 [tool.setuptools]
 license-files = ['LICENSE']

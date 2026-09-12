@@ -13,6 +13,8 @@ VENV="$SUPPORT/venv"
 DEST="$HOME/Applications"
 # The one version this is built for.
 PYTHON_VERSION="${PVQL_PYTHON:-3.14}"
+# --excludes, which drops PyVista's stock VTK requirement, landed in uv 0.10.
+UV_MIN="0.10"
 # The versions in pyproject.toml, so the tests run what the installer provisions.
 PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista[io,io-override]==0.49.0}"
 CVISTA_SPEC="${PVQL_CVISTA_SPEC:-cvista[all]==9.7.0.4}"
@@ -62,6 +64,12 @@ if [[ -z "$UV" ]]; then
   [[ -n "$UV" ]] || { echo "uv could not be installed" >&2; exit 1; }
 fi
 
+UV_VERSION=$("$UV" --version | awk '{print $2}')
+if [[ "$(printf '%s\n%s\n' "$UV_MIN" "$UV_VERSION" | sort -V | head -1)" != "$UV_MIN" ]]; then
+  echo "uv $UV_VERSION is too old; $UV_MIN or newer is required. Upgrade it and rerun." >&2
+  exit 1
+fi
+
 if [[ "$SKIP_HELPER" -eq 0 ]]; then
   echo "==> installing the pvql helper"
   "$UV" tool install --force --reinstall --quiet --python "$PYTHON_VERSION" "$ROOT"
@@ -87,14 +95,10 @@ for stale in "$VENV"/lib/python*; do
     rm -rf "$stale"
   fi
 done
-# PyVista requires stock VTK, which cvista replaces; the override drops that requirement.
-# uv splits the override path on spaces, so the file cannot live in Application Support.
-OVERRIDES=$(mktemp -t pvql-overrides)
-printf "vtk; python_version < '0'\n" > "$OVERRIDES"
+# PyVista requires stock VTK, which cvista replaces; the exclusion drops that requirement.
 "$UV" pip uninstall --quiet --python "$VENV/bin/python" vtk >/dev/null 2>&1 || true
 "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade \
-  --override "$OVERRIDES" "$PYVISTA_SPEC" "$CVISTA_SPEC" "$CAD_SPEC"
-rm -f "$OVERRIDES"
+  --excludes <(echo vtk) "$PYVISTA_SPEC" "$CVISTA_SPEC" "$CAD_SPEC"
 PYTHON="$VENV/bin/python"
 
 echo "==> recording configuration"
