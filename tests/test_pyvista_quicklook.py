@@ -389,16 +389,27 @@ def test_service_install_runs_the_daemon_under_the_package_name(tmp_path, monkey
     agent = tmp_path / 'agent.plist'
     old_agent = tmp_path / 'old-agent.plist'
     old_agent.write_text('x')
+    old_drop = tmp_path / 'old-container'
+    old_drop.mkdir()
     monkeypatch.setattr(cli.daemon_mod, 'agent_path', lambda: agent)
     monkeypatch.setattr(cli.daemon_mod, 'legacy_agent_path', lambda: old_agent)
+    monkeypatch.setattr(cli.daemon_mod, 'legacy_drop_dir', lambda: old_drop)
+    commands = []
     monkeypatch.setattr(
-        cli.subprocess, 'run', lambda *a, **k: subprocess.CompletedProcess(a[0], 0, '', '')
+        cli.subprocess,
+        'run',
+        lambda command, **k: (
+            commands.append(command) or subprocess.CompletedProcess(command, 0, '', '')
+        ),
     )
     args = argparse.Namespace(install=True, uninstall=False, helper=str(tmp_path / 'pvql'))
     assert cli.cmd_service(args) == 0
     stored = plistlib.loads(agent.read_bytes())
     assert stored['ProgramArguments'] == [str(tmp_path / 'pyvista-quicklook'), 'daemon']
     assert not old_agent.exists()
+    assert not old_drop.exists()
+    joined = [' '.join(str(part) for part in command) for command in commands]
+    assert any('bootout' in c and c.endswith(f'/{daemon.LEGACY_LABEL}') for c in joined)
 
 
 def test_parser_accepts_every_subcommand():

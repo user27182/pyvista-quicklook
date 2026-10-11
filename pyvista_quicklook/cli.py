@@ -83,6 +83,7 @@ def retire_legacy_service() -> None:
     target = f'gui/{os.getuid()}/{daemon_mod.LEGACY_LABEL}'
     subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True, check=False)
     daemon_mod.legacy_agent_path().unlink(missing_ok=True)
+    shutil.rmtree(daemon_mod.legacy_drop_dir(), ignore_errors=True)
 
 
 def cmd_service(args: argparse.Namespace) -> int:
