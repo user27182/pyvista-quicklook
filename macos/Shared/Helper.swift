@@ -3,7 +3,7 @@ import Foundation
 import os
 
 /// Log destination for the app and its Quick Look extension.
-let osLog = Logger(subsystem: "io.github.user27182.PyVistaQuickLook", category: "preview")
+let osLog = Logger(subsystem: "org.pyvista.PyVistaQuickLook", category: "preview")
 
 /// Seconds since this process was started, which covers the time before it could log.
 func processAge() -> Double {

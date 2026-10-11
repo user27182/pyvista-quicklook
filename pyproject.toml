@@ -41,7 +41,7 @@ pvql = 'pyvista_quicklook.cli:main'
 pyvista-quicklook = 'pyvista_quicklook.cli:main'
 
 [project.urls]
-Homepage = 'https://github.com/user27182/pyvista-quicklook'
+Homepage = 'https://github.com/pyvista/pyvista-quicklook'
 
 [tool.coverage.run]
 branch = true

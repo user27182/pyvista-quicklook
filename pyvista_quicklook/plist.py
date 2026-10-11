@@ -17,9 +17,11 @@ APP_NAME = 'PyVista Quick Look'
 # CFBundleDisplayName. Everything inside it is named for the build.
 APP_BUNDLE = f'{APP_NAME}.app'
 LEGACY_APP_BUNDLE = 'PyVistaQuickLook.app'
-APP_BUNDLE_ID = 'io.github.user27182.PyVistaQuickLook'
+APP_BUNDLE_ID = 'org.pyvista.PyVistaQuickLook'
+LEGACY_APP_BUNDLE_ID = 'io.github.user27182.PyVistaQuickLook'
 APP_EXECUTABLE = 'PyVistaQuickLook'
 EXT_BUNDLE_ID = f'{APP_BUNDLE_ID}.QuickLook'
+LEGACY_EXT_BUNDLE_ID = f'{LEGACY_APP_BUNDLE_ID}.QuickLook'
 EXT_EXECUTABLE = 'PyVistaQuickLookExtension'
 EXT_PRINCIPAL_CLASS = 'PVQLPreviewViewController'
 
