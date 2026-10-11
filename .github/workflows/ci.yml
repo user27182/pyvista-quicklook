@@ -37,6 +37,10 @@ jobs:
       # The helper is pure standard library, so it is tested away from macOS too, on the
       # one Python the app is built for.
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Lets codecov-action authenticate with OIDC instead of a stored token.
+      id-token: write
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
       with:
@@ -46,12 +50,20 @@ jobs:
       with:
         enable-cache: false
     - run: uv sync --group dev
-    - run: uv run pytest tests/
+    - run: uv run pytest tests/ --cov-report=xml
+    - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5   # v7.1.1
+      with:
+        flags: linux
+        fail_ci_if_error: true
+        use_oidc: true
 
   app:
       # Builds the real thing: compiles both Swift targets, generates the
       # Info.plist files, and ad-hoc signs the bundle.
     runs-on: macos-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1   # v7.0.1
       with:
@@ -74,7 +86,12 @@ jobs:
         # Both architectures, so the download runs on any Mac.
         lipo -archs "$appex/Contents/MacOS/PyVistaQuickLookExtension" | grep -q x86_64
         lipo -archs "$appex/Contents/MacOS/PyVistaQuickLookExtension" | grep -q arm64
-    - run: uv run pytest tests/
+    - run: uv run pytest tests/ --cov-report=xml
+    - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5   # v7.1.1
+      with:
+        flags: macos
+        fail_ci_if_error: true
+        use_oidc: true
     - name: Package the app
       run: ditto -c -k --keepParent "build/PyVista Quick Look.app" build/PyVistaQuickLook.zip
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a   # v7.0.1
