@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+import plistlib
 import re
 import subprocess
 import tomllib
 
 import pytest
+
+from pyvista_quicklook import plist as plist_mod
 
 ROOT = Path(__file__).parents[1]
 INSTALLER = ROOT / 'scripts' / 'install-from-source.sh'
@@ -112,3 +115,63 @@ def test_readme_names_the_installer_python():
     assert set(re.findall(r'Python,? (3\.\d+)', readme)) == {PYTHON_VERSION}
     project = tomllib.loads((ROOT / 'pyproject.toml').read_text())['project']
     assert project['requires-python'].split(',')[0] == f'>={PYTHON_VERSION}'
+
+
+def script_lines(first, last):
+    """Return the installer's lines from the one starting ``first`` through ``last``."""
+    start = SCRIPT.index(first)
+    return SCRIPT[start : SCRIPT.index(last, start) + len(last)]
+
+
+def ask_to_restart_finder(tmp_path, answer):
+    """Run the Finder prompt with ``answer`` typed; return its output and killall's calls."""
+    calls = tmp_path / 'killall.log'
+    killall = tmp_path / 'killall'
+    killall.write_text(f'#!/bin/sh\necho "$@" >> {calls}\n')
+    killall.chmod(0o755)
+    function = script_lines('restart_finder() {', '\n}\n').replace(
+        '/usr/bin/killall', str(killall)
+    )
+    script = f'EXT_ID=extension.id\n{function}restart_finder 3<<< {answer!r}\n'
+    result = subprocess.run(
+        ['/bin/bash', '-c', script], capture_output=True, text=True, timeout=10, check=True
+    )
+    return result.stdout, calls.read_text() if calls.exists() else ''
+
+
+@pytest.mark.parametrize('answer', ['y', 'Y', 'yes'])
+def test_finder_is_restarted_on_yes(tmp_path, answer):
+    """A yes restarts the Finder, after the risk is explained."""
+    output, calls = ask_to_restart_finder(tmp_path, answer)
+    assert 'a cancelled copy can leave a partial file' in output
+    assert calls == 'Finder\n'
+
+
+@pytest.mark.parametrize('answer', ['n', '', 'sure'])
+def test_finder_is_left_running_otherwise(tmp_path, answer):
+    """Anything but a yes leaves the Finder alone and says how to finish later."""
+    output, calls = ask_to_restart_finder(tmp_path, answer)
+    assert calls == ''
+    assert 'Restart it later with "killall Finder"' in output
+
+
+@pytest.mark.parametrize(
+    ('identifier', 'stale'),
+    [(plist_mod.LEGACY_APP_BUNDLE_ID, '1'), (plist_mod.APP_BUNDLE_ID, '0'), (None, '0')],
+)
+def test_an_install_under_the_old_identifier_is_detected(tmp_path, identifier, stale):
+    """Only an app installed under the identifier from before 0.7.0 marks the Finder stale."""
+    app = tmp_path / 'PyVista Quick Look.app'
+    if identifier:
+        (app / 'Contents').mkdir(parents=True)
+        info = plistlib.dumps({'CFBundleIdentifier': identifier})
+        (app / 'Contents' / 'Info.plist').write_bytes(info)
+    legacy = script_lines('LEGACY_BUNDLE_ID=', '\n')
+    detection = script_lines('STALE_FINDER=0', '\ndone\n')
+    script = (
+        f'{legacy}APP={str(app)!r}\nLEGACY_APP=/nonexistent\n{detection}echo "$STALE_FINDER"\n'
+    )
+    result = subprocess.run(
+        ['/bin/bash', '-c', script], capture_output=True, text=True, timeout=10, check=True
+    )
+    assert result.stdout.strip() == stale

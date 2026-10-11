@@ -6,6 +6,8 @@ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 BUNDLE_NAME="PyVista Quick Look"
 # Installations before 0.4.1 named the bundle after the build.
 LEGACY_BUNDLE_NAME="PyVistaQuickLook"
+# Installations before 0.7.0 used identifiers under the old owner.
+LEGACY_BUNDLE_ID="io.github.user27182.PyVistaQuickLook"
 EXT_NAME="PyVistaQuickLookExtension"
 EXT_ID="org.pyvista.PyVistaQuickLook.QuickLook"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
@@ -42,6 +44,23 @@ if [[ -z "$PREBUILT" ]] && ! xcrun --find swiftc >/dev/null 2>&1; then
   echo "Or install a prebuilt app with ./install.sh" >&2
   exit 1
 fi
+
+# Ask, on descriptor 3, whether to restart the Finder, and restart it only on a yes.
+restart_finder() {
+  local answer=""
+  echo
+  echo "The Finder still asks for the extension by the identifier it had before 0.7.0, so"
+  echo "previews show \"Extension $EXT_ID not found\" until the Finder restarts."
+  echo "Restarting it closes and reopens its windows. A copy, move, or empty-trash the Finder"
+  echo "is running at that moment is cancelled, and a cancelled copy can leave a partial file."
+  printf 'Restart the Finder now with "killall Finder"? [y/n] '
+  read -r answer <&3 || true
+  if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
+    /usr/bin/killall Finder || true
+  else
+    echo "Restart it later with \"killall Finder\", or log out and back in."
+  fi
+}
 
 # uv provisions both the helper and the PyVista environment.
 find_uv() {
@@ -128,12 +147,22 @@ else
 fi
 
 APP="$DEST/$BUNDLE_NAME.app"
+LEGACY_APP="$DEST/$LEGACY_BUNDLE_NAME.app"
+# The Finder goes on asking for a replaced extension by its old identifier until it restarts.
+STALE_FINDER=0
+for existing in "$APP" "$LEGACY_APP"; do
+  identifier=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' \
+    "$existing/Contents/Info.plist" 2>/dev/null || true)
+  if [[ "$identifier" == "$LEGACY_BUNDLE_ID" ]]; then
+    STALE_FINDER=1
+  fi
+done
+
 echo "==> installing $APP"
 mkdir -p "$DEST"
 rm -rf "$APP"
 cp -R "$SOURCE_APP" "$APP"
 
-LEGACY_APP="$DEST/$LEGACY_BUNDLE_NAME.app"
 if [[ -d "$LEGACY_APP" ]]; then
   echo "==> removing the previous $LEGACY_APP"
   /usr/bin/pluginkit -r "$LEGACY_APP/Contents/PlugIns/$EXT_NAME.appex" 2>/dev/null || true
@@ -154,6 +183,17 @@ LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchSe
 # After the app, so macOS lists the service under the app's name.
 echo "==> installing the render service"
 "$HELPER" service --install --helper "$HELPER"
+
+if [[ "$STALE_FINDER" == 1 ]]; then
+  # The installer may be read from a pipe, so the answer comes from the terminal.
+  if { exec 3</dev/tty; } 2>/dev/null; then
+    restart_finder
+    exec 3<&-
+  else
+    echo
+    echo "Restart the Finder with \"killall Finder\", or log out and back in, to finish the upgrade."
+  fi
+fi
 
 echo
 echo "Installed. Select a .vtu, .vtp, or .vtk file in the Finder and press space."
