@@ -306,6 +306,13 @@ def test_step_models_are_drawn(tmp_path):
     assert pv.read(out).n_faces > 0
 
 
+def test_iges_models_are_drawn(tmp_path):
+    """An IGES model is tessellated by cascadio, read back as glTF, and drawn."""
+    out = tmp_path / 'out.ply'
+    export_mod.export(cad_examples.downloads.iges_impeller_path(), str(out), 2_000_000, 20_000)
+    assert pv.read(out).n_faces > 0
+
+
 def test_dxf_drawings_are_drawn_as_tubes(tmp_path):
     """A DXF drawing holds only lines, which are given a surface."""
     out = tmp_path / 'out.ply'

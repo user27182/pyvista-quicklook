@@ -18,7 +18,7 @@ UV_MIN="0.10"
 # The versions in pyproject.toml, so the tests run what the installer provisions.
 PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista[io,io-override]==0.49.0}"
 CVISTA_SPEC="${PVQL_CVISTA_SPEC:-cvista[all]==9.7.0.4}"
-# STEP, DXF, and 3MF readers; IGES and the heavier CAD kernels need stock VTK or OCP.
+# STEP, DXF, and 3MF readers; cascadio, the STEP kernel, reads IGES too.
 CAD_SPEC="${PVQL_CAD_SPEC:-pyvista-cad[step-light,3mf]}"
 PYTHON=""
 PREBUILT=""

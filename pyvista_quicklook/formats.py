@@ -68,6 +68,8 @@ FORMATS: dict[str, str] = {
     # CAD formats, read by pyvista-cad.
     '.step': 'STEP Model',
     '.stp': 'STEP Model',
+    '.iges': 'IGES Model',
+    '.igs': 'IGES Model',
     '.dxf': 'DXF Drawing',
     '.3mf': '3MF Model',
     # Mesh formats read by meshio.
@@ -141,8 +143,6 @@ UNCLAIMED: dict[str, str] = {
     '.brep': 'needs an OpenCascade kernel',
     '.brp': 'needs an OpenCascade kernel',
     '.fcstd': 'needs an OpenCascade kernel',
-    '.iges': 'needs an OpenCascade kernel',
-    '.igs': 'needs an OpenCascade kernel',
     '.ifc': 'needs ifcopenshell',
     '.scad': 'needs the openscad program',
     # General containers, often huge, in which mesh files are the exception.

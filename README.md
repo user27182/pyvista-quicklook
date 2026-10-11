@@ -60,7 +60,8 @@ of it:
 
 - [cvista](https://github.com/pyvista/cvista)`[all]`, a VTK fork used in place of
   stock VTK, 137 MB
-- cascadio, [pyvista-cad](https://github.com/pyvista/pyvista-cad)'s STEP reader, 69 MB
+- cascadio, [pyvista-cad](https://github.com/pyvista/pyvista-cad)'s STEP reader, which
+  reads IGES too, 69 MB
 - matplotlib, 28 MB
 - numpy, 25 MB
 - ezdxf, pyvista-cad's DXF reader, 20 MB
@@ -80,32 +81,33 @@ which needs the Xcode command line tools (`xcode-select --install`):
 
 ## Supported files
 
-76 extensions are claimed, so pressing space on any of these files opens
+78 extensions are claimed, so pressing space on any of these files opens
 this preview. A file that turns out not to be a mesh, such as a `.dat` holding a table
 of numbers, is shown as plain text instead, the way Quick Look would have shown it.
 
 | Format | Extensions | Format | Extensions |
 | --- | --- | --- | --- |
-| 3D Studio Model | `.3ds` | OpenFOAM Case | `.foam` |
-| 3MF Model | `.3mf` | ParaView Data Collection | `.pvd` |
-| AVS UCD Data | `.inp` | PERMAS Data | `.dato`, `.post` |
-| AVS UCD Mesh | `.avs` | PLOT3D Metadata | `.p3d` |
-| Binary Marching Cubes Surface | `.tri` | Point Cloud | `.pts` |
-| BYU Geometry | `.g` | ProStar Mesh | `.vrt` |
-| CalculiX Result | `.frd` | Protein Data Bank | `.pdb` |
-| CGNS Data | `.cgns` | PyVista Zstandard Data | `.pv`, `.zvtk` |
-| Digital Elevation Model | `.dem` | SEG-Y Seismic Data | `.segy`, `.sgy` |
-| DXF Drawing | `.dxf` | SLC Volume | `.slc` |
-| Eclipse GRDECL Grid | `.grdecl` | STEP Model | `.step`, `.stp` |
-| EnSight Case | `.case` | Tecplot ASCII Data | `.tec` |
-| Exodus II Data | `.e`, `.ex2`, `.exii`, `.exo` | Tecplot Data | `.dat` |
-| Facet Surface | `.facet` | TetGen Mesh | `.ele`, `.node` |
-| FLAC3D Grid | `.f3grid` | VRML Model | `.vrml`, `.wrl` |
-| Fluent Case | `.cas` | VTK File Series | `.series` |
-| GAMBIT Neutral Mesh | `.neu` | VTK HDF | `.vtkhdf` |
-| Gaussian Cube | `.cube` | VTK Image Data | `.vti` |
-| GE Signa MR Image | `.mr` | VTK Legacy Data | `.vtk` |
-| Gmsh Mesh | `.msh` | VTK MultiBlock | `.vtm`, `.vtmb` |
+| 3D Studio Model | `.3ds` | Object File Format Mesh | `.off` |
+| 3MF Model | `.3mf` | OpenFOAM Case | `.foam` |
+| AVS UCD Data | `.inp` | ParaView Data Collection | `.pvd` |
+| AVS UCD Mesh | `.avs` | PERMAS Data | `.dato`, `.post` |
+| Binary Marching Cubes Surface | `.tri` | PLOT3D Metadata | `.p3d` |
+| BYU Geometry | `.g` | Point Cloud | `.pts` |
+| CalculiX Result | `.frd` | ProStar Mesh | `.vrt` |
+| CGNS Data | `.cgns` | Protein Data Bank | `.pdb` |
+| Digital Elevation Model | `.dem` | PyVista Zstandard Data | `.pv`, `.zvtk` |
+| DXF Drawing | `.dxf` | SEG-Y Seismic Data | `.segy`, `.sgy` |
+| Eclipse GRDECL Grid | `.grdecl` | SLC Volume | `.slc` |
+| EnSight Case | `.case` | STEP Model | `.step`, `.stp` |
+| Exodus II Data | `.e`, `.ex2`, `.exii`, `.exo` | Tecplot ASCII Data | `.tec` |
+| Facet Surface | `.facet` | Tecplot Data | `.dat` |
+| FLAC3D Grid | `.f3grid` | TetGen Mesh | `.ele`, `.node` |
+| Fluent Case | `.cas` | VRML Model | `.vrml`, `.wrl` |
+| GAMBIT Neutral Mesh | `.neu` | VTK File Series | `.series` |
+| Gaussian Cube | `.cube` | VTK HDF | `.vtkhdf` |
+| GE Signa MR Image | `.mr` | VTK Image Data | `.vti` |
+| Gmsh Mesh | `.msh` | VTK Legacy Data | `.vtk` |
+| IGES Model | `.iges`, `.igs` | VTK MultiBlock | `.vtm`, `.vtmb` |
 | Kratos Model Part | `.mdpa` | VTK Parallel Image Data | `.pvti` |
 | Medit Mesh | `.mesh`, `.meshb` | VTK Parallel Legacy Data | `.pvtk` |
 | MetaImage Volume | `.mha`, `.mhd` | VTK Parallel Rectilinear Grid | `.pvtr` |
@@ -116,7 +118,6 @@ of numbers, is shown as plain text instead, the way Quick Look would have shown 
 | Netgen Mesh | `.vol` | VTK Structured Grid | `.vts` |
 | NIfTI Volume | `.nii` | VTK Unstructured Grid | `.vtu` |
 | NRRD Volume | `.nhdr`, `.nrrd` | XDMF Data | `.xdmf` |
-| Object File Format Mesh | `.off` | | |
 
 4 more are claimed through a type macOS declares, since Launch Services sees only
 the last suffix of a compressed dataset:
@@ -131,7 +132,7 @@ PyVista can also read these, which are not claimed:
 - disk images own the extension: `.img`
 - camera raw images own the extension: `.raw`
 - XML owns the extension: `.xml`
-- needs an OpenCascade kernel: `.brep`, `.brp`, `.fcstd`, `.iges`, `.igs`
+- needs an OpenCascade kernel: `.brep`, `.brp`, `.fcstd`
 - needs ifcopenshell: `.ifc`
 - needs the openscad program: `.scad`
 - a general HDF5 container: `.h5`, `.hdf`
