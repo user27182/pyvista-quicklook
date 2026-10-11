@@ -78,6 +78,13 @@ def cmd_daemon(_: argparse.Namespace) -> int:
     return daemon_mod.serve()
 
 
+def retire_legacy_service() -> None:
+    """Stop and remove the render service installed under the io.github.user27182 label."""
+    target = f'gui/{os.getuid()}/{daemon_mod.LEGACY_LABEL}'
+    subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True, check=False)
+    daemon_mod.legacy_agent_path().unlink(missing_ok=True)
+
+
 def cmd_service(args: argparse.Namespace) -> int:
     """Install, remove, or report on the render service."""
     label = daemon_mod.LABEL
@@ -87,10 +94,12 @@ def cmd_service(args: argparse.Namespace) -> int:
     if args.uninstall:
         subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True, check=False)
         path.unlink(missing_ok=True)
+        retire_legacy_service()
         print(f'removed {label}')
         return 0
 
     if args.install:
+        retire_legacy_service()
         helper = args.helper or shutil.which('pvql') or str(Path.home() / '.local/bin/pvql')
         # macOS names a background item after its program until the app is registered.
         named = Path(helper).with_name('pyvista-quicklook')
@@ -319,11 +328,13 @@ def uninstall_targets(everything: bool) -> list[Path]:
     candidates = [
         *installed_apps(),
         daemon_mod.agent_path(),
+        daemon_mod.legacy_agent_path(),
         config_mod.CACHE_DIR,
         support / 'venv',
         support / 'src',
         support / 'unpacked',
         daemon_mod.drop_dir(),
+        daemon_mod.legacy_drop_dir(),
         SERVICE_LOG,
         config_mod.LOG_PATH,
     ]
@@ -377,6 +388,7 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
         subprocess.run([LSREGISTER, '-u', str(app)], capture_output=True, check=False)
     target = f'gui/{os.getuid()}/{daemon_mod.LABEL}'
     subprocess.run(['/bin/launchctl', 'bootout', target], capture_output=True, check=False)
+    retire_legacy_service()
     for path in targets:
         if path.is_dir():
             shutil.rmtree(path, ignore_errors=True)

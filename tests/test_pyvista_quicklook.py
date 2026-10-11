@@ -284,6 +284,8 @@ def installation(tmp_path, monkeypatch):
     monkeypatch.setattr(cli, 'SERVICE_LOG', tmp_path / 'pvqld.log')
     monkeypatch.setattr(cli.daemon_mod, 'agent_path', lambda: tmp_path / 'agent.plist')
     monkeypatch.setattr(cli.daemon_mod, 'drop_dir', lambda: tmp_path / 'container')
+    monkeypatch.setattr(cli.daemon_mod, 'legacy_agent_path', lambda: tmp_path / 'old-agent.plist')
+    monkeypatch.setattr(cli.daemon_mod, 'legacy_drop_dir', lambda: tmp_path / 'old-container')
     monkeypatch.setattr(cli.shutil, 'which', lambda name: str(tmp_path / 'uv'))
     commands = []
     monkeypatch.setattr(
@@ -330,6 +332,18 @@ def test_uninstall_removes_a_bundle_under_the_old_name(installation):
     assert not legacy.exists()
 
 
+def test_uninstall_removes_the_service_under_the_old_label(installation):
+    """A service installed under the io.github.user27182 label is stopped and removed."""
+    tmp_path, commands = installation
+    (tmp_path / 'old-agent.plist').write_text('x')
+    (tmp_path / 'old-container').mkdir()
+    assert cli.cmd_uninstall(argparse.Namespace(yes=True, all=False)) == 0
+    assert not (tmp_path / 'old-agent.plist').exists()
+    assert not (tmp_path / 'old-container').exists()
+    joined = [' '.join(str(part) for part in command) for command in commands]
+    assert any('bootout' in c and c.endswith(f'/{daemon.LEGACY_LABEL}') for c in joined)
+
+
 def test_uninstall_all_removes_the_config_too(installation):
     """`pvql uninstall --all` removes the config file as well."""
     tmp_path, _ = installation
@@ -373,7 +387,10 @@ def test_service_install_runs_the_daemon_under_the_package_name(tmp_path, monkey
         (tmp_path / name).write_text('#!/bin/sh\n')
         (tmp_path / name).chmod(0o755)
     agent = tmp_path / 'agent.plist'
+    old_agent = tmp_path / 'old-agent.plist'
+    old_agent.write_text('x')
     monkeypatch.setattr(cli.daemon_mod, 'agent_path', lambda: agent)
+    monkeypatch.setattr(cli.daemon_mod, 'legacy_agent_path', lambda: old_agent)
     monkeypatch.setattr(
         cli.subprocess, 'run', lambda *a, **k: subprocess.CompletedProcess(a[0], 0, '', '')
     )
@@ -381,6 +398,7 @@ def test_service_install_runs_the_daemon_under_the_package_name(tmp_path, monkey
     assert cli.cmd_service(args) == 0
     stored = plistlib.loads(agent.read_bytes())
     assert stored['ProgramArguments'] == [str(tmp_path / 'pyvista-quicklook'), 'daemon']
+    assert not old_agent.exists()
 
 
 def test_parser_accepts_every_subcommand():

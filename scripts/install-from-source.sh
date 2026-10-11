@@ -7,7 +7,7 @@ BUNDLE_NAME="PyVista Quick Look"
 # Installations before 0.4.1 named the bundle after the build.
 LEGACY_BUNDLE_NAME="PyVistaQuickLook"
 EXT_NAME="PyVistaQuickLookExtension"
-EXT_ID="io.github.user27182.PyVistaQuickLook.QuickLook"
+EXT_ID="org.pyvista.PyVistaQuickLook.QuickLook"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
 VENV="$SUPPORT/venv"
 DEST="$HOME/Applications"
