@@ -50,7 +50,7 @@ No system Python and no existing environment is used or changed.
 | `~/.local/bin/pvql`, `~/.local/bin/pyvista-quicklook` | Links to the helper | |
 | `~/Library/LaunchAgents/org.pyvista.pvqld.plist` | The render service | 4 KB |
 | `~/Library/Logs/pvqld.log` | The service's output | grows slowly |
-| `~/Library/Containers/org.pyvista.PyVistaQuickLook.QuickLook` | The extension's sandbox, created by macOS: its log and staged copies | small |
+| `~/Library/Containers/org.pyvista.PyVistaQuickLook.QuickLook/Data/tmp` | The extension's log and staged copies, in a sandbox folder that macOS creates and keeps | small |
 | `~/Library/Caches/PyVistaQuickLook` | One built preview per file previewed | grows with use |
 | `~/.local/bin/uv`, `~/Library/Application Support/uv` | uv, and Python 3.12 if uv had to fetch one | 45 MB, plus Python |
 | `~/.cache/uv` | uv's download cache; the environment's files are clones of it, not copies | shared |
