@@ -319,6 +319,14 @@ def test_iges_is_read_by_pyvista_after_a_step_read():
     assert pv.read(cad_examples.downloads.iges_impeller_path()).n_blocks > 0
 
 
+def test_unreadable_iges_files_are_reported(tmp_path):
+    """An IGES file cascadio transfers no shapes from fails with a reason."""
+    source = tmp_path / 'broken.igs'
+    source.write_text('nonsense')
+    with pytest.raises(ValueError, match='cascadio could not read'):
+        export_mod.export(str(source), str(tmp_path / 'out.ply'), 2_000_000, 20_000)
+
+
 @pytest.mark.parametrize('extension', ['.h5m', '.hmf', '.med', '.xmf'])
 def test_hdf5_meshes_are_drawn(tmp_path, extension):
     """The meshio formats stored in HDF5 are read with h5py."""
