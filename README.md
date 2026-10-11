@@ -294,8 +294,9 @@ uv run pre-commit run --all-files
 ```
 
 Everything runs on one Python, 3.14: the tests, the `pvql` helper in its uv tool
-environment, and the PyVista environment beside it. `[tool.uv]` in `pyproject.toml` excludes PyVista's stock VTK requirement so
-the test environment holds the same packages the installer provisions.
+environment, and the PyVista environment beside it. `[tool.uv]` in `pyproject.toml`
+excludes stock VTK from the resolve, so the test environment holds the same packages the
+installer provisions.
 
 PyVista and cvista are pinned to one release each, in `pyproject.toml` and
 `scripts/install.sh` alike. Bumping either reruns a test that compares every extension
