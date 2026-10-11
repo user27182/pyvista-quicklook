@@ -89,6 +89,10 @@ FORMATS: dict[str, str] = {
     '.post': 'PERMAS Data',
     '.node': 'TetGen Mesh',
     '.ele': 'TetGen Mesh',
+    '.h5m': 'MOAB Mesh',
+    '.hmf': 'HMF Mesh',
+    '.med': 'MED Mesh',
+    '.xmf': 'XDMF Data',
     # Medical volumes
     '.nii': 'NIfTI Volume',
     '.mha': 'MetaImage Volume',
@@ -148,11 +152,7 @@ UNCLAIMED: dict[str, str] = {
     # General containers, often huge, in which mesh files are the exception.
     '.h5': 'a general HDF5 container',
     '.hdf': 'a general HDF5 container',
-    # meshio lists these but cannot read them as installed.
-    '.h5m': 'needs h5py',
-    '.hmf': 'needs h5py',
-    '.med': 'needs h5py',
-    '.xmf': 'needs h5py',
+    # meshio lists these but cannot read them.
     '.su2': 'meshio fails to read it',
     '.ugrid': 'meshio fails to read it',
     '.wkt': 'meshio hangs on it',

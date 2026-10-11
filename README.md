@@ -81,43 +81,45 @@ which needs the Xcode command line tools (`xcode-select --install`):
 
 ## Supported files
 
-78 extensions are claimed, so pressing space on any of these files opens
+82 extensions are claimed, so pressing space on any of these files opens
 this preview. A file that turns out not to be a mesh, such as a `.dat` holding a table
 of numbers, is shown as plain text instead, the way Quick Look would have shown it.
 
 | Format | Extensions | Format | Extensions |
 | --- | --- | --- | --- |
-| 3D Studio Model | `.3ds` | Object File Format Mesh | `.off` |
-| 3MF Model | `.3mf` | OpenFOAM Case | `.foam` |
-| AVS UCD Data | `.inp` | ParaView Data Collection | `.pvd` |
-| AVS UCD Mesh | `.avs` | PERMAS Data | `.dato`, `.post` |
-| Binary Marching Cubes Surface | `.tri` | PLOT3D Metadata | `.p3d` |
-| BYU Geometry | `.g` | Point Cloud | `.pts` |
-| CalculiX Result | `.frd` | ProStar Mesh | `.vrt` |
-| CGNS Data | `.cgns` | Protein Data Bank | `.pdb` |
-| Digital Elevation Model | `.dem` | PyVista Zstandard Data | `.pv`, `.zvtk` |
-| DXF Drawing | `.dxf` | SEG-Y Seismic Data | `.segy`, `.sgy` |
-| Eclipse GRDECL Grid | `.grdecl` | SLC Volume | `.slc` |
-| EnSight Case | `.case` | STEP Model | `.step`, `.stp` |
-| Exodus II Data | `.e`, `.ex2`, `.exii`, `.exo` | Tecplot ASCII Data | `.tec` |
-| Facet Surface | `.facet` | Tecplot Data | `.dat` |
-| FLAC3D Grid | `.f3grid` | TetGen Mesh | `.ele`, `.node` |
-| Fluent Case | `.cas` | VRML Model | `.vrml`, `.wrl` |
-| GAMBIT Neutral Mesh | `.neu` | VTK File Series | `.series` |
-| Gaussian Cube | `.cube` | VTK HDF | `.vtkhdf` |
-| GE Signa MR Image | `.mr` | VTK Image Data | `.vti` |
-| Gmsh Mesh | `.msh` | VTK Legacy Data | `.vtk` |
+| 3D Studio Model | `.3ds` | NRRD Volume | `.nhdr`, `.nrrd` |
+| 3MF Model | `.3mf` | Object File Format Mesh | `.off` |
+| AVS UCD Data | `.inp` | OpenFOAM Case | `.foam` |
+| AVS UCD Mesh | `.avs` | ParaView Data Collection | `.pvd` |
+| Binary Marching Cubes Surface | `.tri` | PERMAS Data | `.dato`, `.post` |
+| BYU Geometry | `.g` | PLOT3D Metadata | `.p3d` |
+| CalculiX Result | `.frd` | Point Cloud | `.pts` |
+| CGNS Data | `.cgns` | ProStar Mesh | `.vrt` |
+| Digital Elevation Model | `.dem` | Protein Data Bank | `.pdb` |
+| DXF Drawing | `.dxf` | PyVista Zstandard Data | `.pv`, `.zvtk` |
+| Eclipse GRDECL Grid | `.grdecl` | SEG-Y Seismic Data | `.segy`, `.sgy` |
+| EnSight Case | `.case` | SLC Volume | `.slc` |
+| Exodus II Data | `.e`, `.ex2`, `.exii`, `.exo` | STEP Model | `.step`, `.stp` |
+| Facet Surface | `.facet` | Tecplot ASCII Data | `.tec` |
+| FLAC3D Grid | `.f3grid` | Tecplot Data | `.dat` |
+| Fluent Case | `.cas` | TetGen Mesh | `.ele`, `.node` |
+| GAMBIT Neutral Mesh | `.neu` | VRML Model | `.vrml`, `.wrl` |
+| Gaussian Cube | `.cube` | VTK File Series | `.series` |
+| GE Signa MR Image | `.mr` | VTK HDF | `.vtkhdf` |
+| Gmsh Mesh | `.msh` | VTK Image Data | `.vti` |
+| HMF Mesh | `.hmf` | VTK Legacy Data | `.vtk` |
 | IGES Model | `.iges`, `.igs` | VTK MultiBlock | `.vtm`, `.vtmb` |
 | Kratos Model Part | `.mdpa` | VTK Parallel Image Data | `.pvti` |
-| Medit Mesh | `.mesh`, `.meshb` | VTK Parallel Legacy Data | `.pvtk` |
-| MetaImage Volume | `.mha`, `.mhd` | VTK Parallel Rectilinear Grid | `.pvtr` |
-| MFIX Result | `.res` | VTK Parallel Unstructured Grid | `.pvtu` |
-| MINC Volume | `.mnc` | VTK Partitioned Dataset | `.vtpd` |
-| Nastran Bulk Data | `.bdf`, `.fem`, `.nas` | VTK PolyData | `.vtp` |
-| Nek5000 Data | `.nek5000` | VTK Rectilinear Grid | `.vtr` |
-| Netgen Mesh | `.vol` | VTK Structured Grid | `.vts` |
-| NIfTI Volume | `.nii` | VTK Unstructured Grid | `.vtu` |
-| NRRD Volume | `.nhdr`, `.nrrd` | XDMF Data | `.xdmf` |
+| MED Mesh | `.med` | VTK Parallel Legacy Data | `.pvtk` |
+| Medit Mesh | `.mesh`, `.meshb` | VTK Parallel Rectilinear Grid | `.pvtr` |
+| MetaImage Volume | `.mha`, `.mhd` | VTK Parallel Unstructured Grid | `.pvtu` |
+| MFIX Result | `.res` | VTK Partitioned Dataset | `.vtpd` |
+| MINC Volume | `.mnc` | VTK PolyData | `.vtp` |
+| MOAB Mesh | `.h5m` | VTK Rectilinear Grid | `.vtr` |
+| Nastran Bulk Data | `.bdf`, `.fem`, `.nas` | VTK Structured Grid | `.vts` |
+| Nek5000 Data | `.nek5000` | VTK Unstructured Grid | `.vtu` |
+| Netgen Mesh | `.vol` | XDMF Data | `.xdmf` |
+| NIfTI Volume | `.nii` | XDMF Data | `.xmf` |
 
 4 more are claimed through a type macOS declares, since Launch Services sees only
 the last suffix of a compressed dataset:
@@ -136,7 +138,6 @@ PyVista can also read these, which are not claimed:
 - needs ifcopenshell: `.ifc`
 - needs the openscad program: `.scad`
 - a general HDF5 container: `.h5`, `.hdf`
-- needs h5py: `.h5m`, `.hmf`, `.med`, `.xmf`
 - meshio fails to read it: `.su2`, `.ugrid`
 - meshio hangs on it: `.wkt`
 - meshio writes it but does not read it: `.svg`

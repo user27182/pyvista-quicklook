@@ -20,6 +20,8 @@ PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista[io,io-override]==0.49.0}"
 CVISTA_SPEC="${PVQL_CVISTA_SPEC:-cvista[all]==9.7.0.4}"
 # STEP, DXF, and 3MF readers; cascadio, the STEP kernel, reads IGES too.
 CAD_SPEC="${PVQL_CAD_SPEC:-pyvista-cad[step-light,3mf]}"
+# meshio's MOAB, HMF, MED, and XDMF readers.
+H5PY_SPEC="${PVQL_H5PY_SPEC:-h5py}"
 PYTHON=""
 PREBUILT=""
 SKIP_HELPER=0
@@ -109,7 +111,7 @@ done
 "$UV" pip uninstall --quiet --python "$VENV/bin/python" vtk >/dev/null 2>&1 || true
 # uv before 0.13 splits a requirements-file path on spaces, and $SUPPORT has one.
 "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade \
-  --excludes <(echo vtk) "$PYVISTA_SPEC" "$CVISTA_SPEC" "$CAD_SPEC"
+  --excludes <(echo vtk) "$PYVISTA_SPEC" "$CVISTA_SPEC" "$CAD_SPEC" "$H5PY_SPEC"
 PYTHON="$VENV/bin/python"
 
 echo "==> recording configuration"

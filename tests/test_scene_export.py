@@ -313,6 +313,17 @@ def test_iges_models_are_drawn(tmp_path):
     assert pv.read(out).n_faces > 0
 
 
+@pytest.mark.parametrize('extension', ['.h5m', '.hmf', '.med', '.xmf'])
+def test_hdf5_meshes_are_drawn(tmp_path, extension):
+    """The meshio formats stored in HDF5 are read with h5py."""
+    sphere = pv.Sphere()
+    source = tmp_path / f'in{extension}'
+    meshio.write(source, meshio.Mesh(sphere.points, [('triangle', sphere.regular_faces)]))
+    out = tmp_path / 'out.ply'
+    export_mod.export(str(source), str(out), 2_000_000, 20_000)
+    assert pv.read(out).n_faces == sphere.n_faces
+
+
 def test_dxf_drawings_are_drawn_as_tubes(tmp_path):
     """A DXF drawing holds only lines, which are given a surface."""
     out = tmp_path / 'out.ply'
