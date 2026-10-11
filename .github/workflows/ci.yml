@@ -46,7 +46,14 @@ jobs:
       with:
         enable-cache: false
     - run: uv sync --group dev
-    - run: uv run pytest tests/
+    - run: uv run pytest tests/ --cov-report=xml
+    - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5   # v7.1.1
+      with:
+        files: ./coverage.xml
+        # A Codecov outage must not hold up a release.
+        fail_ci_if_error: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   app:
       # Builds the real thing: compiles both Swift targets, generates the
@@ -74,7 +81,13 @@ jobs:
         # Both architectures, so the download runs on any Mac.
         lipo -archs "$appex/Contents/MacOS/PyVistaQuickLookExtension" | grep -q x86_64
         lipo -archs "$appex/Contents/MacOS/PyVistaQuickLookExtension" | grep -q arm64
-    - run: uv run pytest tests/
+    - run: uv run pytest tests/ --cov-report=xml
+    - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5   # v7.1.1
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     - name: Package the app
       run: ditto -c -k --keepParent "build/PyVista Quick Look.app" build/PyVistaQuickLook.zip
     - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a   # v7.0.1

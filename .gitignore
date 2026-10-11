@@ -8,3 +8,4 @@ pyvista_quicklook/_version.py
 .coverage
 .coverage.*
 .idea/
+coverage.xml
