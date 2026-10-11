@@ -313,17 +313,11 @@ def test_iges_models_are_drawn(tmp_path):
     assert pv.read(out).n_faces > 0
 
 
-def test_iges_is_read_by_pyvista_after_a_step_read():
-    """pv.read keeps the cascadio IGES reader once pyvista-cad's readers have loaded."""
-    pv.read(cad_examples.bracket_step_path())
-    assert pv.read(cad_examples.downloads.iges_impeller_path()).n_blocks > 0
-
-
 def test_unreadable_iges_files_are_reported(tmp_path):
     """An IGES file cascadio transfers no shapes from fails with a reason."""
     source = tmp_path / 'broken.igs'
     source.write_text('nonsense')
-    with pytest.raises(ValueError, match='cascadio could not read'):
+    with pytest.raises(ValueError, match='no shapes could be read'):
         export_mod.export(str(source), str(tmp_path / 'out.ply'), 2_000_000, 20_000)
 
 

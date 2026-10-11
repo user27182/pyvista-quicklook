@@ -15,19 +15,19 @@ import tempfile
 
 import numpy as np
 import pyvista as pv
-import pyvista_cad  # noqa: F401
 
 # Readers tried in turn for extensions two formats share; None is PyVista's own choice.
 ATTEMPTS = {'.inp': (None, 'abaqus'), '.msh': (None, 'ansys')}
 
 
-def read_iges(source: str, **_: object) -> object:
+def read_iges(source: str) -> object:
     """Tessellate an IGES file with cascadio, the kernel pyvista-cad reads STEP with."""
     import cascadio
 
+    # pyvista-cad's STEP default, so IGES and STEP previews are meshed alike.
     glb = cascadio.load(Path(source).read_bytes(), file_type='iges', tol_linear=0.1)
     if not glb:
-        message = 'cascadio could not read the IGES file'
+        message = 'no shapes could be read from the IGES file'
         raise ValueError(message)
     with tempfile.TemporaryDirectory() as folder:
         model = Path(folder) / 'model.glb'
@@ -35,13 +35,10 @@ def read_iges(source: str, **_: object) -> object:
         return pv.read(model)
 
 
-# Imported first, pyvista-cad's own IGES reader, which needs stock VTK, is replaced.
-for extension in ('.iges', '.igs'):
-    pv.register_reader(extension, read_iges, override=True)
-
-
 def read(source: str) -> object:
     """Read a file, trying each reader its extension may need until one returns points."""
+    if Path(source).suffix.lower() in ('.iges', '.igs'):
+        return read_iges(source)
     failure: BaseException | None = None
     dataset = None
     for file_format in ATTEMPTS.get(Path(source).suffix.lower(), (None,)):
