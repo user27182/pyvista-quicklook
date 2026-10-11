@@ -3,7 +3,7 @@ revision = 3
 requires-python = "==3.14.*"
 
 [manifest]
-overrides = [{ name = "vtk", marker = "python_full_version < '0'" }]
+excludes = ["vtk"]
 
 [[package]]
 name = "attrs"

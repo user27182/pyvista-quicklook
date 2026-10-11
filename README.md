@@ -21,8 +21,8 @@ result with `pvql doctor`.
 
 1. Downloads the latest release: the installer scripts, about 1 MB, and the prebuilt
    app, about 200 KB.
-2. Installs [uv](https://docs.astral.sh/uv/) if it is missing, and a Python 3.12 if uv
-   finds none on the machine.
+2. Installs [uv](https://docs.astral.sh/uv/) if it is missing or updates it if it is too
+   old, then a Python 3.14 if uv finds none on the machine.
 3. Installs the `pvql` helper as a uv tool.
 4. Creates a private Python environment and installs
    [PyVista](https://github.com/pyvista/pyvista) 0.49 with its io extras, among them
@@ -52,7 +52,7 @@ No system Python and no existing environment is used or changed.
 | `~/Library/Logs/pvqld.log` | The service's output | grows slowly |
 | `~/Library/Containers/org.pyvista.PyVistaQuickLook.QuickLook/Data/tmp` | The extension's log and staged copies, in a sandbox folder that macOS creates and keeps | small |
 | `~/Library/Caches/PyVistaQuickLook` | One built preview per file previewed | grows with use |
-| `~/.local/bin/uv`, `~/Library/Application Support/uv` | uv, and Python 3.12 if uv had to fetch one | 45 MB, plus Python |
+| `~/.local/bin/uv`, `~/Library/Application Support/uv` | uv, and Python 3.14 if uv had to fetch one | 45 MB, plus Python |
 | `~/.cache/uv` | uv's download cache; the environment's files are clones of it, not copies | shared |
 
 About 385 MB in total, or 430 MB when uv is installed too. The environment is the bulk
@@ -294,8 +294,9 @@ uv run pre-commit run --all-files
 ```
 
 Everything runs on one Python, 3.14: the tests, the `pvql` helper in its uv tool
-environment, and the PyVista environment beside it. `[tool.uv]` in `pyproject.toml` overrides PyVista's stock VTK requirement so
-the test environment holds the same packages the installer provisions.
+environment, and the PyVista environment beside it. `[tool.uv]` in `pyproject.toml`
+excludes stock VTK from the resolve, so the test environment holds the same packages the
+installer provisions.
 
 PyVista and cvista are pinned to one release each, in `pyproject.toml` and
 `scripts/install-from-source.sh` alike. Bumping either reruns a test that compares every extension

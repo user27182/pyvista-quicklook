@@ -13,6 +13,8 @@ VENV="$SUPPORT/venv"
 DEST="$HOME/Applications"
 # The one version this is built for.
 PYTHON_VERSION="${PVQL_PYTHON:-3.14}"
+# --excludes, which drops PyVista's stock VTK requirement, landed in uv 0.10.
+UV_MIN="0.10"
 # The versions in pyproject.toml, so the tests run what the installer provisions.
 PYVISTA_SPEC="${PVQL_PYVISTA_SPEC:-pyvista[io,io-override]==0.49.0}"
 CVISTA_SPEC="${PVQL_CVISTA_SPEC:-cvista[all]==9.7.0.4}"
@@ -54,12 +56,28 @@ find_uv() {
   done
 }
 
+# Whether uv version $1 is older than $2.
+uv_older_than() {
+  [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -1)" != "$2" ]]
+}
+
 UV=$(find_uv)
 if [[ -z "$UV" ]]; then
   echo "==> installing uv"
   curl -LsSf https://astral.sh/uv/install.sh | sh
   UV=$(find_uv)
   [[ -n "$UV" ]] || { echo "uv could not be installed" >&2; exit 1; }
+fi
+
+UV_VERSION=$("$UV" --version | awk '{print $2}')
+if uv_older_than "$UV_VERSION" "$UV_MIN"; then
+  echo "==> updating uv ${UV_VERSION:-unknown}, which is older than $UV_MIN"
+  "$UV" self update || true
+  UV_VERSION=$("$UV" --version | awk '{print $2}')
+fi
+if uv_older_than "$UV_VERSION" "$UV_MIN"; then
+  echo "uv ${UV_VERSION:-unknown} at $UV is older than $UV_MIN; update it and rerun the installer." >&2
+  exit 1
 fi
 
 if [[ "$SKIP_HELPER" -eq 0 ]]; then
@@ -87,14 +105,11 @@ for stale in "$VENV"/lib/python*; do
     rm -rf "$stale"
   fi
 done
-# PyVista requires stock VTK, which cvista replaces; the override drops that requirement.
-# uv splits the override path on spaces, so the file cannot live in Application Support.
-OVERRIDES=$(mktemp -t pvql-overrides)
-printf "vtk; python_version < '0'\n" > "$OVERRIDES"
+# PyVista requires stock VTK, which cvista replaces; the exclusion drops that requirement.
 "$UV" pip uninstall --quiet --python "$VENV/bin/python" vtk >/dev/null 2>&1 || true
+# uv before 0.13 splits a requirements-file path on spaces, and $SUPPORT has one.
 "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade \
-  --override "$OVERRIDES" "$PYVISTA_SPEC" "$CVISTA_SPEC" "$CAD_SPEC"
-rm -f "$OVERRIDES"
+  --excludes <(echo vtk) "$PYVISTA_SPEC" "$CVISTA_SPEC" "$CAD_SPEC"
 PYTHON="$VENV/bin/python"
 
 echo "==> recording configuration"
