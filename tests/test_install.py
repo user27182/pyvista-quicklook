@@ -237,10 +237,23 @@ def stale_finder(folder):
     return result.stdout.split()[0]
 
 
-def test_the_finder_restart_is_retired_by_python_3_17():
-    """The Finder restart for upgrades from before 0.7.0 goes once the app moves to Python 3.17."""
+def test_upgrades_from_before_0_7_are_retired_by_python_3_17():
+    """The code that upgrades installs from before 0.7.0 goes once the app moves to Python 3.17."""
     assert tuple(int(part) for part in PYTHON_VERSION.split('.')) < (3, 17), (
-        'Upgrades from before 0.7.0 are long past: remove LEGACY_BUNDLE_ID, LEGACY_SERVICE_PLIST, '
-        'restart_finder, and STALE_FINDER from scripts/install-from-source.sh, the tests that run '
-        'them, and this test.'
+        'Upgrades from before 0.7.0 are long past; remove the code that handles them:\n'
+        '- scripts/install-from-source.sh: LEGACY_BUNDLE_NAME, LEGACY_BUNDLE_ID,\n'
+        '  LEGACY_SERVICE_PLIST, LEGACY_APP and its removal, restart_finder, STALE_FINDER\n'
+        '- pyvista_quicklook/cli.py: retire_legacy_service and its calls, the old bundle\n'
+        '  name in installed_apps, the legacy paths in uninstall_targets\n'
+        '- pyvista_quicklook/daemon.py: LEGACY_LABEL, legacy_agent_path, legacy_drop_dir\n'
+        '- pyvista_quicklook/plist.py: LEGACY_APP_BUNDLE, LEGACY_APP_BUNDLE_ID,\n'
+        '  LEGACY_EXT_BUNDLE_ID\n'
+        '- tests/test_install.py: the Finder restart and old-install tests, script_lines,\n'
+        '  run_strict, ask_to_restart_finder, stale_finder, and this test\n'
+        '- tests/test_pyvista_quicklook.py: test_uninstall_removes_a_bundle_under_the_old_name,\n'
+        '  test_uninstall_removes_the_service_under_the_old_label, and the old service in\n'
+        '  test_service_install_runs_the_daemon_under_the_package_name\n'
+        '- tests/test_daemon.py: the legacy assertions in\n'
+        '  test_exchange_locations_are_in_the_extension_containers\n'
+        '- tests/conftest.py: the legacy_agent_path and legacy_drop_dir stand-ins'
     )
