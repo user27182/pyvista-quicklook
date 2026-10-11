@@ -92,7 +92,7 @@ FORMATS: dict[str, str] = {
     '.h5m': 'MOAB Mesh',
     '.hmf': 'HMF Mesh',
     '.med': 'MED Mesh',
-    '.xmf': 'XDMF Data',
+    '.xmf': 'XDMF Mesh',
     # Medical volumes
     '.nii': 'NIfTI Volume',
     '.mha': 'MetaImage Volume',
@@ -144,9 +144,9 @@ UNCLAIMED: dict[str, str] = {
     '.raw': 'camera raw images own the extension',
     '.xml': 'XML owns the extension',
     # Readers pyvista-cad registers whose kernels the installer leaves out.
-    '.brep': 'needs an OpenCascade kernel',
-    '.brp': 'needs an OpenCascade kernel',
-    '.fcstd': 'needs an OpenCascade kernel',
+    '.brep': 'needs a full OpenCascade kernel',
+    '.brp': 'needs a full OpenCascade kernel',
+    '.fcstd': 'needs a full OpenCascade kernel',
     '.ifc': 'needs ifcopenshell',
     '.scad': 'needs the openscad program',
     # General containers, often huge, in which mesh files are the exception.

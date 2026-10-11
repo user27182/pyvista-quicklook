@@ -55,7 +55,7 @@ No system Python and no existing environment is used or changed.
 | `~/.local/bin/uv`, `~/Library/Application Support/uv` | uv, and Python 3.14 if uv had to fetch one | 45 MB, plus Python |
 | `~/.cache/uv` | uv's download cache; the environment's files are clones of it, not copies | shared |
 
-About 385 MB in total, or 430 MB when uv is installed too. The environment is the bulk
+About 395 MB in total, or 440 MB when uv is installed too. The environment is the bulk
 of it:
 
 - [cvista](https://github.com/pyvista/cvista)`[all]`, a VTK fork used in place of
@@ -66,7 +66,7 @@ of it:
 - numpy, 25 MB
 - ezdxf, pyvista-cad's DXF reader, 20 MB
 - PyVista 0.49, [meshio](https://github.com/nschloe/meshio), and the remaining
-  dependencies, about 100 MB
+  dependencies, about 110 MB
 
 `pvql cache --clear` empties the preview cache. `pvql uninstall` removes everything
 above except the configuration file and uv.
@@ -119,7 +119,7 @@ of numbers, is shown as plain text instead, the way Quick Look would have shown 
 | Nastran Bulk Data | `.bdf`, `.fem`, `.nas` | VTK Structured Grid | `.vts` |
 | Nek5000 Data | `.nek5000` | VTK Unstructured Grid | `.vtu` |
 | Netgen Mesh | `.vol` | XDMF Data | `.xdmf` |
-| NIfTI Volume | `.nii` | XDMF Data | `.xmf` |
+| NIfTI Volume | `.nii` | XDMF Mesh | `.xmf` |
 
 4 more are claimed through a type macOS declares, since Launch Services sees only
 the last suffix of a compressed dataset:
@@ -134,7 +134,7 @@ PyVista can also read these, which are not claimed:
 - disk images own the extension: `.img`
 - camera raw images own the extension: `.raw`
 - XML owns the extension: `.xml`
-- needs an OpenCascade kernel: `.brep`, `.brp`, `.fcstd`
+- needs a full OpenCascade kernel: `.brep`, `.brp`, `.fcstd`
 - needs ifcopenshell: `.ifc`
 - needs the openscad program: `.scad`
 - a general HDF5 container: `.h5`, `.hdf`
@@ -230,10 +230,10 @@ macOS keeps those folders private to each program, and the render service cannot
 them. The Quick Look extension copies the file it was asked to preview into its own
 container so that the service can convert it anyway.
 
-A dataset that points at neighbouring files — `.pvd`, `.vtm`, `.case`, `.foam` — needs
-those neighbours, which the copy does not include. Keep such datasets outside those
-three folders, or grant the render service Full Disk Access in System Settings under
-Privacy & Security.
+A dataset that points at neighbouring files — `.pvd`, `.vtm`, `.case`, `.foam`, `.xdmf`,
+`.xmf` — needs those neighbours, which the copy does not include. Keep such datasets
+outside those three folders, or grant the render service Full Disk Access in System
+Settings under Privacy & Security.
 
 ## Configuration
 
