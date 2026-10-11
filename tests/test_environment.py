@@ -30,6 +30,7 @@ def test_log_never_raises(tmp_path, monkeypatch):
     blocker = tmp_path / 'file'
     blocker.write_text('x')
     monkeypatch.setattr(config, 'APP_SUPPORT', blocker / 'support')
+    monkeypatch.setattr(config, 'LOG_PATH', blocker / 'support' / 'pvql.log')
     environment.log({'log': True}, 'lost')
 
 

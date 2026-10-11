@@ -17,36 +17,6 @@ from pyvista_quicklook import plist
 from pyvista_quicklook.environment import RenderError
 
 
-@pytest.fixture
-def commands(monkeypatch):
-    """Record every system command the CLI runs, and answer each with success."""
-    ran = []
-    monkeypatch.setattr(
-        cli.subprocess,
-        'run',
-        lambda command, **k: (
-            ran.append(command) or subprocess.CompletedProcess(command, 0, '', '')
-        ),
-    )
-    return ran
-
-
-@pytest.fixture
-def home(tmp_path, monkeypatch):
-    """Point every location the CLI touches at tmp_path."""
-    monkeypatch.setattr(config, 'APP_SUPPORT', tmp_path / 'support')
-    monkeypatch.setattr(config, 'CONFIG_PATH', tmp_path / 'support' / 'config.json')
-    monkeypatch.setattr(config, 'LOG_PATH', tmp_path / 'support' / 'pvql.log')
-    monkeypatch.setattr(config, 'CACHE_DIR', tmp_path / 'cache')
-    monkeypatch.setattr(cli, 'APP_DIRS', (tmp_path / 'Applications',))
-    monkeypatch.setattr(cli, 'SERVICE_LOG', tmp_path / 'pvqld.log')
-    monkeypatch.setattr(cli.daemon_mod, 'agent_path', lambda: tmp_path / 'agent.plist')
-    monkeypatch.setattr(cli.daemon_mod, 'legacy_agent_path', lambda: tmp_path / 'old.plist')
-    monkeypatch.setattr(cli.daemon_mod, 'drop_dir', lambda: tmp_path / 'container')
-    monkeypatch.setattr(cli.daemon_mod, 'legacy_drop_dir', lambda: tmp_path / 'old-container')
-    return tmp_path
-
-
 def test_main_dispatches_to_the_subcommand(capsys, home):
     """``main`` parses its arguments and returns the subcommand's exit status."""
     assert cli.main(['cache']) == 0
@@ -56,7 +26,7 @@ def test_main_dispatches_to_the_subcommand(capsys, home):
 def test_module_runs_the_cli(capsys, monkeypatch, home):
     """``python -m pyvista_quicklook`` exits with the CLI's status."""
     monkeypatch.setattr(sys, 'argv', ['pvql', 'cache'])
-    sys.modules.pop('pyvista_quicklook.__main__', None)
+    monkeypatch.delitem(sys.modules, 'pyvista_quicklook.__main__', raising=False)
     with pytest.raises(SystemExit) as exit_info:
         runpy.run_module('pyvista_quicklook', run_name='__main__')
     assert exit_info.value.code == 0
@@ -89,12 +59,12 @@ def test_preview_bypasses_the_cache_and_copies_the_output(capsys, monkeypatch, t
 def test_service_uninstall_removes_both_agents(capsys, commands, home):
     """Uninstalling stops the service and deletes its agent, old label included."""
     (home / 'agent.plist').write_text('x')
-    (home / 'old.plist').write_text('x')
+    (home / 'old-agent.plist').write_text('x')
     (home / 'old-container').mkdir()
     args = argparse.Namespace(install=False, uninstall=True, helper=None)
     assert cli.cmd_service(args) == 0
     assert not (home / 'agent.plist').exists()
-    assert not (home / 'old.plist').exists()
+    assert not (home / 'old-agent.plist').exists()
     assert not (home / 'old-container').exists()
     assert sum('bootout' in command for command in commands) == 2
     assert 'removed' in capsys.readouterr().out
@@ -182,9 +152,12 @@ def test_types_all_lists_unclaimed_formats(capsys, monkeypatch):
     removed = {**config.DEFAULTS, 'extensions': {'add': [], 'remove': ['.vtu']}}
     monkeypatch.setattr(cli.config_mod, 'load', lambda: removed)
     assert cli.cmd_types(argparse.Namespace(all=True)) == 0
-    out = capsys.readouterr().out
-    assert 'removed in the config' in out
-    assert 'extensions claimed' not in out
+    rows = capsys.readouterr().out.splitlines()
+    vtu = next(row for row in rows if row[2:].startswith('.vtu '))
+    assert vtu.startswith(' ')
+    assert vtu.endswith('not claimed: removed in the config')
+    assert any(row.startswith('✓ .vtp') for row in rows)
+    assert not any('extensions claimed' in row for row in rows)
 
 
 def test_plist_writes_nothing_without_targets(capsys, monkeypatch):
@@ -219,11 +192,12 @@ def test_run_and_succeeds_survive_a_missing_program(tmp_path):
 def doctor(home, monkeypatch):
     """Return a hook that sets what each doctor check finds."""
 
-    def setup(*, healthy, preview=None):
+    def setup(*, healthy, preview=None, pyvista_runs=None):
         interpreter = sys.executable if healthy else None
+        runs = healthy if pyvista_runs is None else pyvista_runs
         monkeypatch.setattr(cli.config_mod, 'find_python', lambda cfg: interpreter)
         monkeypatch.setattr(cli.config_mod, 'resolve_pyvista', lambda cfg: interpreter)
-        monkeypatch.setattr(cli, '_succeeds', lambda command: healthy)
+        monkeypatch.setattr(cli, '_succeeds', lambda command: runs)
         monkeypatch.setattr(cli, '_run', lambda command: 'loaded' if healthy else '')
         if healthy:
             (home / 'Applications' / plist.APP_BUNDLE).mkdir(parents=True)
@@ -244,9 +218,19 @@ def test_doctor_passes_a_healthy_installation(capsys, doctor, tmp_path):
     doctor(healthy=True, preview=preview)
     assert cli.cmd_doctor(argparse.Namespace()) == 0
     out = capsys.readouterr().out
+    assert f'pyvista    {sys.executable}' in out
     assert 'interactive scene, 2 KB' in out
     assert 'all checks passed' in out
     assert not rendered.exists()
+
+
+def test_doctor_notes_a_pyvista_command_that_does_not_run(capsys, doctor, tmp_path):
+    """A pyvista command that fails to run only rules out still images."""
+    rendered = tmp_path / 'smoke.ply'
+    rendered.write_bytes(b'x')
+    doctor(healthy=True, preview=lambda sample, timeout: rendered, pyvista_runs=False)
+    assert cli.cmd_doctor(argparse.Namespace()) == 0
+    assert 'still images unavailable' in capsys.readouterr().out
 
 
 def test_doctor_reports_a_failed_render(capsys, doctor):

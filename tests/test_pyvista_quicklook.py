@@ -262,40 +262,22 @@ def test_handle_refuses_a_large_file_before_touching_it(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def installation(tmp_path, monkeypatch):
+def installation(home, commands, monkeypatch):
     """Lay out a fake installation under tmp_path and record the commands run."""
-    support = tmp_path / 'support'
+    support = home / 'support'
     for folder in ('venv', 'src', 'unpacked'):
         (support / folder).mkdir(parents=True)
         (support / folder / 'file').write_text('x')
     (support / 'config.json').write_text('{}')
-    app = tmp_path / 'Applications' / plist.APP_BUNDLE
+    app = home / 'Applications' / plist.APP_BUNDLE
     (app / 'Contents' / 'PlugIns').mkdir(parents=True)
-    (tmp_path / 'cache').mkdir()
-    (tmp_path / 'agent.plist').write_text('x')
-    (tmp_path / 'container').mkdir()
-    (tmp_path / 'pvqld.log').write_text('x')
-    (tmp_path / 'uv').write_text('#!/bin/sh\n')
-    monkeypatch.setattr(config, 'APP_SUPPORT', support)
-    monkeypatch.setattr(config, 'CONFIG_PATH', support / 'config.json')
-    monkeypatch.setattr(config, 'LOG_PATH', support / 'pvql.log')
-    monkeypatch.setattr(config, 'CACHE_DIR', tmp_path / 'cache')
-    monkeypatch.setattr(cli, 'APP_DIRS', (tmp_path / 'Applications',))
-    monkeypatch.setattr(cli, 'SERVICE_LOG', tmp_path / 'pvqld.log')
-    monkeypatch.setattr(cli.daemon_mod, 'agent_path', lambda: tmp_path / 'agent.plist')
-    monkeypatch.setattr(cli.daemon_mod, 'drop_dir', lambda: tmp_path / 'container')
-    monkeypatch.setattr(cli.daemon_mod, 'legacy_agent_path', lambda: tmp_path / 'old-agent.plist')
-    monkeypatch.setattr(cli.daemon_mod, 'legacy_drop_dir', lambda: tmp_path / 'old-container')
-    monkeypatch.setattr(cli.shutil, 'which', lambda name: str(tmp_path / 'uv'))
-    commands = []
-    monkeypatch.setattr(
-        cli.subprocess,
-        'run',
-        lambda command, **k: (
-            commands.append(command) or subprocess.CompletedProcess(command, 0, '', '')
-        ),
-    )
-    return tmp_path, commands
+    (home / 'cache').mkdir()
+    (home / 'agent.plist').write_text('x')
+    (home / 'container').mkdir()
+    (home / 'pvqld.log').write_text('x')
+    (home / 'uv').write_text('#!/bin/sh\n')
+    monkeypatch.setattr(cli.shutil, 'which', lambda name: str(home / 'uv'))
+    return home, commands
 
 
 def test_uninstall_removes_everything_but_the_config(installation, capsys):

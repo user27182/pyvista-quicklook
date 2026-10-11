@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import faulthandler
 import json
 import os
 from pathlib import Path
@@ -23,22 +24,29 @@ def test_exchange_locations_are_in_the_extension_containers():
 
 
 def test_folder_is_reachable_remembers_its_answer(tmp_path, monkeypatch):
-    """A folder is probed once, and the answer is reused for its other files."""
+    """A folder is probed once, and the answer is reused for its other files for a while."""
     probes = []
     monkeypatch.setattr(daemon, '_reachable_folders', {})
     monkeypatch.setattr(daemon, 'readable', lambda path: probes.append(path) or True)
     assert daemon.folder_is_reachable(str(tmp_path / 'a.vtu'))
     assert daemon.folder_is_reachable(str(tmp_path / 'b.vtu'))
     assert probes == [str(tmp_path / 'a.vtu')]
+    later = time.monotonic() + daemon.FOLDER_MEMO_SECONDS + 1
+    monkeypatch.setattr(daemon.time, 'monotonic', lambda: later)
+    assert daemon.folder_is_reachable(str(tmp_path / 'c.vtu'))
+    assert probes == [str(tmp_path / 'a.vtu'), str(tmp_path / 'c.vtu')]
 
 
 def test_readable_gives_up_on_a_file_that_blocks(tmp_path):
     """Opening a file that never answers is abandoned when the timer fires."""
     fifo = tmp_path / 'blocks'
     os.mkfifo(fifo)
-    started = time.monotonic()
-    assert daemon.readable(str(fifo), seconds=0.1) is False
-    assert time.monotonic() - started < 5
+    # Ends the run with a traceback rather than hanging if the timer never fires.
+    faulthandler.dump_traceback_later(10, exit=True)
+    try:
+        assert daemon.readable(str(fifo), seconds=0.1) is False
+    finally:
+        faulthandler.cancel_dump_traceback_later()
 
 
 def test_handle_reports_an_unexpected_exception(tmp_path, monkeypatch):
@@ -78,7 +86,7 @@ def test_sweep_removes_only_stale_replies(tmp_path):
     """Uncollected replies older than the cutoff go; fresh ones and requests stay."""
     old = time.time() - daemon.STALE_SECONDS - 10
     stale = [tmp_path / name for name in ('a.pvqlrep', 'a.png', 'a.ply')]
-    fresh = [tmp_path / name for name in ('b.pvqlrep', 'c.pvqlreq')]
+    fresh = [tmp_path / name for name in ('b.pvqlrep', 'b.png', 'b.ply', 'c.pvqlreq')]
     for path in stale + fresh:
         path.write_text('x')
     for path in stale:
@@ -104,20 +112,26 @@ class StopLoopError(Exception):
 
 
 def test_serve_answers_requests_and_sweeps(tmp_path, monkeypatch):
-    """The loop prepares its folder, warms up, answers each request, and sweeps."""
+    """The loop prepares its folder, warms up, answers each request, and sweeps each minute."""
     drop = tmp_path / 'container'
     handled, swept, warmed = [], [], []
     monkeypatch.setattr(daemon, 'drop_dir', lambda: drop)
     monkeypatch.setattr(daemon.cache, 'discard_other_scenes', lambda version: 0)
     monkeypatch.setattr(daemon.config_mod, 'load', lambda: {'warm_on_start': True})
     monkeypatch.setattr(daemon, 'warm_in_background', warmed.append)
-    monkeypatch.setattr(daemon, 'handle', lambda request: handled.append(request.name))
+    monkeypatch.setattr(
+        daemon, 'handle', lambda request: handled.append(request.name) or request.unlink()
+    )
     monkeypatch.setattr(daemon, 'sweep', swept.append)
-    clock = iter([0.0, 100.0, 100.0])
+    # Started at 0, then polls at 30 (not due), 100 (due), and 130 (not due again).
+    clock = iter([0.0, 30.0, 100.0, 100.0, 130.0])
     monkeypatch.setattr(daemon.time, 'monotonic', lambda: next(clock))
+    polls = []
 
     def sleep(seconds):
-        raise StopLoopError
+        polls.append(seconds)
+        if len(polls) == 3:
+            raise StopLoopError
 
     monkeypatch.setattr(daemon.time, 'sleep', sleep)
     drop.mkdir()
@@ -169,6 +183,7 @@ def test_request_preview_returns_the_delivered_scene(tmp_path, drop):
     thread.join()
     assert seen[0]['path'] == str(source.resolve())
     assert seen[0]['size'] == 1
+    assert seen[0]['mtime'] == int(source.stat().st_mtime)
     assert not list(drop.iterdir())
 
 
