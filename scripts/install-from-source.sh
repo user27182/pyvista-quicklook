@@ -35,7 +35,7 @@ done
 if [[ -z "$PREBUILT" ]] && ! xcrun --find swiftc >/dev/null 2>&1; then
   echo "Xcode command line tools are needed to build the extension." >&2
   echo "Install them with:  xcode-select --install" >&2
-  echo "Or install a prebuilt app with scripts/bootstrap.sh" >&2
+  echo "Or install a prebuilt app with ./install.sh" >&2
   exit 1
 fi
 

@@ -11,7 +11,7 @@ coloured by the active scalars and free to rotate and zoom.
 macOS 12 or newer. Nothing else needs to be installed first.
 
 ```bash
-curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/scripts/bootstrap.sh | sh
+curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/install.sh | sh
 ```
 
 Then select a `.vtu`, `.vtp`, or `.vtk` file in the Finder and press space. Check the
@@ -70,12 +70,12 @@ of it:
 `pvql cache --clear` empties the preview cache. `pvql uninstall` removes everything
 above except the configuration file and uv.
 
-From a checkout, `./scripts/install.sh` does the same and builds the app from source,
+From a checkout, `./scripts/install-from-source.sh` does the same and builds the app from source,
 which needs the Xcode command line tools (`xcode-select --install`):
 
 ```bash
-./scripts/install.sh --prefix /Applications                # install for all users
-./scripts/install.sh --app /path/to/PyVistaQuickLook.app   # skip the build
+./scripts/install-from-source.sh --prefix /Applications                # install for all users
+./scripts/install-from-source.sh --app /path/to/PyVistaQuickLook.app   # skip the build
 ```
 
 ## Supported files
@@ -298,7 +298,7 @@ environment, and the PyVista environment beside it. `[tool.uv]` in `pyproject.to
 the test environment holds the same packages the installer provisions.
 
 PyVista and cvista are pinned to one release each, in `pyproject.toml` and
-`scripts/install.sh` alike. Bumping either reruns a test that compares every extension
+`scripts/install-from-source.sh` alike. Bumping either reruns a test that compares every extension
 the environment can read with the format table, so a reader that PyVista adds, drops, or
 moves to a package of its own shows up as a failure to resolve in `formats.py`. The README's format tables are generated from
 PyVista's reader tables and checked by another test:
