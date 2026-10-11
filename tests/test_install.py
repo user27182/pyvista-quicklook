@@ -6,6 +6,7 @@ from pathlib import Path
 import plistlib
 import re
 import subprocess
+import sys
 import tomllib
 
 import pytest
@@ -155,6 +156,7 @@ def test_finder_is_left_running_otherwise(tmp_path, answer):
     assert 'Restart it later with "killall Finder"' in output
 
 
+@pytest.mark.skipif(sys.platform != 'darwin', reason='PlistBuddy is macOS only')
 @pytest.mark.parametrize(
     ('identifier', 'stale'),
     [(plist_mod.LEGACY_APP_BUNDLE_ID, '1'), (plist_mod.APP_BUNDLE_ID, '0'), (None, '0')],
