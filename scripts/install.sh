@@ -56,6 +56,11 @@ find_uv() {
   done
 }
 
+# Whether uv version $1 is older than $2.
+uv_older_than() {
+  [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -1)" != "$2" ]]
+}
+
 UV=$(find_uv)
 if [[ -z "$UV" ]]; then
   echo "==> installing uv"
@@ -65,8 +70,13 @@ if [[ -z "$UV" ]]; then
 fi
 
 UV_VERSION=$("$UV" --version | awk '{print $2}')
-if [[ "$(printf '%s\n%s\n' "$UV_MIN" "$UV_VERSION" | sort -V | head -1)" != "$UV_MIN" ]]; then
-  echo "uv $UV_VERSION is too old; $UV_MIN or newer is required. Upgrade it and rerun." >&2
+if uv_older_than "$UV_VERSION" "$UV_MIN"; then
+  echo "==> updating uv ${UV_VERSION:-unknown}, which is older than $UV_MIN"
+  "$UV" self update || true
+  UV_VERSION=$("$UV" --version | awk '{print $2}')
+fi
+if uv_older_than "$UV_VERSION" "$UV_MIN"; then
+  echo "uv ${UV_VERSION:-unknown} at $UV is older than $UV_MIN; update it and rerun the installer." >&2
   exit 1
 fi
 

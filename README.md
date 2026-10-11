@@ -21,8 +21,8 @@ result with `pvql doctor`.
 
 1. Downloads the latest release: the installer scripts, about 1 MB, and the prebuilt
    app, about 200 KB.
-2. Installs [uv](https://docs.astral.sh/uv/) if it is missing, and a Python 3.14 if uv
-   finds none on the machine.
+2. Installs [uv](https://docs.astral.sh/uv/) if it is missing or updates it if it is too
+   old, then a Python 3.14 if uv finds none on the machine.
 3. Installs the `pvql` helper as a uv tool.
 4. Creates a private Python environment and installs
    [PyVista](https://github.com/pyvista/pyvista) 0.49 with its io extras, among them
