@@ -1,0 +1,294 @@
+"""Tests for the ``pvql`` subcommands, with every system command replaced."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import plistlib
+import runpy
+import subprocess
+import sys
+
+import pytest
+
+from pyvista_quicklook import cli
+from pyvista_quicklook import config
+from pyvista_quicklook import plist
+from pyvista_quicklook.environment import RenderError
+
+
+@pytest.fixture
+def commands(monkeypatch):
+    """Record every system command the CLI runs, and answer each with success."""
+    ran = []
+    monkeypatch.setattr(
+        cli.subprocess,
+        'run',
+        lambda command, **k: (
+            ran.append(command) or subprocess.CompletedProcess(command, 0, '', '')
+        ),
+    )
+    return ran
+
+
+@pytest.fixture
+def home(tmp_path, monkeypatch):
+    """Point every location the CLI touches at tmp_path."""
+    monkeypatch.setattr(config, 'APP_SUPPORT', tmp_path / 'support')
+    monkeypatch.setattr(config, 'CONFIG_PATH', tmp_path / 'support' / 'config.json')
+    monkeypatch.setattr(config, 'LOG_PATH', tmp_path / 'support' / 'pvql.log')
+    monkeypatch.setattr(config, 'CACHE_DIR', tmp_path / 'cache')
+    monkeypatch.setattr(cli, 'APP_DIRS', (tmp_path / 'Applications',))
+    monkeypatch.setattr(cli, 'SERVICE_LOG', tmp_path / 'pvqld.log')
+    monkeypatch.setattr(cli.daemon_mod, 'agent_path', lambda: tmp_path / 'agent.plist')
+    monkeypatch.setattr(cli.daemon_mod, 'legacy_agent_path', lambda: tmp_path / 'old.plist')
+    monkeypatch.setattr(cli.daemon_mod, 'drop_dir', lambda: tmp_path / 'container')
+    monkeypatch.setattr(cli.daemon_mod, 'legacy_drop_dir', lambda: tmp_path / 'old-container')
+    return tmp_path
+
+
+def test_main_dispatches_to_the_subcommand(capsys, home):
+    """``main`` parses its arguments and returns the subcommand's exit status."""
+    assert cli.main(['cache']) == 0
+    assert '0 previews' in capsys.readouterr().out
+
+
+def test_module_runs_the_cli(capsys, monkeypatch, home):
+    """``python -m pyvista_quicklook`` exits with the CLI's status."""
+    monkeypatch.setattr(sys, 'argv', ['pvql', 'cache'])
+    sys.modules.pop('pyvista_quicklook.__main__', None)
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_module('pyvista_quicklook', run_name='__main__')
+    assert exit_info.value.code == 0
+    assert 'previews' in capsys.readouterr().out
+
+
+def test_daemon_runs_the_service(monkeypatch):
+    """The daemon subcommand hands over to the service loop."""
+    monkeypatch.setattr(cli.daemon_mod, 'serve', lambda: 7)
+    assert cli.cmd_daemon(argparse.Namespace()) == 7
+
+
+def test_preview_bypasses_the_cache_and_copies_the_output(capsys, monkeypatch, tmp_path):
+    """``--no-cache`` reaches the producer and ``--output`` receives a copy."""
+    built = tmp_path / 'scene.ply'
+    built.write_text('ply')
+    seen = []
+    monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(config.DEFAULTS))
+    monkeypatch.setattr(
+        cli.daemon_mod, 'produce', lambda path, cfg: seen.append(cfg['cache']) or built
+    )
+    copy = tmp_path / 'copy.ply'
+    args = argparse.Namespace(path='mesh.vtu', no_cache=True, output=str(copy))
+    assert cli.cmd_preview(args) == 0
+    assert seen == [False]
+    assert copy.read_text() == 'ply'
+    assert capsys.readouterr().out.strip() == str(copy)
+
+
+def test_service_uninstall_removes_both_agents(capsys, commands, home):
+    """Uninstalling stops the service and deletes its agent, old label included."""
+    (home / 'agent.plist').write_text('x')
+    (home / 'old.plist').write_text('x')
+    (home / 'old-container').mkdir()
+    args = argparse.Namespace(install=False, uninstall=True, helper=None)
+    assert cli.cmd_service(args) == 0
+    assert not (home / 'agent.plist').exists()
+    assert not (home / 'old.plist').exists()
+    assert not (home / 'old-container').exists()
+    assert sum('bootout' in command for command in commands) == 2
+    assert 'removed' in capsys.readouterr().out
+
+
+def test_service_install_falls_back_to_the_given_helper(commands, home):
+    """Without a pyvista-quicklook beside it, the agent runs the helper it was given."""
+    helper = home / 'bin' / 'pvql'
+    args = argparse.Namespace(install=True, uninstall=False, helper=str(helper))
+    assert cli.cmd_service(args) == 0
+    agent = plistlib.loads((home / 'agent.plist').read_bytes())
+    assert agent['ProgramArguments'] == [str(helper), 'daemon']
+    assert any('kickstart' in command for command in commands)
+
+
+def test_service_install_retries_then_reports_launchd(capsys, monkeypatch, home):
+    """A bootstrap launchd keeps refusing is retried, then reported with its message."""
+    bootstraps = []
+
+    def run(command, **kwargs):
+        if 'bootstrap' in command:
+            bootstraps.append(command)
+            return subprocess.CompletedProcess(command, 5, '', 'Input/output error\n')
+        return subprocess.CompletedProcess(command, 0, '', '')
+
+    monkeypatch.setattr(cli.subprocess, 'run', run)
+    monkeypatch.setattr(cli.time, 'sleep', lambda seconds: None)
+    args = argparse.Namespace(install=True, uninstall=False, helper='/bin/pvql')
+    assert cli.cmd_service(args) == 1
+    assert len(bootstraps) == 5
+    assert 'could not load' in capsys.readouterr().err
+
+
+def test_service_reports_a_job_that_is_not_loaded(capsys, monkeypatch):
+    """With no flags, the status of the job is printed, or that it is not loaded."""
+    monkeypatch.setattr(cli, '_run', lambda command: '')
+    assert cli.cmd_service(argparse.Namespace(install=False, uninstall=False)) == 0
+    assert 'is not loaded' in capsys.readouterr().out
+
+
+def test_warmup_reports_the_time_taken(capsys, monkeypatch):
+    """A successful warm-up says how long it took."""
+    monkeypatch.setattr(cli.warmup_mod, 'warm', lambda: 1.25)
+    assert cli.cmd_warmup(argparse.Namespace()) == 0
+    assert '1.2 s' in capsys.readouterr().out
+
+
+def test_warmup_reports_a_failure(capsys, monkeypatch):
+    """A failed warm-up is reported on stderr with a failing status."""
+
+    def fail():
+        message = 'no interpreter'
+        raise RenderError(message)
+
+    monkeypatch.setattr(cli.warmup_mod, 'warm', fail)
+    assert cli.cmd_warmup(argparse.Namespace()) == 1
+    assert 'no interpreter' in capsys.readouterr().err
+
+
+def test_warm_counts_failures_and_named_files(capsys, monkeypatch, tmp_path):
+    """Named files are warmed as given, and each failure is reported in one line."""
+    good = tmp_path / 'good.vtu'
+    bad = tmp_path / 'bad.vtu'
+    for path in (good, bad):
+        path.write_text('x')
+
+    def produce(target, cfg):
+        if target == bad:
+            message = 'unreadable\nmore detail'
+            raise RenderError(message)
+        return target
+
+    monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(config.DEFAULTS))
+    monkeypatch.setattr(cli.daemon_mod, 'produce', produce)
+    args = argparse.Namespace(paths=[str(good), str(bad), str(tmp_path / 'missing.vtu')])
+    assert cli.cmd_warm(args) == 1
+    captured = capsys.readouterr()
+    assert '1 of 2 cached' in captured.out
+    assert 'unreadable' in captured.err
+    assert 'more detail' not in captured.err
+
+
+def test_types_all_lists_unclaimed_formats(capsys, monkeypatch):
+    """``--all`` lists formats that are not claimed, with the reason."""
+    removed = {**config.DEFAULTS, 'extensions': {'add': [], 'remove': ['.vtu']}}
+    monkeypatch.setattr(cli.config_mod, 'load', lambda: removed)
+    assert cli.cmd_types(argparse.Namespace(all=True)) == 0
+    out = capsys.readouterr().out
+    assert 'removed in the config' in out
+    assert 'extensions claimed' not in out
+
+
+def test_plist_writes_nothing_without_targets(capsys, monkeypatch):
+    """Without ``--app`` or ``--extension`` no file is written."""
+    monkeypatch.setattr(cli.config_mod, 'load', lambda: dict(config.DEFAULTS))
+    args = argparse.Namespace(app=None, extension=None, helper='/bin/pvql')
+    assert cli.cmd_plist(args) == 0
+    assert capsys.readouterr().out == ''
+
+
+def test_config_shows_the_stored_file(capsys, home):
+    """The configuration file is printed when it exists, and a hint when it does not."""
+    args = argparse.Namespace(init=False)
+    cli.cmd_config(args)
+    assert 'pvql config --init' in capsys.readouterr().out
+    config.CONFIG_PATH.parent.mkdir(parents=True)
+    config.CONFIG_PATH.write_text(json.dumps({'timeout': 5}))
+    cli.cmd_config(args)
+    assert '"timeout": 5' in capsys.readouterr().out
+
+
+def test_run_and_succeeds_survive_a_missing_program(tmp_path):
+    """A program that cannot be started gives no output and does not succeed."""
+    missing = str(tmp_path / 'no-such-program')
+    assert cli._run([missing]) == ''
+    assert cli._succeeds([missing]) is False
+    assert cli._run([sys.executable, '-c', 'print("hi")']) == 'hi'
+    assert cli._succeeds([sys.executable, '-c', 'raise SystemExit(3)']) is False
+
+
+@pytest.fixture
+def doctor(home, monkeypatch):
+    """Return a hook that sets what each doctor check finds."""
+
+    def setup(*, healthy, preview=None):
+        interpreter = sys.executable if healthy else None
+        monkeypatch.setattr(cli.config_mod, 'find_python', lambda cfg: interpreter)
+        monkeypatch.setattr(cli.config_mod, 'resolve_pyvista', lambda cfg: interpreter)
+        monkeypatch.setattr(cli, '_succeeds', lambda command: healthy)
+        monkeypatch.setattr(cli, '_run', lambda command: 'loaded' if healthy else '')
+        if healthy:
+            (home / 'Applications' / plist.APP_BUNDLE).mkdir(parents=True)
+        monkeypatch.setattr(cli.daemon_mod, 'request_preview', preview)
+
+    return setup
+
+
+def test_doctor_passes_a_healthy_installation(capsys, doctor, tmp_path):
+    """Every check passes, the smoke render included, and the result is cleaned up."""
+    rendered = tmp_path / 'smoke.ply'
+
+    def preview(sample, timeout):
+        assert 'POLYGONS' in sample.read_text()
+        rendered.write_bytes(b'x' * 2048)
+        return rendered
+
+    doctor(healthy=True, preview=preview)
+    assert cli.cmd_doctor(argparse.Namespace()) == 0
+    out = capsys.readouterr().out
+    assert 'interactive scene, 2 KB' in out
+    assert 'all checks passed' in out
+    assert not rendered.exists()
+
+
+def test_doctor_reports_a_failed_render(capsys, doctor):
+    """A render that fails through the service is a problem, with the reason shown."""
+
+    def preview(sample, timeout):
+        message = 'service did not answer'
+        raise RenderError(message)
+
+    doctor(healthy=True, preview=preview)
+    assert cli.cmd_doctor(argparse.Namespace()) == 1
+    out = capsys.readouterr().out
+    assert 'service did not answer' in out
+    assert '1 problem(s) found' in out
+
+
+def test_doctor_counts_every_missing_piece(capsys, doctor):
+    """Without an environment, app, extension or service, each is reported."""
+    doctor(healthy=False, preview=lambda *a, **k: pytest.fail('rendered'))
+    assert cli.cmd_doctor(argparse.Namespace()) == 1
+    out = capsys.readouterr().out
+    assert '(using defaults)' in out
+    assert 'still images unavailable' in out
+    assert '4 problem(s) found' in out
+
+
+def test_uninstall_asks_first_on_a_terminal(capsys, commands, home, monkeypatch):
+    """An interactive uninstall stops unless the answer is yes."""
+    config.CONFIG_PATH.parent.mkdir(parents=True)
+    config.CONFIG_PATH.write_text('{}')
+    monkeypatch.setattr(cli.sys.stdin, 'isatty', lambda: True)
+    monkeypatch.setattr('builtins.input', lambda prompt: 'n')
+    assert cli.cmd_uninstall(argparse.Namespace(all=False, yes=False)) == 1
+    assert 'pvql uninstall --all' in capsys.readouterr().out
+    assert commands == []
+
+
+def test_uninstall_without_uv_says_how_to_remove_the_command(capsys, commands, home, monkeypatch):
+    """Without uv the pvql command is left, with the command that removes it."""
+    monkeypatch.setattr(cli.sys.stdin, 'isatty', lambda: True)
+    monkeypatch.setattr('builtins.input', lambda prompt: 'y')
+    monkeypatch.setattr(cli.shutil, 'which', lambda name: str(home / 'no-uv'))
+    assert cli.cmd_uninstall(argparse.Namespace(all=False, yes=False)) == 0
+    assert 'uv tool uninstall pyvista-quicklook' in capsys.readouterr().out
+    assert not any('tool' in command for command in commands)

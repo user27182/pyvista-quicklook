@@ -50,7 +50,7 @@ parallel = true
 source = ['pyvista_quicklook']
 
 [tool.pytest.ini_options]
-addopts = '--cov=pyvista_quicklook --cov-fail-under=70'
+addopts = '--cov=pyvista_quicklook --cov-fail-under=90'
 testpaths = 'tests'
 
 [tool.ruff]
