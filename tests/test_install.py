@@ -1,16 +1,18 @@
-"""The source installer's handling of uv, run against stand-in uv and pvql commands."""
+"""The source installer's handling of uv and of upgrades, run against stand-in commands."""
 
 from __future__ import annotations
 
 from pathlib import Path
 import plistlib
 import re
+import shlex
 import subprocess
 import sys
 import tomllib
 
 import pytest
 
+from pyvista_quicklook import daemon as daemon_mod
 from pyvista_quicklook import plist as plist_mod
 
 ROOT = Path(__file__).parents[1]
@@ -124,56 +126,121 @@ def script_lines(first, last):
     return SCRIPT[start : SCRIPT.index(last, start) + len(last)]
 
 
-def ask_to_restart_finder(tmp_path, answer):
-    """Run the Finder prompt with ``answer`` typed; return its output and killall's calls."""
+def run_strict(script, **kwargs):
+    """Run a piece of the installer under its own shell options, then report reaching the end."""
+    return subprocess.run(
+        ['/bin/bash', '-c', f'set -euo pipefail\n{script}echo reached the end\n'],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+        **kwargs,
+    )
+
+
+def ask_to_restart_finder(tmp_path, answer, killall_status=0):
+    """Answer the Finder prompt, or leave it unanswered; return the result and killall's log."""
     calls = tmp_path / 'killall.log'
     killall = tmp_path / 'killall'
-    killall.write_text(f'#!/bin/sh\necho "$@" >> {calls}\n')
+    killall.write_text(
+        f'#!/bin/sh\necho "$@" >> {shlex.quote(str(calls))}\nexit {killall_status}\n'
+    )
     killall.chmod(0o755)
-    function = script_lines('restart_finder() {', '\n}\n').replace(
-        '/usr/bin/killall', str(killall)
-    )
-    script = f'{function}restart_finder 3<<< {answer!r}\n'
-    result = subprocess.run(
-        ['/bin/bash', '-c', script], capture_output=True, text=True, timeout=10, check=True
-    )
-    return result.stdout, calls.read_text() if calls.exists() else ''
+    function = script_lines('restart_finder() {', '\n}\n')
+    function = function.replace('/usr/bin/killall', shlex.quote(str(killall)))
+    typed = '3</dev/null' if answer is None else f'3<<< {shlex.quote(answer)}'
+    result = run_strict(f'{function}restart_finder {typed}\n')
+    return result, calls.read_text() if calls.exists() else ''
 
 
 @pytest.mark.parametrize('answer', ['y', 'Y', 'yes'])
 def test_finder_is_restarted_on_yes(tmp_path, answer):
     """A yes restarts the Finder, after the risk is explained."""
-    output, calls = ask_to_restart_finder(tmp_path, answer)
-    assert 'Make sure no files are currently being moved or copied.' in output
+    result, calls = ask_to_restart_finder(tmp_path, answer)
+    assert 'Make sure no files are currently being moved or copied.' in result.stdout
     assert calls == 'Finder\n'
+    assert result.stdout.endswith('reached the end\n'), result.stderr
 
 
-@pytest.mark.parametrize('answer', ['n', '', 'sure'])
+@pytest.mark.parametrize('answer', ['n', '', 'sure', None])
 def test_finder_is_left_running_otherwise(tmp_path, answer):
-    """Anything but a yes leaves the Finder alone and says how to finish later."""
-    output, calls = ask_to_restart_finder(tmp_path, answer)
+    """Any other answer, or none at all, leaves the Finder alone and says how to finish."""
+    result, calls = ask_to_restart_finder(tmp_path, answer)
     assert calls == ''
-    assert 'Restart it later with "killall Finder"' in output
+    assert 'Restart it later with "killall Finder"' in result.stdout
+    assert result.stdout.endswith('reached the end\n'), result.stderr
+
+
+def test_a_failed_finder_restart_does_not_stop_the_install(tmp_path):
+    """The install goes on when killall fails, as it does with no Finder running."""
+    result, calls = ask_to_restart_finder(tmp_path, 'y', killall_status=1)
+    assert calls == 'Finder\n'
+    assert result.stdout.endswith('reached the end\n'), result.stderr
+
+
+def test_without_a_terminal_the_installer_says_how_to_finish():
+    """With no terminal to ask on, the installer prints the remedy and goes on."""
+    dispatch = script_lines('if [[ "$STALE_FINDER" == 1 ]]; then', '\nfi\n')
+    result = run_strict(
+        f'STALE_FINDER=1\nrestart_finder() {{ echo asked; }}\n{dispatch}',
+        stdin=subprocess.DEVNULL,
+        start_new_session=True,
+    )
+    assert 'asked' not in result.stdout
+    assert 'to finish the upgrade' in result.stdout
+    assert result.stdout.endswith('reached the end\n'), result.stderr
+
+
+def test_an_old_install_is_looked_for_before_it_is_replaced():
+    """The old app and service are checked before the installer replaces and retires them."""
+    detection = SCRIPT.index('STALE_FINDER=0')
+    assert detection < SCRIPT.index('rm -rf "$APP"')
+    assert detection < SCRIPT.index('rm -rf "$LEGACY_APP"')
+    assert detection < SCRIPT.index('service --install')
 
 
 @pytest.mark.skipif(sys.platform != 'darwin', reason='PlistBuddy is macOS only')
+@pytest.mark.parametrize('bundle', ['PyVista Quick Look.app', 'PyVistaQuickLook.app'])
 @pytest.mark.parametrize(
     ('identifier', 'stale'),
     [(plist_mod.LEGACY_APP_BUNDLE_ID, '1'), (plist_mod.APP_BUNDLE_ID, '0'), (None, '0')],
 )
-def test_an_install_under_the_old_identifier_is_detected(tmp_path, identifier, stale):
+def test_an_install_under_the_old_identifier_is_detected(tmp_path, bundle, identifier, stale):
     """Only an app installed under the identifier from before 0.7.0 marks the Finder stale."""
-    app = tmp_path / 'PyVista Quick Look.app'
     if identifier:
-        (app / 'Contents').mkdir(parents=True)
-        info = plistlib.dumps({'CFBundleIdentifier': identifier})
-        (app / 'Contents' / 'Info.plist').write_bytes(info)
-    legacy = script_lines('LEGACY_BUNDLE_ID=', '\n')
+        contents = tmp_path / bundle / 'Contents'
+        contents.mkdir(parents=True)
+        (contents / 'Info.plist').write_bytes(plistlib.dumps({'CFBundleIdentifier': identifier}))
+    assert stale_finder(tmp_path) == stale
+
+
+@pytest.mark.skipif(sys.platform != 'darwin', reason='PlistBuddy is macOS only')
+def test_an_old_service_marks_the_finder_stale(tmp_path, monkeypatch):
+    """The service from before 0.7.0 marks the Finder stale wherever that app was installed."""
+    monkeypatch.setenv('HOME', str(tmp_path / 'home'))
+    agent = daemon_mod.legacy_agent_path()
+    agent.parent.mkdir(parents=True)
+    agent.touch()
+    assert stale_finder(tmp_path) == '1'
+
+
+def stale_finder(folder):
+    """Run the installer's detection against apps in ``folder``; return what it decided."""
+    names = script_lines('LEGACY_BUNDLE_ID=', '\n') + script_lines('LEGACY_SERVICE_PLIST=', '\n')
+    apps = (
+        f'APP={shlex.quote(str(folder / "PyVista Quick Look.app"))}\n'
+        f'LEGACY_APP={shlex.quote(str(folder / "PyVistaQuickLook.app"))}\n'
+    )
     detection = script_lines('STALE_FINDER=0', '\ndone\n')
-    script = (
-        f'{legacy}APP={str(app)!r}\nLEGACY_APP=/nonexistent\n{detection}echo "$STALE_FINDER"\n'
+    result = run_strict(f'{names}{apps}{detection}echo "$STALE_FINDER"\n')
+    assert result.returncode == 0, result.stderr
+    return result.stdout.split()[0]
+
+
+def test_the_finder_restart_is_retired_by_python_3_17():
+    """The Finder restart for upgrades from before 0.7.0 goes once the app moves to Python 3.17."""
+    assert tuple(int(part) for part in PYTHON_VERSION.split('.')) < (3, 17), (
+        'Upgrades from before 0.7.0 are long past: remove LEGACY_BUNDLE_ID, LEGACY_SERVICE_PLIST, '
+        'restart_finder, and STALE_FINDER from scripts/install-from-source.sh, the tests that run '
+        'them, and this test.'
     )
-    result = subprocess.run(
-        ['/bin/bash', '-c', script], capture_output=True, text=True, timeout=10, check=True
-    )
-    assert result.stdout.strip() == stale

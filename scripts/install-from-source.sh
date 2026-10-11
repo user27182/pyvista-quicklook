@@ -8,6 +8,7 @@ BUNDLE_NAME="PyVista Quick Look"
 LEGACY_BUNDLE_NAME="PyVistaQuickLook"
 # Installations before 0.7.0 used identifiers under the old owner.
 LEGACY_BUNDLE_ID="io.github.user27182.PyVistaQuickLook"
+LEGACY_SERVICE_PLIST="$HOME/Library/LaunchAgents/io.github.user27182.pvqld.plist"
 EXT_NAME="PyVistaQuickLookExtension"
 EXT_ID="org.pyvista.PyVistaQuickLook.QuickLook"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
@@ -50,7 +51,7 @@ restart_finder() {
   local answer=""
   echo
   echo "Previews won't work until the Finder restarts. Make sure no files are currently being moved or copied."
-  printf 'Restart the Finder now with "killall Finder"? [y/n] '
+  printf 'Restart the Finder now with "killall Finder"? [y/N] '
   read -r answer <&3 || true
   if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
     /usr/bin/killall Finder || true
@@ -146,7 +147,11 @@ fi
 APP="$DEST/$BUNDLE_NAME.app"
 LEGACY_APP="$DEST/$LEGACY_BUNDLE_NAME.app"
 # The Finder goes on asking for a replaced extension by its old identifier until it restarts.
+# The old service is found wherever the old app was installed, and is retired further down.
 STALE_FINDER=0
+if [[ -f "$LEGACY_SERVICE_PLIST" ]]; then
+  STALE_FINDER=1
+fi
 for existing in "$APP" "$LEGACY_APP"; do
   identifier=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' \
     "$existing/Contents/Info.plist" 2>/dev/null || true)
@@ -182,7 +187,7 @@ echo "==> installing the render service"
 "$HELPER" service --install --helper "$HELPER"
 
 if [[ "$STALE_FINDER" == 1 ]]; then
-  # The installer may be read from a pipe, so the answer comes from the terminal.
+  # Under curl | sh, stdin is the script being run, so the answer comes from the terminal.
   if { exec 3</dev/tty; } 2>/dev/null; then
     restart_finder
     exec 3<&-
