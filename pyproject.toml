@@ -47,10 +47,11 @@ Homepage = 'https://github.com/pyvista/pyvista-quicklook'
 branch = true
 omit = ['*/_formats_table.py', '*/_version.py', '*/_warmup.py']
 parallel = true
+patch = ['subprocess']
 source = ['pyvista_quicklook']
 
 [tool.pytest.ini_options]
-addopts = '--cov=pyvista_quicklook --cov-fail-under=90'
+addopts = '--cov=pyvista_quicklook --cov-fail-under=95'
 testpaths = 'tests'
 
 [tool.ruff]

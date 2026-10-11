@@ -1,13 +1,8 @@
-comment: false
-
-# Coverage may not drop below what main has, and new code is held to the same.
 coverage:
   status:
     project:
       default:
-        target: auto
-        threshold: 0.5%
+        target: 95%
     patch:
       default:
-        target: auto
-        threshold: 0.5%
+        target: 95%
