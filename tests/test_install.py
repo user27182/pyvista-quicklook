@@ -133,7 +133,7 @@ def ask_to_restart_finder(tmp_path, answer):
     function = script_lines('restart_finder() {', '\n}\n').replace(
         '/usr/bin/killall', str(killall)
     )
-    script = f'EXT_ID=extension.id\n{function}restart_finder 3<<< {answer!r}\n'
+    script = f'{function}restart_finder 3<<< {answer!r}\n'
     result = subprocess.run(
         ['/bin/bash', '-c', script], capture_output=True, text=True, timeout=10, check=True
     )
@@ -144,7 +144,7 @@ def ask_to_restart_finder(tmp_path, answer):
 def test_finder_is_restarted_on_yes(tmp_path, answer):
     """A yes restarts the Finder, after the risk is explained."""
     output, calls = ask_to_restart_finder(tmp_path, answer)
-    assert 'a cancelled copy can leave a partial file' in output
+    assert 'Make sure no files are currently being moved or copied.' in output
     assert calls == 'Finder\n'
 
 

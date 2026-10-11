@@ -49,10 +49,7 @@ fi
 restart_finder() {
   local answer=""
   echo
-  echo "The Finder still asks for the extension by the identifier it had before 0.7.0, so"
-  echo "previews show \"Extension $EXT_ID not found\" until the Finder restarts."
-  echo "Restarting it closes and reopens its windows. A copy, move, or empty-trash the Finder"
-  echo "is running at that moment is cancelled, and a cancelled copy can leave a partial file."
+  echo "Previews won't work until the Finder restarts. Make sure no files are currently being moved or copied."
   printf 'Restart the Finder now with "killall Finder"? [y/n] '
   read -r answer <&3 || true
   if [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; then
