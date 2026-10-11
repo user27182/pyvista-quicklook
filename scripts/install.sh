@@ -107,6 +107,7 @@ for stale in "$VENV"/lib/python*; do
 done
 # PyVista requires stock VTK, which cvista replaces; the exclusion drops that requirement.
 "$UV" pip uninstall --quiet --python "$VENV/bin/python" vtk >/dev/null 2>&1 || true
+# uv before 0.13 splits a requirements-file path on spaces, and $SUPPORT has one.
 "$UV" pip install --quiet --python "$VENV/bin/python" --upgrade \
   --excludes <(echo vtk) "$PYVISTA_SPEC" "$CVISTA_SPEC" "$CAD_SPEC"
 PYTHON="$VENV/bin/python"
