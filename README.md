@@ -55,17 +55,18 @@ No system Python and no existing environment is used or changed.
 | `~/.local/bin/uv`, `~/Library/Application Support/uv` | uv, and Python 3.14 if uv had to fetch one | 45 MB, plus Python |
 | `~/.cache/uv` | uv's download cache; the environment's files are clones of it, not copies | shared |
 
-About 385 MB in total, or 430 MB when uv is installed too. The environment is the bulk
+About 395 MB in total, or 440 MB when uv is installed too. The environment is the bulk
 of it:
 
 - [cvista](https://github.com/pyvista/cvista)`[all]`, a VTK fork used in place of
   stock VTK, 137 MB
-- cascadio, [pyvista-cad](https://github.com/pyvista/pyvista-cad)'s STEP reader, 69 MB
+- cascadio, [pyvista-cad](https://github.com/pyvista/pyvista-cad)'s STEP reader, which
+  reads IGES too, 69 MB
 - matplotlib, 28 MB
 - numpy, 25 MB
 - ezdxf, pyvista-cad's DXF reader, 20 MB
 - PyVista 0.49, [meshio](https://github.com/nschloe/meshio), and the remaining
-  dependencies, about 100 MB
+  dependencies, about 110 MB
 
 `pvql cache --clear` empties the preview cache. `pvql uninstall` removes everything
 above except the configuration file and uv.
@@ -80,43 +81,45 @@ which needs the Xcode command line tools (`xcode-select --install`):
 
 ## Supported files
 
-76 extensions are claimed, so pressing space on any of these files opens
+82 extensions are claimed, so pressing space on any of these files opens
 this preview. A file that turns out not to be a mesh, such as a `.dat` holding a table
 of numbers, is shown as plain text instead, the way Quick Look would have shown it.
 
 | Format | Extensions | Format | Extensions |
 | --- | --- | --- | --- |
-| 3D Studio Model | `.3ds` | OpenFOAM Case | `.foam` |
-| 3MF Model | `.3mf` | ParaView Data Collection | `.pvd` |
-| AVS UCD Data | `.inp` | PERMAS Data | `.dato`, `.post` |
-| AVS UCD Mesh | `.avs` | PLOT3D Metadata | `.p3d` |
-| Binary Marching Cubes Surface | `.tri` | Point Cloud | `.pts` |
-| BYU Geometry | `.g` | ProStar Mesh | `.vrt` |
-| CalculiX Result | `.frd` | Protein Data Bank | `.pdb` |
-| CGNS Data | `.cgns` | PyVista Zstandard Data | `.pv`, `.zvtk` |
-| Digital Elevation Model | `.dem` | SEG-Y Seismic Data | `.segy`, `.sgy` |
-| DXF Drawing | `.dxf` | SLC Volume | `.slc` |
-| Eclipse GRDECL Grid | `.grdecl` | STEP Model | `.step`, `.stp` |
-| EnSight Case | `.case` | Tecplot ASCII Data | `.tec` |
-| Exodus II Data | `.e`, `.ex2`, `.exii`, `.exo` | Tecplot Data | `.dat` |
-| Facet Surface | `.facet` | TetGen Mesh | `.ele`, `.node` |
-| FLAC3D Grid | `.f3grid` | VRML Model | `.vrml`, `.wrl` |
-| Fluent Case | `.cas` | VTK File Series | `.series` |
-| GAMBIT Neutral Mesh | `.neu` | VTK HDF | `.vtkhdf` |
-| Gaussian Cube | `.cube` | VTK Image Data | `.vti` |
-| GE Signa MR Image | `.mr` | VTK Legacy Data | `.vtk` |
-| Gmsh Mesh | `.msh` | VTK MultiBlock | `.vtm`, `.vtmb` |
+| 3D Studio Model | `.3ds` | NRRD Volume | `.nhdr`, `.nrrd` |
+| 3MF Model | `.3mf` | Object File Format Mesh | `.off` |
+| AVS UCD Data | `.inp` | OpenFOAM Case | `.foam` |
+| AVS UCD Mesh | `.avs` | ParaView Data Collection | `.pvd` |
+| Binary Marching Cubes Surface | `.tri` | PERMAS Data | `.dato`, `.post` |
+| BYU Geometry | `.g` | PLOT3D Metadata | `.p3d` |
+| CalculiX Result | `.frd` | Point Cloud | `.pts` |
+| CGNS Data | `.cgns` | ProStar Mesh | `.vrt` |
+| Digital Elevation Model | `.dem` | Protein Data Bank | `.pdb` |
+| DXF Drawing | `.dxf` | PyVista Zstandard Data | `.pv`, `.zvtk` |
+| Eclipse GRDECL Grid | `.grdecl` | SEG-Y Seismic Data | `.segy`, `.sgy` |
+| EnSight Case | `.case` | SLC Volume | `.slc` |
+| Exodus II Data | `.e`, `.ex2`, `.exii`, `.exo` | STEP Model | `.step`, `.stp` |
+| Facet Surface | `.facet` | Tecplot ASCII Data | `.tec` |
+| FLAC3D Grid | `.f3grid` | Tecplot Data | `.dat` |
+| Fluent Case | `.cas` | TetGen Mesh | `.ele`, `.node` |
+| GAMBIT Neutral Mesh | `.neu` | VRML Model | `.vrml`, `.wrl` |
+| Gaussian Cube | `.cube` | VTK File Series | `.series` |
+| GE Signa MR Image | `.mr` | VTK HDF | `.vtkhdf` |
+| Gmsh Mesh | `.msh` | VTK Image Data | `.vti` |
+| HMF Mesh | `.hmf` | VTK Legacy Data | `.vtk` |
+| IGES Model | `.iges`, `.igs` | VTK MultiBlock | `.vtm`, `.vtmb` |
 | Kratos Model Part | `.mdpa` | VTK Parallel Image Data | `.pvti` |
-| Medit Mesh | `.mesh`, `.meshb` | VTK Parallel Legacy Data | `.pvtk` |
-| MetaImage Volume | `.mha`, `.mhd` | VTK Parallel Rectilinear Grid | `.pvtr` |
-| MFIX Result | `.res` | VTK Parallel Unstructured Grid | `.pvtu` |
-| MINC Volume | `.mnc` | VTK Partitioned Dataset | `.vtpd` |
-| Nastran Bulk Data | `.bdf`, `.fem`, `.nas` | VTK PolyData | `.vtp` |
-| Nek5000 Data | `.nek5000` | VTK Rectilinear Grid | `.vtr` |
-| Netgen Mesh | `.vol` | VTK Structured Grid | `.vts` |
-| NIfTI Volume | `.nii` | VTK Unstructured Grid | `.vtu` |
-| NRRD Volume | `.nhdr`, `.nrrd` | XDMF Data | `.xdmf` |
-| Object File Format Mesh | `.off` | | |
+| MED Mesh | `.med` | VTK Parallel Legacy Data | `.pvtk` |
+| Medit Mesh | `.mesh`, `.meshb` | VTK Parallel Rectilinear Grid | `.pvtr` |
+| MetaImage Volume | `.mha`, `.mhd` | VTK Parallel Unstructured Grid | `.pvtu` |
+| MFIX Result | `.res` | VTK Partitioned Dataset | `.vtpd` |
+| MINC Volume | `.mnc` | VTK PolyData | `.vtp` |
+| MOAB Mesh | `.h5m` | VTK Rectilinear Grid | `.vtr` |
+| Nastran Bulk Data | `.bdf`, `.fem`, `.nas` | VTK Structured Grid | `.vts` |
+| Nek5000 Data | `.nek5000` | VTK Unstructured Grid | `.vtu` |
+| Netgen Mesh | `.vol` | XDMF Data | `.xdmf` |
+| NIfTI Volume | `.nii` | XDMF Mesh | `.xmf` |
 
 4 more are claimed through a type macOS declares, since Launch Services sees only
 the last suffix of a compressed dataset:
@@ -131,11 +134,10 @@ PyVista can also read these, which are not claimed:
 - disk images own the extension: `.img`
 - camera raw images own the extension: `.raw`
 - XML owns the extension: `.xml`
-- needs an OpenCascade kernel: `.brep`, `.brp`, `.fcstd`, `.iges`, `.igs`
+- needs a full OpenCascade kernel: `.brep`, `.brp`, `.fcstd`
 - needs ifcopenshell: `.ifc`
 - needs the openscad program: `.scad`
 - a general HDF5 container: `.h5`, `.hdf`
-- needs h5py: `.h5m`, `.hmf`, `.med`, `.xmf`
 - meshio fails to read it: `.su2`, `.ugrid`
 - meshio hangs on it: `.wkt`
 - meshio writes it but does not read it: `.svg`
@@ -228,10 +230,10 @@ macOS keeps those folders private to each program, and the render service cannot
 them. The Quick Look extension copies the file it was asked to preview into its own
 container so that the service can convert it anyway.
 
-A dataset that points at neighbouring files — `.pvd`, `.vtm`, `.case`, `.foam` — needs
-those neighbours, which the copy does not include. Keep such datasets outside those
-three folders, or grant the render service Full Disk Access in System Settings under
-Privacy & Security.
+A dataset that points at neighbouring files — `.pvd`, `.vtm`, `.case`, `.foam`, `.xdmf`,
+`.xmf` — needs those neighbours, which the copy does not include. Keep such datasets
+outside those three folders, or grant the render service Full Disk Access in System
+Settings under Privacy & Security.
 
 ## Configuration
 

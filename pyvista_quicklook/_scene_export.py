@@ -11,6 +11,7 @@ import math
 import os
 from pathlib import Path
 import sys
+import tempfile
 
 import numpy as np
 import pyvista as pv
@@ -19,8 +20,25 @@ import pyvista as pv
 ATTEMPTS = {'.inp': (None, 'abaqus'), '.msh': (None, 'ansys')}
 
 
+def read_iges(source: str) -> object:
+    """Tessellate an IGES file with cascadio, the kernel pyvista-cad reads STEP with."""
+    import cascadio
+
+    # pyvista-cad's STEP default, so IGES and STEP previews are meshed alike.
+    glb = cascadio.load(Path(source).read_bytes(), file_type='iges', tol_linear=0.1)
+    if not glb:
+        message = 'no shapes could be read from the IGES file'
+        raise ValueError(message)
+    with tempfile.TemporaryDirectory() as folder:
+        model = Path(folder) / 'model.glb'
+        model.write_bytes(glb)
+        return pv.read(model)
+
+
 def read(source: str) -> object:
     """Read a file, trying each reader its extension may need until one returns points."""
+    if Path(source).suffix.lower() in ('.iges', '.igs'):
+        return read_iges(source)
     failure: BaseException | None = None
     dataset = None
     for file_format in ATTEMPTS.get(Path(source).suffix.lower(), (None,)):

@@ -6,6 +6,7 @@ requires = ['setuptools>=64', 'setuptools_scm>=8']
 # The tests run the exporter under the same environment the installer builds.
 dev = [
   'cvista[all]==9.7.0.4',
+  'h5py',
   'pre-commit',
   'pytest',
   'pytest-cov',

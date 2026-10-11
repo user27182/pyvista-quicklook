@@ -68,6 +68,8 @@ FORMATS: dict[str, str] = {
     # CAD formats, read by pyvista-cad.
     '.step': 'STEP Model',
     '.stp': 'STEP Model',
+    '.iges': 'IGES Model',
+    '.igs': 'IGES Model',
     '.dxf': 'DXF Drawing',
     '.3mf': '3MF Model',
     # Mesh formats read by meshio.
@@ -87,6 +89,10 @@ FORMATS: dict[str, str] = {
     '.post': 'PERMAS Data',
     '.node': 'TetGen Mesh',
     '.ele': 'TetGen Mesh',
+    '.h5m': 'MOAB Mesh',
+    '.hmf': 'HMF Mesh',
+    '.med': 'MED Mesh',
+    '.xmf': 'XDMF Mesh',
     # Medical volumes
     '.nii': 'NIfTI Volume',
     '.mha': 'MetaImage Volume',
@@ -138,21 +144,15 @@ UNCLAIMED: dict[str, str] = {
     '.raw': 'camera raw images own the extension',
     '.xml': 'XML owns the extension',
     # Readers pyvista-cad registers whose kernels the installer leaves out.
-    '.brep': 'needs an OpenCascade kernel',
-    '.brp': 'needs an OpenCascade kernel',
-    '.fcstd': 'needs an OpenCascade kernel',
-    '.iges': 'needs an OpenCascade kernel',
-    '.igs': 'needs an OpenCascade kernel',
+    '.brep': 'needs a full OpenCascade kernel',
+    '.brp': 'needs a full OpenCascade kernel',
+    '.fcstd': 'needs a full OpenCascade kernel',
     '.ifc': 'needs ifcopenshell',
     '.scad': 'needs the openscad program',
     # General containers, often huge, in which mesh files are the exception.
     '.h5': 'a general HDF5 container',
     '.hdf': 'a general HDF5 container',
-    # meshio lists these but cannot read them as installed.
-    '.h5m': 'needs h5py',
-    '.hmf': 'needs h5py',
-    '.med': 'needs h5py',
-    '.xmf': 'needs h5py',
+    # meshio lists these but cannot read them.
     '.su2': 'meshio fails to read it',
     '.ugrid': 'meshio fails to read it',
     '.wkt': 'meshio hangs on it',
