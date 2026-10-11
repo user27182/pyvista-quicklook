@@ -313,6 +313,12 @@ def test_iges_models_are_drawn(tmp_path):
     assert pv.read(out).n_faces > 0
 
 
+def test_iges_is_read_by_pyvista_after_a_step_read():
+    """pv.read keeps the cascadio IGES reader once pyvista-cad's readers have loaded."""
+    pv.read(cad_examples.bracket_step_path())
+    assert pv.read(cad_examples.downloads.iges_impeller_path()).n_blocks > 0
+
+
 @pytest.mark.parametrize('extension', ['.h5m', '.hmf', '.med', '.xmf'])
 def test_hdf5_meshes_are_drawn(tmp_path, extension):
     """The meshio formats stored in HDF5 are read with h5py."""
