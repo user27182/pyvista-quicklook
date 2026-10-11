@@ -104,7 +104,7 @@ func holdsDicomFiles(_ url: URL) -> Bool {
     return false
 }
 
-let utiPrefix = "io.github.user27182.pyvista-quicklook"
+let utiPrefix = "org.pyvista.pyvista-quicklook"
 
 /// Whether the file's type is one this app exported. A type macOS owns, a gzip archive or
 /// a folder, has a preview of its own, which is better than any imitation of it here.

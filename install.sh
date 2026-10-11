@@ -2,7 +2,7 @@
 # One-line installer for PyVista Quick Look. Safe to pipe from curl.
 set -eu
 
-REPO="${PVQL_REPO:-user27182/pyvista-quicklook}"
+REPO="${PVQL_REPO:-pyvista/pyvista-quicklook}"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
 SRC="${PVQL_SRC:-$SUPPORT/src}"
 ASSET="PyVistaQuickLook.zip"
@@ -15,11 +15,11 @@ die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 # Run from the checkout this script lives in when there is one, otherwise fetch it.
 HERE=''
 case "${0:-}" in
-  */*) HERE=$(CDPATH='' cd -- "$(dirname -- "$0")/.." 2>/dev/null && pwd || true) ;;
+  */*) HERE=$(CDPATH='' cd -- "$(dirname -- "$0")" 2>/dev/null && pwd || true) ;;
 esac
 
 DOWNLOAD="https://github.com/$REPO/releases/latest/download/$ASSET"
-if [ -n "$HERE" ] && [ -x "$HERE/scripts/install.sh" ] && [ -d "$HERE/macos" ]; then
+if [ -n "$HERE" ] && [ -x "$HERE/scripts/install-from-source.sh" ] && [ -d "$HERE/macos" ]; then
   ROOT="$HERE"
 else
   # The scripts and the app come from the same release, so the two never drift.
@@ -65,10 +65,10 @@ if curl -LsSf -o "$ZIP" "$DOWNLOAD"; then
 fi
 
 if [ -n "$APP" ] && [ -d "$APP" ]; then
-  "$ROOT/scripts/install.sh" --app "$APP" "$@" && outcome=0 || outcome=$?
+  "$ROOT/scripts/install-from-source.sh" --app "$APP" "$@" && outcome=0 || outcome=$?
 else
   say '==> no published build for this release; building from source'
-  "$ROOT/scripts/install.sh" "$@" && outcome=0 || outcome=$?
+  "$ROOT/scripts/install-from-source.sh" "$@" && outcome=0 || outcome=$?
 fi
 # Nothing uses the downloads once the app and the helper are installed.
 rm -rf "$UNPACKED"

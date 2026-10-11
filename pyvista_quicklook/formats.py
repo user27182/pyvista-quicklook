@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-UTI_PREFIX = 'io.github.user27182.pyvista-quicklook'
+UTI_PREFIX = 'org.pyvista.pyvista-quicklook'
 
 # Types macOS declares itself, which the extension supports rather than exports. A
 # compressed dataset is named .nii.gz or .vol.gz, but Launch Services sees only .gz and

@@ -22,8 +22,10 @@ from . import warmup as warmup_mod
 from .environment import RenderError
 from .plist import APP_BUNDLE_ID
 from .plist import EXT_BUNDLE_ID
+from .plist import LEGACY_EXT_BUNDLE_ID
 
-LABEL = 'io.github.user27182.pvqld'
+LABEL = 'org.pyvista.pvqld'
+LEGACY_LABEL = 'io.github.user27182.pvqld'
 REQUEST_SUFFIX = '.pvqlreq'
 REPLY_SUFFIX = '.pvqlrep'
 STALE_SECONDS = 600
@@ -40,6 +42,11 @@ file elsewhere."""
 def drop_dir() -> Path:
     """Return the directory the extension and the daemon exchange files in."""
     return Path.home() / 'Library' / 'Containers' / EXT_BUNDLE_ID / 'Data' / 'tmp'
+
+
+def legacy_drop_dir() -> Path:
+    """Return the exchange directory of installations before the org.pyvista identifiers."""
+    return Path.home() / 'Library' / 'Containers' / LEGACY_EXT_BUNDLE_ID / 'Data' / 'tmp'
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -237,6 +244,11 @@ def request_preview(source: str, timeout: float = 90) -> Path:
 def agent_path() -> Path:
     """Return the path of the launch agent property list."""
     return Path.home() / 'Library' / 'LaunchAgents' / f'{LABEL}.plist'
+
+
+def legacy_agent_path() -> Path:
+    """Return the launch agent path of installations before the org.pyvista identifiers."""
+    return Path.home() / 'Library' / 'LaunchAgents' / f'{LEGACY_LABEL}.plist'
 
 
 def agent_plist(helper: str) -> dict[str, Any]:

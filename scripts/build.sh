@@ -8,7 +8,7 @@ BUILD="$ROOT/build"
 BUNDLE_NAME="PyVista Quick Look"
 APP_NAME="PyVistaQuickLook"
 EXT_NAME="PyVistaQuickLookExtension"
-APP_ID="io.github.user27182.PyVistaQuickLook"
+APP_ID="org.pyvista.PyVistaQuickLook"
 EXT_ID="$APP_ID.QuickLook"
 DEPLOYMENT_TARGET="12.0"
 

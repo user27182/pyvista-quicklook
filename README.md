@@ -11,7 +11,7 @@ coloured by the active scalars and free to rotate and zoom.
 macOS 12 or newer. Nothing else needs to be installed first.
 
 ```bash
-curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/scripts/bootstrap.sh | sh
+curl -LsSf https://github.com/pyvista/pyvista-quicklook/releases/latest/download/install.sh | sh
 ```
 
 Then select a `.vtu`, `.vtp`, or `.vtk` file in the Finder and press space. Check the
@@ -48,9 +48,9 @@ No system Python and no existing environment is used or changed.
 | `~/Applications/PyVista Quick Look.app` | The app and its Quick Look extension | 500 KB |
 | `~/Library/Application Support/uv/tools/pyvista-quicklook` | The `pvql` helper | 400 KB |
 | `~/.local/bin/pvql`, `~/.local/bin/pyvista-quicklook` | Links to the helper | |
-| `~/Library/LaunchAgents/io.github.user27182.pvqld.plist` | The render service | 4 KB |
+| `~/Library/LaunchAgents/org.pyvista.pvqld.plist` | The render service | 4 KB |
 | `~/Library/Logs/pvqld.log` | The service's output | grows slowly |
-| `~/Library/Containers/io.github.user27182.PyVistaQuickLook.QuickLook` | The extension's sandbox, created by macOS: its log and staged copies | small |
+| `~/Library/Containers/org.pyvista.PyVistaQuickLook.QuickLook/Data/tmp` | The extension's log and staged copies, in a sandbox folder that macOS creates and keeps | small |
 | `~/Library/Caches/PyVistaQuickLook` | One built preview per file previewed | grows with use |
 | `~/.local/bin/uv`, `~/Library/Application Support/uv` | uv, and Python 3.14 if uv had to fetch one | 45 MB, plus Python |
 | `~/.cache/uv` | uv's download cache; the environment's files are clones of it, not copies | shared |
@@ -70,12 +70,12 @@ of it:
 `pvql cache --clear` empties the preview cache. `pvql uninstall` removes everything
 above except the configuration file and uv.
 
-From a checkout, `./scripts/install.sh` does the same and builds the app from source,
+From a checkout, `./scripts/install-from-source.sh` does the same and builds the app from source,
 which needs the Xcode command line tools (`xcode-select --install`):
 
 ```bash
-./scripts/install.sh --prefix /Applications                # install for all users
-./scripts/install.sh --app /path/to/PyVistaQuickLook.app   # skip the build
+./scripts/install-from-source.sh --prefix /Applications                # install for all users
+./scripts/install-from-source.sh --app /path/to/PyVistaQuickLook.app   # skip the build
 ```
 
 ## Supported files
@@ -278,11 +278,11 @@ service, and a real preview.
 - **The panel says the service is not answering.** Run `pvql service --install`.
 - **Nothing happens on space bar.** Confirm the type is claimed with `pvql types`, then
   check that Finder resolves it: `mdls -name kMDItemContentType yourfile.vtu` should
-  report an `io.github.user27182.pyvista-quicklook.*` type.
+  report an `org.pyvista.pyvista-quicklook.*` type.
 - **Previews are stale.** `pvql cache --clear`.
 - **A preview fails.** Set `"log": true` in the config; activity is appended to
   `pvql.log` beside it. The extension's own log is in
-  `~/Library/Containers/io.github.user27182.PyVistaQuickLook.QuickLook/Data/tmp/`.
+  `~/Library/Containers/org.pyvista.PyVistaQuickLook.QuickLook/Data/tmp/`.
 
 ## Development
 
@@ -299,7 +299,7 @@ excludes stock VTK from the resolve, so the test environment holds the same pack
 installer provisions.
 
 PyVista and cvista are pinned to one release each, in `pyproject.toml` and
-`scripts/install.sh` alike. Bumping either reruns a test that compares every extension
+`scripts/install-from-source.sh` alike. Bumping either reruns a test that compares every extension
 the environment can read with the format table, so a reader that PyVista adds, drops, or
 moves to a package of its own shows up as a failure to resolve in `formats.py`. The README's format tables are generated from
 PyVista's reader tables and checked by another test:
