@@ -2,7 +2,7 @@
 # One-line installer for PyVista Quick Look. Safe to pipe from curl.
 set -eu
 
-REPO="${PVQL_REPO:-user27182/pyvista-quicklook}"
+REPO="${PVQL_REPO:-pyvista/pyvista-quicklook}"
 SUPPORT="$HOME/Library/Application Support/PyVistaQuickLook"
 SRC="${PVQL_SRC:-$SUPPORT/src}"
 ASSET="PyVistaQuickLook.zip"

@@ -11,7 +11,7 @@ coloured by the active scalars and free to rotate and zoom.
 macOS 12 or newer. Nothing else needs to be installed first.
 
 ```bash
-curl -LsSf https://raw.githubusercontent.com/user27182/pyvista-quicklook/main/install.sh | sh
+curl -LsSf https://github.com/pyvista/pyvista-quicklook/releases/latest/download/install.sh | sh
 ```
 
 Then select a `.vtu`, `.vtp`, or `.vtk` file in the Finder and press space. Check the
