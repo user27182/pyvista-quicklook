@@ -1,8 +1,3 @@
-# Wait for both the Linux and the macOS report before posting statuses.
-codecov:
-  notify:
-    after_n_builds: 2
-
 coverage:
   status:
     project:
