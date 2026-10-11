@@ -21,7 +21,7 @@ result with `pvql doctor`.
 
 1. Downloads the latest release: the installer scripts, about 1 MB, and the prebuilt
    app, about 200 KB.
-2. Installs [uv](https://docs.astral.sh/uv/) if it is missing, and a Python 3.12 if uv
+2. Installs [uv](https://docs.astral.sh/uv/) if it is missing, and a Python 3.14 if uv
    finds none on the machine.
 3. Installs the `pvql` helper as a uv tool.
 4. Creates a private Python environment and installs
@@ -52,7 +52,7 @@ No system Python and no existing environment is used or changed.
 | `~/Library/Logs/pvqld.log` | The service's output | grows slowly |
 | `~/Library/Containers/io.github.user27182.PyVistaQuickLook.QuickLook` | The extension's sandbox, created by macOS: its log and staged copies | small |
 | `~/Library/Caches/PyVistaQuickLook` | One built preview per file previewed | grows with use |
-| `~/.local/bin/uv`, `~/Library/Application Support/uv` | uv, and Python 3.12 if uv had to fetch one | 45 MB, plus Python |
+| `~/.local/bin/uv`, `~/Library/Application Support/uv` | uv, and Python 3.14 if uv had to fetch one | 45 MB, plus Python |
 | `~/.cache/uv` | uv's download cache; the environment's files are clones of it, not copies | shared |
 
 About 385 MB in total, or 430 MB when uv is installed too. The environment is the bulk
